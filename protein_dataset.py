@@ -28,7 +28,8 @@ DATA_ROOT_DIR = 'data/'
 TEST_FOLD = 'test'
 DEV_FOLD = 'dev'
 TRAIN_FOLD = 'train'
-_DATA_FOLD_VALUES = [TRAIN_FOLD, DEV_FOLD, TEST_FOLD]
+ALL_FOLD = '*'
+DATA_FOLD_VALUES = [TRAIN_FOLD, DEV_FOLD, TEST_FOLD, ALL_FOLD]
 
 SEQUENCE_KEY = 'sequence'
 SEQUENCE_LENGTH_KEY = 'sequence_length'
@@ -152,10 +153,9 @@ def non_batched_dataset(train_dev_or_test,
         LABEL_KEY: rank-1 tensor of integer labels from label_vocab,
     }
   """
-  if train_dev_or_test not in _DATA_FOLD_VALUES:
-    raise ValueError(
-        'Only train, dev and test are supported datasets. Received {}.'.format(
-            train_dev_or_test))
+  if train_dev_or_test not in DATA_FOLD_VALUES:
+    raise ValueError(('Only train, dev, test and * are supported datasets.'
+                      ' Received {}.').format(train_dev_or_test))
   dataset_files = [
       os.path.join(data_root_dir, f)
       for f in tf.gfile.ListDirectory(data_root_dir)

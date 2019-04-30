@@ -16,12 +16,13 @@
 # pylint: disable=line-too-long
 r"""Train a model to predict protein labels.
 
-Run:
-python train.py\
-  --data_base_path=testdata/\
-  --label_vocab_path=testdata/label_vocab.tsv\
-  --output_dir=/tmp/`date +'%s'`\
-  --hparams_set=small_test_model
+Example use:
+
+python train.py --data_base_path=./testdata/ \
+--label_vocab_path=./data/vocabs/EC.tsv \
+--hparams_set=small_test_model \
+--output_dir=/tmp/`date +'%s'`
+
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -50,18 +51,28 @@ flags.DEFINE_string('output_dir', '/tmp/protein_model',
 flags.DEFINE_string('hparams_set', hparams_sets.small_test_model.__name__,
                     'Hyperparameters to use (see hparams_sets module).')
 
+flags.DEFINE_enum(
+    'train_fold', protein_dataset.TRAIN_FOLD, protein_dataset.DATA_FOLD_VALUES,
+    'Fold to use for training data '
+    '(one of protein_dataset.DATA_FOLD_VALUES)')
+
+flags.DEFINE_enum(
+    'eval_fold', protein_dataset.TEST_FOLD, protein_dataset.DATA_FOLD_VALUES,
+    'Fold to use for training data '
+    '(one of protein_dataset.DATA_FOLD_VALUES)')
+
 FLAGS = flags.FLAGS
 
 _VOCAB_ITEM_COLUMN_NAME = 'vocab_item'
 _VOCAB_INDEX_COLUMN_NAME = 'vocab_index'
 
 
-def _make_estimator(hparams, num_output_classes, output_dir):
+def _make_estimator(hparams, label_vocab, output_dir):
   """Create a tf.estimator.Estimator.
 
   Args:
     hparams: tf.contrib.training.HParams.
-    num_output_classes: int. Number of different labels.
+    label_vocab: list of string.
     output_dir: str. Path to save checkpoints.
 
   Returns:
@@ -69,7 +80,8 @@ def _make_estimator(hparams, num_output_classes, output_dir):
   """
   # TODO(mlbileschi): when adding savedmodel support, save vocabulary in the
   # savedmodel.
-  model_fn = protein_model.make_model_fn(num_output_classes=num_output_classes)
+  model_fn = protein_model.make_model_fn(
+      label_vocab=label_vocab, hparams=hparams)
   run_config = tf.estimator.RunConfig(model_dir=output_dir)
 
   estimator = tf.estimator.Estimator(
@@ -113,8 +125,8 @@ def get_serving_input_fn():
   return serving_input_fn
 
 
-def _make_estimator_and_inputs(hparams, label_vocab, data_base_path,
-                               output_dir):
+def _make_estimator_and_inputs(hparams, label_vocab, data_base_path, output_dir,
+                               train_fold, eval_fold):
   """Makes Estimator and input_fn for train and eval.
 
   Args:
@@ -123,22 +135,24 @@ def _make_estimator_and_inputs(hparams, label_vocab, data_base_path,
     data_base_path: str. Directory path containing tfrecords named like "train",
       "dev" and "test"
     output_dir: str. Path to save checkpoints.
-
+    train_fold: fold to use for training data (one of
+          protein_dataset.DATA_FOLD_VALUES)
+    eval_fold: fold to use for training data (one of
+          protein_dataset.DATA_FOLD_VALUES)
   Returns:
     A tuple of estimator, train_spec and eval_spec
   """
 
   estimator = _make_estimator(
-      hparams=hparams,
-      num_output_classes=len(label_vocab),
-      output_dir=output_dir)
+      hparams=hparams, label_vocab=label_vocab, output_dir=output_dir)
 
   logging.info('Loading data from %s', data_base_path)
+  logging.info('Writing to directory %s', output_dir)
   train_input_fn = protein_dataset.make_input_fn(
       data_file_pattern=data_base_path,
       batch_size=hparams.batch_size,
       label_vocab=label_vocab,
-      train_dev_or_test=protein_dataset.TRAIN_FOLD)
+      train_dev_or_test=train_fold)
 
   train_spec = tf.estimator.TrainSpec(
       train_input_fn, max_steps=hparams.train_steps)
@@ -147,7 +161,7 @@ def _make_estimator_and_inputs(hparams, label_vocab, data_base_path,
       data_file_pattern=data_base_path,
       batch_size=hparams.batch_size,
       label_vocab=label_vocab,
-      train_dev_or_test=protein_dataset.DEV_FOLD)
+      train_dev_or_test=eval_fold)
   savedmodel_exporters = [
       tf.estimator.LatestExporter(
           name='saved_model',
@@ -201,7 +215,8 @@ def parse_label_vocab(label_vocab_path):
       [_VOCAB_INDEX_COLUMN_NAME])[_VOCAB_ITEM_COLUMN_NAME].values
 
 
-def train(data_base_path, output_dir, label_vocab_path, hparams_set_name):
+def train(data_base_path, output_dir, label_vocab_path, hparams_set_name,
+          train_fold, eval_fold):
   """Constructs trains, and evaluates a model on the given input data.
 
   Args:
@@ -213,6 +228,10 @@ def train(data_base_path, output_dir, label_vocab_path, hparams_set_name):
       testdata/label_vocab.tsv for an example.
     hparams_set_name: name of a function in the hparams module which returns a
       tf.contrib.training.HParams object.
+    train_fold: fold to use for training data (one of
+          protein_dataset.DATA_FOLD_VALUES)
+    eval_fold: fold to use for training data (one of
+          protein_dataset.DATA_FOLD_VALUES)
 
   Returns:
     A tuple of the evaluation metrics, and the exported objects from Estimator.
@@ -223,7 +242,9 @@ def train(data_base_path, output_dir, label_vocab_path, hparams_set_name):
       hparams=hparams,
       label_vocab=label_vocab,
       data_base_path=data_base_path,
-      output_dir=output_dir)
+      output_dir=output_dir,
+      train_fold=train_fold,
+      eval_fold=eval_fold)
   return tf.estimator.train_and_evaluate(
       estimator=estimator, train_spec=train_spec, eval_spec=eval_spec)
 
@@ -234,7 +255,8 @@ def main(_):
       output_dir=FLAGS.output_dir,
       label_vocab_path=FLAGS.label_vocab_path,
       hparams_set_name=FLAGS.hparams_set,
-  )
+      train_fold=FLAGS.train_fold,
+      eval_fold=FLAGS.eval_fold)
 
 
 if __name__ == '__main__':

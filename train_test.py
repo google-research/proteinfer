@@ -25,6 +25,7 @@ from absl import flags
 from absl.testing import parameterized
 import numpy as np
 import hparams_sets
+import protein_dataset
 import train
 import tensorflow as tf
 
@@ -59,7 +60,9 @@ class TrainTest(parameterized.TestCase):
         output_dir=output_dir,
         label_vocab_path=os.path.join(self._test_data_directory,
                                       'label_vocab.tsv'),
-        hparams_set_name=hparams_sets.small_test_model.__name__)
+        hparams_set_name=hparams_sets.small_test_model.__name__,
+        train_fold=protein_dataset.TRAIN_FOLD,
+        eval_fold=protein_dataset.TEST_FOLD)
 
     self.assertTrue(np.isfinite(evaluation_results['loss']))
 
@@ -68,6 +71,12 @@ class TrainTest(parameterized.TestCase):
     with tf.Session(graph=tf.Graph()) as sess:
       tf.saved_model.loader.load(sess, [tf.saved_model.tag_constants.SERVING],
                                  saved_model_path)
+      label_vocab = tf.get_default_graph().get_tensor_by_name('label_vocab:0')
+      self.assertLen(label_vocab.shape, 1)
+      decision_threshold = sess.run(
+          tf.get_default_graph().get_tensor_by_name('decision_threshold:0'))
+      self.assertGreater(decision_threshold, 0)
+      self.assertLess(decision_threshold, 1)
 
 
 if __name__ == '__main__':

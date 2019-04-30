@@ -123,13 +123,14 @@ def _custom_recall_at_k(labels_as_multi_hot, predictions, k):
   return tf.metrics.mean(recall_per_example_finite_only)
 
 
-def _make_evaluation_metrics(labels, predictions, num_output_classes):
+def _make_evaluation_metrics(labels, predictions, num_output_classes, hparams):
   """Construct various eval metrics.
 
   Args:
     labels: dict with ground truth data necessary for computing metrics.
     predictions: dict containing Tensors for predictions.
     num_output_classes: number of different labels.
+    hparams: tf.contrib.HParams object.
 
   Returns:
     A dict where the values obey the tf.metrics API.
@@ -137,28 +138,22 @@ def _make_evaluation_metrics(labels, predictions, num_output_classes):
   labels_op = labels[protein_dataset.LABEL_KEY]
   multi_hot_labels = _indices_to_multihot(labels_op, num_output_classes)
   predictions_as_floats = predictions[protein_dataset.LABEL_KEY]
-  recall_threshold = 0.5
+  recall_threshold = hparams.decision_threshold
   predictions_as_bools = tf.greater(predictions_as_floats,
                                     tf.constant(recall_threshold))
 
   metrics = {
-      'precision_at_{}'.format(recall_threshold):
+      'precision_at_threshold':
           tf.metrics.precision(
               labels=multi_hot_labels, predictions=predictions_as_bools),
-      'recall_at_{}'.format(recall_threshold):
+      'recall_at_threshold':
           tf.metrics.recall(
               labels=multi_hot_labels, predictions=predictions_as_bools),
-      'f1_at_{}'.format(recall_threshold):
+      'f1_at_threshold':
           _f1_score(labels=multi_hot_labels, predictions=predictions_as_bools),
-      'mean_examplewise_f1_at_{}'.format(recall_threshold):
+      'mean_examplewise_f1_at_threshold':
           _mean_examplewise_f1_score(
               labels=multi_hot_labels, predictions=predictions_as_bools),
-      'max_f1_across_thresholds':
-          tf.contrib.metrics.f1_score(
-              multi_hot_labels,
-              predictions_as_floats,
-              num_thresholds=100,
-          ),
       'true_positives':
           tf.metrics.true_positives(
               labels=multi_hot_labels, predictions=predictions_as_bools),
@@ -217,7 +212,8 @@ def _set_padding_to_sentinel(padded_representations, sequence_lengths,
     return per_location_representations
 
 
-def _make_per_sequence_features(per_location_representations, raw_features):
+def _make_per_sequence_features(per_location_representations, raw_features,
+                                hparams):
   """Aggregate representations across the sequence dimension."""
 
   sequence_lengths = raw_features[protein_dataset.SEQUENCE_LENGTH_KEY]
@@ -227,12 +223,15 @@ def _make_per_sequence_features(per_location_representations, raw_features):
   # tf.reduce_mean(..., axis=1) is problematic, since different batches
   # may be dynamically padded to different lengths. Instead, we normalize
   # each element of the batch individually, by the length of each element's
-  # un-normalized sequence.
-  denominator = tf.expand_dims(
-      raw_features[protein_dataset.SEQUENCE_LENGTH_KEY], axis=-1)
+  # un-normalized sequence. We raise this to a tunable power to allow the
+  # tuner to choose between mean and sum-pooling or an intermediate type.
+  denominator = tf.cast(
+      tf.expand_dims(
+          raw_features[protein_dataset.SEQUENCE_LENGTH_KEY], axis=-1),
+      tf.float32)**hparams.denominator_power
 
   pooled_representation = tf.reduce_sum(
-      per_location_representations, axis=1) / tf.cast(denominator, tf.float32)
+      per_location_representations, axis=1) / denominator
 
   pooled_representation = tf.identity(
       pooled_representation, name='pooled_representation')
@@ -241,7 +240,7 @@ def _make_per_sequence_features(per_location_representations, raw_features):
 
 
 def _convert_representation_to_prediction_ops(representation, raw_features,
-                                              num_output_classes):
+                                              num_output_classes, hparams):
   """Map per-location features to problem-specific prediction ops.
 
   Args:
@@ -249,6 +248,7 @@ def _convert_representation_to_prediction_ops(representation, raw_features,
     raw_features: dictionary containing the raw input Tensors; this is the
       sequence, keyed by sequence_key.
     num_output_classes: number of different labels.
+    hparams: tf.contrib.HParams object.
 
   Returns:
     predictions: dictionary containing Tensors that Estimator
@@ -256,7 +256,9 @@ def _convert_representation_to_prediction_ops(representation, raw_features,
     predictions_for_loss: Tensor that make_loss() consumes.
   """
   per_sequence_features = _make_per_sequence_features(
-      per_location_representations=representation, raw_features=raw_features)
+      per_location_representations=representation,
+      raw_features=raw_features,
+      hparams=hparams)
   logits = tf.layers.dense(
       per_sequence_features, num_output_classes, name=LOGITS_KEY)
 
@@ -305,16 +307,23 @@ def _make_representation(features, hparams, mode):
   return sequence_features
 
 
-def _make_prediction_ops(features, hparams, mode, num_output_classes):
+def _make_prediction_ops(features, hparams, mode, label_vocab):
   """Returns (predictions, predictions_for_loss, representation)."""
   representation = _make_representation(features, hparams, mode)
 
   representation = tf.identity(representation, name=REPRESENTATION_KEY)
 
+  # Used to save constants in the graph, e.g. for SavedModel.
+  _ = tf.constant(label_vocab, name='label_vocab')
+  _ = tf.constant(hparams.decision_threshold, name='decision_threshold')
+
+  num_output_classes = len(label_vocab)
+
   predictions, prediction_for_loss = _convert_representation_to_prediction_ops(
       representation=representation,
       raw_features=features,
-      num_output_classes=num_output_classes)
+      num_output_classes=num_output_classes,
+      hparams=hparams)
   return predictions, prediction_for_loss
 
 
@@ -446,11 +455,12 @@ def _make_train_op(loss, hparams):
       optimizer='Adam')
 
 
-def make_model_fn(num_output_classes):
+def make_model_fn(label_vocab, hparams):
   """Returns a model function for estimator given prediction base class.
 
   Args:
-    num_output_classes: number of different labels.
+    label_vocab: list of string.
+    hparams: tf.contrib.HParams object.
 
   Returns:
     A function that returns a tf.estimator.EstimatorSpec
@@ -460,13 +470,10 @@ def make_model_fn(num_output_classes):
     """Returns tf.estimator.EstimatorSpec."""
 
     predictions, predictions_for_loss = _make_prediction_ops(
-        features=features,
-        hparams=params,
-        mode=mode,
-        num_output_classes=num_output_classes)
+        features=features, hparams=params, mode=mode, label_vocab=label_vocab)
 
     evaluation_hooks = []
-
+    num_output_classes = len(label_vocab)
     if mode == tf.estimator.ModeKeys.TRAIN:
       loss = _make_loss(
           predictions_for_loss=predictions_for_loss,
@@ -488,7 +495,8 @@ def make_model_fn(num_output_classes):
       eval_ops = _make_evaluation_metrics(
           labels=labels,
           predictions=predictions,
-          num_output_classes=num_output_classes)
+          num_output_classes=num_output_classes,
+          hparams=hparams)
 
     return tf.estimator.EstimatorSpec(
         mode=mode,
