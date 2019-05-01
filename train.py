@@ -78,8 +78,6 @@ def _make_estimator(hparams, label_vocab, output_dir):
   Returns:
     tf.estimator.Estimator.
   """
-  # TODO(mlbileschi): when adding savedmodel support, save vocabulary in the
-  # savedmodel.
   model_fn = protein_model.make_model_fn(
       label_vocab=label_vocab, hparams=hparams)
   run_config = tf.estimator.RunConfig(model_dir=output_dir)

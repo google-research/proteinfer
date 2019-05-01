@@ -40,7 +40,7 @@ def _starting_hparams():
 
 
 def tuned_for_ec():
-  """A small test model that will run on a CPU quickly."""
+  """Hyperparameters tuned for EC classification."""
   # TODO(theosanderson): update these to true SOTA values
   hparams = tf.contrib.training.HParams()
   hparams.add_hparam('batch_style', 'bucket')
@@ -57,32 +57,7 @@ def tuned_for_ec():
   hparams.add_hparam('decision_threshold', 0.3746)
   hparams.add_hparam('denominator_power', 0.88)
 
-  hparams.add_hparam('train_steps', 605000)
-  hparams.add_hparam('lr_decay_steps', 1000)
-  hparams.add_hparam('lr_warmup_steps', 3000)
-  return hparams
-
-def tuned_for_go():
-  """A small test model that will run on a CPU quickly."""
-  # TODO(theosanderson): update these to true SOTA values
-  hparams = tf.contrib.training.HParams()
-  hparams.add_hparam('batch_style', 'bucket')
-  hparams.add_hparam('batch_size', 27)
-  hparams.add_hparam('dilation_rate', 2)
-  hparams.add_hparam('filters', 360)
-  hparams.add_hparam('first_dilated_layer', 1)  # This is 0-indexed
-  hparams.add_hparam('kernel_size', 22)
-  hparams.add_hparam('num_layers', 8)
-  hparams.add_hparam('pooling', 'mean')
-  hparams.add_hparam('resnet_bottleneck_factor', 0.964860	)
-  hparams.add_hparam('lr_decay_rate', 0.99822)
-  hparams.add_hparam('learning_rate', 0.00020606470455762182)
-  hparams.add_hparam('decision_threshold', 0.717)
-  hparams.add_hparam('denominator_power', 0.94)
-
-  hparams.add_hparam('train_steps', 350000)
-  hparams.add_hparam('lr_decay_steps', 1000)
-  hparams.add_hparam('lr_warmup_steps', 3000)
+  hparams.add_hparam('train_steps', 650000)
   return hparams
 
 
