@@ -169,7 +169,7 @@ class Inferrer(object):
           batch, custom_tensor_to_retrieve=custom_tensor_to_retrieve)
 
       if output_matrix is None:
-        output_shape = batch_activations.shape
+        output_shape = list(batch_activations.shape)
         output_shape[0] = len(list_of_seqs)
         output_matrix = np.zeros(output_shape)
       output_matrix[i*self.batch_size:(i+1)*self.batch_size] = batch_activations
