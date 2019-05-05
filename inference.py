@@ -171,7 +171,7 @@ class Inferrer(object):
       if output_matrix is None:
         output_shape = list(batch_activations.shape)
         output_shape[0] = len(list_of_seqs)
-        output_matrix = np.zeros(output_shape)
+        output_matrix = np.zeros(output_shape,np.float16)
       output_matrix[i*self.batch_size:(i+1)*self.batch_size] = batch_activations
 
     return output_matrix
