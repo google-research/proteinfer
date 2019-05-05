@@ -163,15 +163,18 @@ class Inferrer(object):
     activation_list = []
     batches = list(utils.batch_iterable(list_of_seqs, self.batch_size))
     itr = tqdm.tqdm(batches, position=0) if self._use_tqdm else batches
-    for batch in itr:
+    output_matrix = None
+    for i, batch in enumerate(itr):
       batch_activations = self._get_activations_for_batch(
           batch, custom_tensor_to_retrieve=custom_tensor_to_retrieve)
 
-      activation_list.append(batch_activations)
+      if output_matrix is None:
+        output_shape = batch_activations.shape
+        output_shape[0] = len(list_of_seqs)
+        output_matrix = np.zeros(output_shape)
+      output_matrix[i*self.batch_size:(i+1)*self.batch_size] = batch_activations
 
-    activations = np.concatenate(activation_list, axis=0)
-
-    return activations
+    return output_matrix
 
   def get_variable(self, variable_name):
     """Gets the value of a variable from the graph.
