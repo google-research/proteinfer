@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2019 The Google Research Authors.
+# Copyright 2020 The Google Research Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,11 +19,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+
+
 from absl import logging
 import numpy as np
+import pandas as pd
 import protein_dataset
 import utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import tqdm
 
 
@@ -160,19 +163,22 @@ class Inferrer(object):
     if list_of_seqs == []:  # pylint: disable=g-explicit-bool-comparison
       return np.array([], dtype=float)
 
-    activation_list = []
     batches = list(utils.batch_iterable(list_of_seqs, self.batch_size))
     itr = tqdm.tqdm(batches, position=0) if self._use_tqdm else batches
     output_matrix = None
+
     for i, batch in enumerate(itr):
       batch_activations = self._get_activations_for_batch(
           batch, custom_tensor_to_retrieve=custom_tensor_to_retrieve)
 
       if output_matrix is None:
+        # Allocate matrix to store all activations:
         output_shape = list(batch_activations.shape)
         output_shape[0] = len(list_of_seqs)
-        output_matrix = np.zeros(output_shape,np.float16)
-      output_matrix[i*self.batch_size:(i+1)*self.batch_size] = batch_activations
+        output_matrix = np.zeros(output_shape, np.float16)
+      starting_index = i * self.batch_size
+      output_matrix[starting_index:starting_index +
+                    batch_activations.shape[0]] = batch_activations
 
     return output_matrix
 
@@ -187,3 +193,21 @@ class Inferrer(object):
     """
     with self._graph.as_default():
       return self._sess.run(variable_name)
+
+
+def predictions_for_df(df, inferrer):
+  """Returns df with column that's the activations for each sequence.
+
+  Args:
+    df: DataFrame with columns 'sequence' and 'sequence_name'.
+    inferrer: inferrer.
+
+  Returns:
+    pd.DataFrame with columns 'sequence_name', 'predicted_label', and
+    'predictions'. 'predictions' has type np.ndarray, whose shape depends on
+    inferrer.activation_type.
+  """
+  working_df = df.copy()
+  working_df['predictions'] = inferrer.get_activations(
+      working_df.sequence.values).tolist()
+  return working_df

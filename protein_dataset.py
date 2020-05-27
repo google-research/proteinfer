@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2019 The Google Research Authors.
+# Copyright 2020 The Google Research Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import os
 
 
 import utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+from tensorflow.contrib import data as contrib_data
+from tensorflow.contrib import lookup as contrib_lookup
 
 # TODO(theosanderson): finalise this root path.
 DATA_ROOT_DIR = 'data/'
@@ -167,12 +169,12 @@ def non_batched_dataset(train_dev_or_test,
   dataset = tfrecord_dataset.map(lambda record: tf.io.parse_single_example(  # pylint: disable=g-long-lambda
       record, DATASET_FEATURES))
   dataset = dataset.map(_add_sequence_length)
-  dataset.filter(_is_sequence_short_enough_for_training)
+  dataset = dataset.filter(_is_sequence_short_enough_for_training)
 
-  amino_acid_table = tf.contrib.lookup.index_table_from_tensor(
+  amino_acid_table = contrib_lookup.index_table_from_tensor(
       utils.AMINO_ACID_VOCABULARY,
       default_value=len(utils.AMINO_ACID_VOCABULARY))
-  protein_class_table = tf.contrib.lookup.index_table_from_tensor(
+  protein_class_table = contrib_lookup.index_table_from_tensor(
       mapping=label_vocab)
 
   dataset = dataset.map(lambda ex: _map_sequence_to_ints(ex, amino_acid_table))
@@ -182,7 +184,7 @@ def non_batched_dataset(train_dev_or_test,
   if train_dev_or_test == TRAIN_FOLD:
     dataset = dataset.repeat()
 
-  dataset = dataset.prefetch(tf.contrib.data.AUTOTUNE)
+  dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
   return dataset
 
@@ -222,7 +224,7 @@ def batched_dataset(input_dataset, batch_size, bucket_boundaries):
   bucket_batch_sizes = utils.calculate_bucket_batch_sizes(
       bucket_boundaries, MAX_SEQUENCE_LENGTH, batch_size)
   dataset = input_dataset.apply(
-      tf.contrib.data.bucket_by_sequence_length(
+      contrib_data.bucket_by_sequence_length(
           element_length_func=_get_element_length,
           bucket_batch_sizes=bucket_batch_sizes,
           bucket_boundaries=bucket_boundaries,

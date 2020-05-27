@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2019 The Google Research Authors.
+# Copyright 2020 The Google Research Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,8 @@ from __future__ import print_function
 import math
 
 import protein_dataset
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+from tensorflow.contrib import layers as contrib_layers
 from tensorflow.contrib.layers.python.layers import optimizers as optimizers_lib
 
 _GRADIENT_CLIPPING_DECAY = .9999
@@ -409,7 +410,7 @@ def _indices_to_multihot(indices, vocab_size):
         'indices_to_multihot expects tensors of dimension 2, got shape %s' %
         indices.shape)
 
-  sparse_indices = tf.contrib.layers.dense_to_sparse(indices, eos_token=-1)
+  sparse_indices = contrib_layers.dense_to_sparse(indices, eos_token=-1)
 
   multihot = tf.sparse.to_indicator(sparse_indices, vocab_size=vocab_size)
 
@@ -443,7 +444,7 @@ def _make_train_op(loss, hparams):
         tf.constant(1.))
     return learning_rate
 
-  return tf.contrib.layers.optimize_loss(
+  return contrib_layers.optimize_loss(
       loss=loss,
       global_step=tf.train.get_global_step(),
       clip_gradients=optimizers_lib.adaptive_clipping_fn(

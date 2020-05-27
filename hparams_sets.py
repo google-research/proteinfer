@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2019 The Google Research Authors.
+# Copyright 2020 The Google Research Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ These are defined as functions to allow for inheritance.
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import tensorflow as tf
+from tensorflow.contrib import training as contrib_training
 
 
 def _starting_hparams():
   """Set of shared starting parameters used in sets below."""
-  hparams = tf.contrib.training.HParams()
+  hparams = contrib_training.HParams()
   hparams.add_hparam('batch_style', 'bucket')
   hparams.add_hparam('gradient_clip', 1.0)
   hparams.add_hparam('learning_rate', 0.0005)
@@ -42,7 +42,7 @@ def _starting_hparams():
 def tuned_for_ec():
   """Hyperparameters tuned for EC classification."""
   # TODO(theosanderson): update these to true SOTA values
-  hparams = tf.contrib.training.HParams()
+  hparams = contrib_training.HParams()
   hparams.add_hparam('batch_style', 'bucket')
   hparams.add_hparam('batch_size', 34)
   hparams.add_hparam('dilation_rate', 5)

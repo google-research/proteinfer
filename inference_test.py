@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2019 The Google Research Authors.
+# Copyright 2020 The Google Research Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,14 +17,26 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+
 import os
+
+
 
 from absl import flags
 from absl.testing import absltest
 from absl.testing import parameterized
+import numpy as np
+import pandas as pd
 import inference
 
 FLAGS = flags.FLAGS
+
+
+class _InferrerFixture(object):
+  activation_type = 'serving_default'
+
+  def get_activations(self, l):
+    return np.array([len(s) for s in l])
 
 
 class InferenceLibTest(parameterized.TestCase):
@@ -54,6 +66,20 @@ class InferenceLibTest(parameterized.TestCase):
     inferrer = inference.Inferrer(self.saved_model_path)
     output = inferrer.get_variable('conv1d/bias:0')
     self.assertNotEmpty(output)
+
+  def test_predictions_for_df(self):
+    inferrer_fixture = _InferrerFixture()
+    input_seqs = ['AAAA', 'DDD', 'EE', 'W']
+    input_df = pd.DataFrame({
+        'sequence_name': input_seqs,
+        'sequence': input_seqs
+    })
+    actual_output_df = inference.predictions_for_df(input_df, inferrer_fixture)
+
+    self.assertEqual(actual_output_df['predictions'].values.tolist(),
+                     [4, 3, 2, 1])
+
+    self.assertEqual(actual_output_df.sequence_name.values.tolist(), input_seqs)
 
 
 if __name__ == '__main__':
