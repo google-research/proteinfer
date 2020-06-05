@@ -16,4 +16,5 @@ bash -c 'for f in *_test.py; do python3 $f || exit 1; done'
 ## Status
 
 This repository is still a work in progress. Please check back for more
-documentation and a manuscript very soon.
+documentation and a manuscript very soon. We are not able to accept pull 
+requests or contributions at this time.
