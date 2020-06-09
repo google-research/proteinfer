@@ -19,6 +19,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
+
+
+
 from absl.testing import parameterized
 import numpy as np
 import utils
@@ -99,6 +103,18 @@ class TestTensorUtils(parameterized.TestCase):
     self.assertTrue(
         np.allclose(actual, expected),
         msg='Actual: ' + str(actual) + '\nExpected: ' + str(expected))
+
+  def test_absolute_paths_of_files_in_dir(self):
+    test_dir = self.create_tempdir().full_path
+    file_to_create = os.path.join(test_dir, 'a_file.txt')
+    with open(file_to_create, 'w'):
+      pass
+
+    expected = [file_to_create]
+
+    actual = utils.absolute_paths_of_files_in_dir(test_dir)
+
+    self.assertCountEqual(actual, expected)
 
 
 if __name__ == '__main__':

@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for module inference_lib.py."""
+"""Tests for module inference.py."""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import gzip
 import os
 
 
@@ -28,6 +29,7 @@ from absl.testing import parameterized
 import numpy as np
 import pandas as pd
 import inference
+import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
 
@@ -59,7 +61,7 @@ class InferenceLibTest(parameterized.TestCase):
   def testStringInput(self):
     inferrer = inference.Inferrer(self.saved_model_path)
     # Simulate failure to use a list.
-    with self.assertRaisesRegexp(ValueError, 'must be a list of strings'):
+    with self.assertRaisesRegex(ValueError, 'must be a list of strings'):
       inferrer.get_activations('QP')
 
   def testGetVariable(self):
@@ -80,6 +82,64 @@ class InferenceLibTest(parameterized.TestCase):
                      [4, 3, 2, 1])
 
     self.assertEqual(actual_output_df.sequence_name.values.tolist(), input_seqs)
+
+  def test_serialize_deserialize_inference_result(self):
+    input_accession = 'ACCESSION'
+    input_activations = np.array([1., 2., 3.])
+
+    serialized = inference.serialize_inference_result(input_accession,
+                                                      input_activations)
+    deserialized_actual_accession, deserialized_actual_activations = inference.deserialize_inference_result(
+        serialized)
+
+    self.assertEqual(deserialized_actual_accession, input_accession)
+    np.testing.assert_array_equal(deserialized_actual_activations,
+                                  input_activations)
+
+  def test_parse_sharded_inference_results(self):
+    # Create input inference results.
+    input_accession_1 = 'ACCESSION_1'
+    input_activations_1 = np.array([1., 2., 3.])
+
+    input_accession_2 = 'ACCESSION_2'
+    input_activations_2 = np.array([4., 5., 6.])
+
+    input_accession_3 = 'ACCESSION_3'
+    input_activations_3 = np.array([7., 8., 9.])
+
+    # Create files and a directory containing those inference results.
+    shard_1_contents = inference.serialize_inference_result(
+        input_accession_1,
+        input_activations_1) + b'\n' + inference.serialize_inference_result(
+            input_accession_2, input_activations_2)
+
+    shard_2_contents = inference.serialize_inference_result(
+        input_accession_3, input_activations_3)
+
+    shard_dir = self.create_tempdir()
+
+    shard_1_filename = shard_dir.create_file('shard_1').full_path
+    shard_2_filename = shard_dir.create_file('shard_2').full_path
+
+    # Write contents to a gzipped file.
+    with tf.io.gfile.GFile(shard_1_filename, 'wb') as f:
+      with gzip.GzipFile(fileobj=f, mode='wb') as f_gz:
+        f_gz.write(shard_1_contents)
+
+    with tf.io.gfile.GFile(shard_2_filename, 'wb') as f:
+      with gzip.GzipFile(fileobj=f, mode='wb') as f_gz:
+        f_gz.write(shard_2_contents)
+
+    actual = inference.parse_all_shards(shard_dir.full_path).values
+    actual = sorted(actual, key=lambda x: x[0])
+
+    self.assertEqual(actual[0][0], input_accession_1)
+    self.assertEqual(actual[1][0], input_accession_2)
+    self.assertEqual(actual[2][0], input_accession_3)
+
+    np.testing.assert_array_equal(actual[0][1], input_activations_1)
+    np.testing.assert_array_equal(actual[1][1], input_activations_2)
+    np.testing.assert_array_equal(actual[2][1], input_activations_3)
 
 
 if __name__ == '__main__':

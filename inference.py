@@ -19,7 +19,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-
+import base64
+import gzip
+import io
+import itertools
+from typing import Iterator, Text, Tuple
 
 from absl import logging
 import numpy as np
@@ -211,3 +215,110 @@ def predictions_for_df(df, inferrer):
   working_df['predictions'] = inferrer.get_activations(
       working_df.sequence.values).tolist()
   return working_df
+
+
+def serialize_inference_result(sequence_name,
+                               activations):
+  """Serializes an inference result.
+
+  This function is the opposite of deserialize_inference_result.
+
+  The full format returned is a
+  base-64 encoded ( np compressed array of ( dict of (seq_name: activations))))
+
+  Benefits of this setup:
+  - Takes advantage of np compression.
+  - Avoids explicit use of pickle (e.g. np.save(allow_pickle)).
+  - Is somewhat agnostic to the dictionary contents
+    (i.e. you can put whatever you want in the dictionary if we wanted to reuse
+    this serialization format)
+  - No protos, so no build dependencies for colab.
+  - Entries are serialized row-wise, so they're easy to iterate through, and
+    it's possible to decode them on the fly.
+
+  Args:
+    sequence_name: sequence name.
+    activations: np.ndarray.
+
+  Returns:
+    encoded/serialized version of sequence_name and activations.
+  """
+  with io.BytesIO() as bytes_io:
+    np.savez_compressed(bytes_io, **{sequence_name: activations})
+    return base64.b64encode(bytes_io.getvalue())
+
+
+def deserialize_inference_result(results_b64):
+  """Deserializes an inference result.
+
+  This function is the opposite of serialize_inference_result.
+
+  The full format expected is a
+  base-64 encoded ( np compressed array of ( dict of (seq_name: activations))))
+
+  Benefits of this setup:
+  - Takes advantage of np compression.
+  - Avoids explicit use of pickle (e.g. np.save(allow_pickle)).
+  - Is somewhat agnostic to the dictionary contents
+    (i.e. you can put whatever you want in the dictionary if we wanted to reuse
+    this serialization format)
+  - No protos, so no build dependencies for colab.
+  - Entries are serialized row-wise, so they're easy to iterate through, and
+    it's possible to decode them on the fly.
+
+  Args:
+    results_b64: bytes with the above contents.
+
+  Returns:
+    tuple of sequence_name, np.ndarray (the activations).
+
+  Raises:
+    ValueError if the structured np.array containing the activations doesn't
+    have exactly 1 element.
+  """
+  bytes_io = io.BytesIO(base64.b64decode(results_b64))
+  single_pred_dict = dict(np.load(bytes_io))
+  if len(single_pred_dict) != 1:
+    raise ValueError('Expected exactly one object in the structured np array. '
+                     f'Saw {len(single_pred_dict)}')
+  sequence_name = list(single_pred_dict.keys())[0]
+  activations = list(single_pred_dict.values())[0]
+  return sequence_name, activations
+
+
+def parse_shard(shard_path):
+  """Parses file of gzipped, newline-separated inference results.
+
+  The contents of each line are expected to be serialized as in
+  `serialize_inference_result` above.
+
+  Args:
+    shard_path: file path.
+
+  Yields:
+    Tuple of (accession, activation).
+  """
+  with tf.io.gfile.GFile(shard_path, 'rb') as f:
+    with gzip.GzipFile(fileobj=f, mode='rb') as f_gz:
+      for line in f_gz:  # Line-by-line.
+        yield deserialize_inference_result(line)
+
+
+def parse_all_shards(shard_dir_path):
+  """Parses directory of files of gzipped, newline-separated inference results.
+
+  The contents of each line are expected to be serialized as in
+  `serialize_inference_result` above.
+
+  Args:
+    shard_dir_path: path to directory containing shards.
+
+  Returns:
+    DataFrame with columns sequence_name (str); predictions (rank 1 np.ndarray
+    of activations).
+  """
+  files_to_process = utils.absolute_paths_of_files_in_dir(shard_dir_path)
+  list_of_shard_results = [parse_shard(f) for f in files_to_process]
+  return pd.DataFrame(
+      list(itertools.chain(*list_of_shard_results)),
+      columns=['sequence_name', 'predictions'])

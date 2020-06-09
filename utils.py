@@ -18,6 +18,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+
+import os
 import numpy as np
 
 AMINO_ACID_VOCABULARY = [
@@ -145,3 +147,8 @@ def make_padded_np_array(ragged_arrays):
       pad_one_hot(ragged_array, max_array_length)
       for ragged_array in ragged_arrays
   ])
+
+
+def absolute_paths_of_files_in_dir(dir_path):
+  files = os.listdir(dir_path)
+  return [os.path.join(dir_path, f) for f in files]
