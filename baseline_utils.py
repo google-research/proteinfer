@@ -86,6 +86,7 @@ def _get_labels_from_sequence_header(s):
 class BlastResult(
     typing.NamedTuple('BlastResult', (
         ('sequence_name', Text),
+        ('closest_sequence', Text),
         ('predicted_label', Set[Text]),
         ('percent_seq_identity', float),
         ('e_value', float),
@@ -108,6 +109,7 @@ class BlastResult(
 
     return BlastResult(
         sequence_name=query_sequence,
+        closest_sequence=closest_sequence,
         predicted_label=predicted_label,
         percent_seq_identity=percent_seq_identity,
         e_value=e_value,
