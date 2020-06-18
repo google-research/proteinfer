@@ -7,6 +7,7 @@ To install:
 ```
 pip3 install -q -r requirements.txt
 ```
+If running on macOS you will need to remove the `tensorflow-gpu` line from requirements.txt and GPU-acceleration will not be available.
 
 To run the unit tests:
 ```
