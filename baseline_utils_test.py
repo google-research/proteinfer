@@ -165,6 +165,7 @@ class BaselineUtilsTest(parameterized.TestCase):
 
     expected = pd.DataFrame({
         "sequence_name": ["ACCESSION", "ACCESSION2"],
+        "closest_sequence": ["MATCHACCESSION", float("nan")],
         "true_label": [{"GO:101010", "EC:9.9.9.9"}, {"EC:1.2.-.-"}],
         "predicted_label": [{"GO:101010", "EC:9.9.9.9", "Pfam:PF12345"},
                             frozenset()],
