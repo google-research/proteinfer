@@ -241,6 +241,5 @@ def main(_):
 
 if __name__ == '__main__':
     FLAGS.alsologtostderr = True
-    flags.mark_flags_as_required(['uniprot_xml', 'output_prefix'])
 
     app.run(main)
