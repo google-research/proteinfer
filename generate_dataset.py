@@ -9,6 +9,7 @@ import gzip
 from absl import flags
 from absl import app
 import tqdm
+import os
 
 """
 Generate a UniProt dataset.
@@ -19,6 +20,7 @@ wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/c
 wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/idmapping_selected.tab.gz
 python generate_dataset.py --id_mapping_file=idmapping_selected.tab.gz --uniprot_xml=uniprot_sprot.xml.gz --parenthood_file=./testdata/parenthood.json.gz --dataset_type=clustered --output_prefix=clustered
 python generate_dataset.py --uniprot_xml=uniprot_sprot.xml.gz --parenthood_file=./testdata/parenthood.json.gz --dataset_type=random --output_prefix=random
+python generate_dataset.py --tfrecord_files=random*.tfrecord --vocab_prefix=EC --dataset_type=vocab --output_prefix=./vocabs
 
 
 """
@@ -44,6 +46,12 @@ flags.DEFINE_string('id_mapping_file', None,
 
 flags.DEFINE_string('dataset_type', "random",
                     'Type of dataset, "random" or "clustered"')
+
+
+flags.DEFINE_string('tfrecord_files', None,
+                    '')
+flags.DEFINE_string('vocab_prefix', None,
+                    '')
 
 FLAGS = flags.FLAGS
 
@@ -182,6 +190,7 @@ def create_clustered_dataset(xml_filename, tfrecord_prefix, id_mapping_file,
 
     clustered_dataset_sampler = ClusteredDatasetSampler(
         xml_filename, id_mapping_file)
+    #raise ValueError(clustered_dataset_sampler.uniprot_to_uniref, clustered_dataset_sampler.uniref_to_fold)
     label_parenthood_adder = LabelParenthoodAdder(label_parenthood_file)
 
     dict_source = yield_dicts_from_xml_file(gzip.open(xml_filename))
@@ -205,6 +214,17 @@ def create_clustered_dataset(xml_filename, tfrecord_prefix, id_mapping_file,
         if fold:
             writers[fold].write(proto_from_dict(example_dict).SerializeToString())
 
+def create_vocab(tfrecord_files, prefix, output_prefix):
+    """Generate a vocabulary from TFrecord files."""
+    sequence_iterator = protein_dataset.yield_examples(tfrecord_files)
+    label_set = set()
+    for example in tqdm.tqdm(sequence_iterator):
+        label_set.update({x.decode("utf-8") for x in example[protein_dataset.LABEL_KEY] if x.decode("utf-8").startswith(prefix)})
+
+    vocab = pd.DataFrame({'vocab_item':sorted(label_set)})
+    vocab['vocab_index'] = range(vocab.shape[0])
+    path_loc = os.path.join(output_prefix,f"{prefix}.tsv")
+    vocab.to_csv(path_loc,sep="\t")
 
 def main(_):
     if FLAGS.dataset_type == "random":
@@ -213,6 +233,8 @@ def main(_):
     elif FLAGS.dataset_type == "clustered":
         create_clustered_dataset(FLAGS.uniprot_xml, FLAGS.output_prefix,
                                  FLAGS.id_mapping_file, FLAGS.parenthood_file)
+    elif FLAGS.dataset_type == "vocab":
+        create_vocab(FLAGS.tfrecord_files, FLAGS.vocab_prefix, FLAGS.output_prefix)
     else:
         raise ValueError("Invalid dataset_type")
 

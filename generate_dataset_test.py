@@ -6,7 +6,7 @@ from absl.testing import parameterized
 import gzip
 import tempfile
 import os
-
+import pandas as pd
 
 class GenerateDatasetTest(parameterized.TestCase):
     def test_yield_dicts_from_xml_file(self):
@@ -164,9 +164,22 @@ class GenerateDatasetTest(parameterized.TestCase):
                 f"{tfrecord_prefix}_train.tfrecord")
         }
 
-        cluster = [b'Q865W6', b'Q865W5', b'P68230', b'P63105', b'Q34028']
+        cluster = [b'Q865W6', b'P68230', b'P63105', b'Q34028']
+        in_set = []
         for x in cluster:
-            assert (x in actual)
+            in_set.append(x in actual)
+
+        self.assertEqual( min(in_set) , max(in_set) )
+
+    def test_create_vocab(self):
+        temp_dir = tempfile.TemporaryDirectory()
+        path_loc = os.path.join(temp_dir.name, "vocabs")
+        os.mkdir(path_loc)
+        generate_dataset.create_vocab("testdata/*.tfrecord","GO", path_loc)
+        df = pd.read_table(os.path.join(path_loc, "GO.tsv"))
+        self.assertEqual(list(df['vocab_item']),
+                         ['GO:GO:0005524', 'GO:GO:0005737', 'GO:GO:0006457'])
+
 
 
 if __name__ == '__main__':
