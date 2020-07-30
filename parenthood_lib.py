@@ -31,7 +31,7 @@ import tqdm
 
 
 # From ftp://ftp.expasy.org/databases/enzyme/enzyme.dat
-DATA_DIR = ''
+DATA_DIR = 'testdata/'
 EC_LEAF_NODE_METADATA_PATH = os.path.join(DATA_DIR, 'enzyme.dat')
 
 # From ftp://ftp.expasy.org/databases/enzyme/enzclass.txt
