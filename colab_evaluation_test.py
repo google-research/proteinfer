@@ -34,13 +34,6 @@ import tensorflow.compat.v1 as tf
 FLAGS = flags.FLAGS
 
 
-class _InferrerFixture(object):
-    activation_type = 'serving_default'
-
-    def get_activations(self, l):
-        return np.array([len(s) for s in l])
-
-
 class ColabEvaluationTest(parameterized.TestCase):
     def setUp(self):
         super(ColabEvaluationTest, self).setUp()
@@ -166,7 +159,7 @@ class ColabEvaluationTest(parameterized.TestCase):
             'fp': [False, False, True, False, False, False],
             'fn': [False, False, False, False, False, True]
         })
-        actual = tp_fp_fn.loc[:,[ "tp", "fp", "fn"]]
+        actual = tp_fp_fn.loc[:, ["tp", "fp", "fn"]]
         pd.testing.assert_frame_equal(expected, actual)
 
 
