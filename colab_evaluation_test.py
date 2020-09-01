@@ -43,19 +43,14 @@ class ColabEvaluationTest(parameterized.TestCase):
             accessions_list.append(accession)
             activations_list.append(activations)
             serialized_inferences.append(
-                inference.serialize_inference_result(
-                    accession, activations))
+                inference.serialize_inference_result(accession, activations))
 
         return serialized_inferences, accessions_list, activations_list
-    @parameterized.parameters([
-       {'batch_size':1},
-     {'batch_size':9}
-   ])
-    def test_parse_sharded_inference_results(self, batch_size, num_examples=100):
 
+    @parameterized.parameters([{'batch_size': 1}, {'batch_size': 9}])
+    def test_batched_inferences_from_dir(self, batch_size, num_examples=100):
 
         # Create input inference results.
-    
 
         serialized_inferences, accessions_list, activations_list = self._generate_random_inferences(
             num_examples)
@@ -88,17 +83,19 @@ class ColabEvaluationTest(parameterized.TestCase):
 
         self.assertEqual(len(actual), math.ceil(num_examples / batch_size))
         self.assertEqual(actual[0][0][0], accessions_list[0])
-        self.assertEqual(actual[1][0][1], accessions_list[batch_size + 1])
+        if batch_size > 1:
+            self.assertEqual(actual[1][0][1], accessions_list[batch_size + 1])
         np.testing.assert_equal(actual[0][1][0], activations_list[0])
-        np.testing.assert_equal(actual[1][1][1],
-                                activations_list[batch_size + 1])
+        if batch_size > 1:
+            np.testing.assert_equal(actual[1][1][1],
+                                    activations_list[batch_size + 1])
 
     def test_make_tidy_df_from_seq_names_and_prediction_array(self):
         vocab = ["ENTRY0", "ENTRY1", "ENTRY2"]
         sequence_names = ['SEQ0', 'SEQ1']
         predictions_array = np.array([[0.1, 0.9, 0.5], [1, 1, 1]])
         min_decision_threshold = 0.4
-        actual_df = colab_evaluation.make_tidy_df_from_seq_names_and_prediction_array(
+        actual_df = colab_evaluation._make_tidy_df_from_seq_names_and_prediction_array(
             sequence_names,
             predictions_array,
             vocab,
@@ -109,7 +106,6 @@ class ColabEvaluationTest(parameterized.TestCase):
             'value': [0.9, 0.5, 1.0, 1.0, 1.0]
         })
         pd.testing.assert_frame_equal(actual_df, expected_df)
-        return expected_df
 
     def test_make_tidy_df_from_ground_truth(self):
         input_df = pd.DataFrame({
@@ -123,11 +119,18 @@ class ColabEvaluationTest(parameterized.TestCase):
             'gt': [True, True, True, True]
         })
         pd.testing.assert_frame_equal(actual_df, expected_df)
-        return expected_df
 
     def test_merge_predictions_and_ground_truth(self):
-        gt = self.test_make_tidy_df_from_ground_truth()
-        pred = self.test_make_tidy_df_from_seq_names_and_prediction_array()
+        pred = pd.DataFrame({
+            'up_id': ['SEQ0', 'SEQ0', 'SEQ1', 'SEQ1', 'SEQ1'],
+            'label': ['ENTRY1', 'ENTRY2', 'ENTRY0', 'ENTRY1', 'ENTRY2'],
+            'value': [0.9, 0.5, 1.0, 1.0, 1.0]
+        })
+        gt = pd.DataFrame({
+            'up_id': ['SEQ0', 'SEQ1', 'SEQ1', 'SEQ3'],
+            'label': ['ENTRY1', 'ENTRY1', 'ENTRY2', 'ENTRY6'],
+            'gt': [True, True, True, True]
+        })
         actual_df = colab_evaluation.merge_predictions_and_ground_truth(
             pred, gt)
         expected_df = pd.DataFrame({
@@ -140,17 +143,37 @@ class ColabEvaluationTest(parameterized.TestCase):
         pd.testing.assert_frame_equal(actual_df, expected_df)
 
     def test_get_pr_curve_df(self):
-        gt = self.test_make_tidy_df_from_ground_truth()
-        pred = self.test_make_tidy_df_from_seq_names_and_prediction_array()
+        pred = pd.DataFrame({
+            'up_id': ['SEQ0', 'SEQ0', 'SEQ1', 'SEQ1', 'SEQ1'],
+            'label': ['ENTRY1', 'ENTRY2', 'ENTRY0', 'ENTRY1', 'ENTRY2'],
+            'value': [0.9, 0.5, 1.0, 1.0, 1.0]
+        })
+        gt = pd.DataFrame({
+            'up_id': ['SEQ0', 'SEQ1', 'SEQ1', 'SEQ3'],
+            'label': ['ENTRY1', 'ENTRY1', 'ENTRY2', 'ENTRY6'],
+            'gt': [True, True, True, True]
+        })
         pr_curve = colab_evaluation.get_pr_curve_df(pred, gt)
 
         np.testing.assert_almost_equal(pr_curve['recall'],
                                        np.array([1, 0.75, 0.75, .5]))
+        np.testing.assert_almost_equal(
+            pr_curve['precision'], np.array([0.6666667, 0.6, 0.75, 0.6666667]))
+        np.testing.assert_almost_equal(
+            pr_curve['f1'], np.array([0.8, 0.6666667, 0.75, 0.5714286]))
 
     def test_assign_tp_fp_fn(self):
-        gt = self.test_make_tidy_df_from_ground_truth()
-        pred = self.test_make_tidy_df_from_seq_names_and_prediction_array()
-        tp_fp_fn = colab_evaluation.assign_tp_fp_fn(pred, gt)
+        pred = pd.DataFrame({
+            'up_id': ['SEQ0', 'SEQ0', 'SEQ1', 'SEQ1', 'SEQ1'],
+            'label': ['ENTRY1', 'ENTRY2', 'ENTRY0', 'ENTRY1', 'ENTRY2'],
+            'value': [0.9, 0.5, 1.0, 1.0, 1.0]
+        })
+        gt = pd.DataFrame({
+            'up_id': ['SEQ0', 'SEQ1', 'SEQ1', 'SEQ3'],
+            'label': ['ENTRY1', 'ENTRY1', 'ENTRY2', 'ENTRY6'],
+            'gt': [True, True, True, True]
+        })
+        tp_fp_fn = colab_evaluation.assign_tp_fp_fn(pred, gt, threshold=0.5)
 
         expected = pd.DataFrame({
             'tp': [True, False, False, True, True, False],

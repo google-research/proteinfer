@@ -12,7 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Version of evaluation utilities intended for use in lower memory environments, such as colab."""
+"""Version of evaluation utilities intended for use in lower memory environments, such as colab.
+
+This version of the evaluation code leverages the fact that the vast majority of label-example predictions 
+are essentially zero, and so only contribute to false negatives. It therefore represents the data in "tidy
+format" with one row per example-label pair and excludes label-example pairs below a defined threshold.
+"""
 
 import numpy as np
 import pandas as pd
@@ -33,7 +38,7 @@ def batch_inferences(iterator, batch_size):
         try:
             inference = next(iterator)
         except StopIteration:
-            if len(seq_ids)>0:
+            if len(seq_ids) > 0:
                 yield seq_ids, np.vstack(predictions)
             return
         seq_ids.append(inference[0])
@@ -209,7 +214,7 @@ def filter_pr_curve(precisions, recalls, thresholds, resolution=1e-3):
         new_thresholds)
 
 
-def assign_tp_fp_fn(predictions_df, ground_truth_df):
+def assign_tp_fp_fn(predictions_df, ground_truth_df, threshold):
     """Return a new predictions dataframe where each row is assigned as either a TP, FP or FN."""
     combined = merge_predictions_and_ground_truth(predictions_df,
                                                   ground_truth_df)
