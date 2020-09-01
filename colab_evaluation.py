@@ -63,7 +63,7 @@ def batched_inferences_from_dir(shard_dir_path, batch_size=100):
     return batched_inferences_from_files(files_to_process, batch_size)
 
 
-def make_tidy_df_from_seq_names_and_prediction_array(
+def _make_tidy_df_from_seq_names_and_prediction_array(
         sequence_names,
         predictions_array,
         vocab,
@@ -89,14 +89,27 @@ def get_normalized_inference_results(shard_dir_path,
                                      vocab,
                                      label_normalizer,
                                      min_decision_threshold=1e-20):
-    """Take a directory of sharded inferences and output a tidy and normalized dataframe."""
+    """Take a directory of sharded inferences and output a tidy and normalized dataframe.
+    
+    Args:
+        shard_dir_path: directory of TFrecord inference shards
+        vocab: a list of vocabulary items
+        label_normalizer: a dictionary mapping vocabulary items to their parents
+        min_decision_threshold: a threshold reflecting the minimum we will ever be 
+            able to use to call a positive in subsequent analysis. Higher
+            values use less RAM at the expense of lower maximum sensitivity.
+        
+    Returns:
+        A pandas dataframe with one row per example-label (provided value > min_decision_threshold) and the 
+        associated value from the neural network.
+    """
     batches = batched_inferences_from_dir(shard_dir_path)
     dfs = []
     for seq_names, confidences in batches:
         normed_confidences = evaluation.normalize_confidences(
             confidences, vocab, label_normalizer)
         dfs.append(
-            make_tidy_df_from_seq_names_and_prediction_array(
+            _make_tidy_df_from_seq_names_and_prediction_array(
                 seq_names,
                 normed_confidences,
                 vocab,
@@ -118,7 +131,7 @@ def make_tidy_df_from_ground_truth(ground_truth):
 
 
 def merge_predictions_and_ground_truth(predictions_df, ground_truth_df):
-    """Perform an inner join of predictions and ground truth, then set all empty values to False."""
+    """Perform an outer join of predictions and ground truth, then set all empty values to False."""
     combined = predictions_df.merge(ground_truth_df,
                                     how="outer",
                                     suffixes=("_pred", "_gt"),
@@ -195,8 +208,8 @@ def filter_pr_curve(precisions, recalls, thresholds, resolution=1e-3):
         new_thresholds)
 
 
-def assign_tp_fp_fn(predictions_df, ground_truth_df, threshold=0.5):
-    """Assign each row of a predictions_df as either a TP,FP or FN."""
+def assign_tp_fp_fn(predictions_df, ground_truth_df):
+    """Return a new predictions dataframe where each row is assigned as either a TP, FP or FN."""
     combined = merge_predictions_and_ground_truth(predictions_df,
                                                   ground_truth_df)
 

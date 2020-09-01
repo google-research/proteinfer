@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for module colab_evaluation.py."""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import gzip
 import os
@@ -35,31 +32,32 @@ FLAGS = flags.FLAGS
 
 
 class ColabEvaluationTest(parameterized.TestCase):
-    def setUp(self):
-        super(ColabEvaluationTest, self).setUp()
+    def _generate_random_inferences(self, n):
+        serialized_inferences = []
+        accessions_list = []
+        activations_list = []
 
-    def test_parse_sharded_inference_results(self):
-        def generate_random_inferences(n):
-            serialized_inferences = []
-            accessions_list = []
-            activations_list = []
+        for _ in range(n):
+            accession = f"ACCESSION_{time.time()}"
+            activations = np.random.rand(100)
+            accessions_list.append(accession)
+            activations_list.append(activations)
+            serialized_inferences.append(
+                inference.serialize_inference_result(
+                    accession, activations))
 
-            for _ in range(n):
-                accession = f"ACCESSION_{time.time()}"
-                activations = np.random.rand(100)
-                accessions_list.append(accession)
-                activations_list.append(activations)
-                serialized_inferences.append(
-                    inference.serialize_inference_result(
-                        accession, activations))
+        return serialized_inferences, accessions_list, activations_list
+    @parameterized.parameters([
+       {'batch_size':1},
+     {'batch_size':9}
+   ])
+    def test_parse_sharded_inference_results(self, batch_size, num_examples=100):
 
-            return serialized_inferences, accessions_list, activations_list
 
         # Create input inference results.
-        num_examples = 100
-        batch_size = 9
+    
 
-        serialized_inferences, accessions_list, activations_list = generate_random_inferences(
+        serialized_inferences, accessions_list, activations_list = self._generate_random_inferences(
             num_examples)
 
         shard_1_contents = b"\n".join(serialized_inferences[0:60])
