@@ -33,7 +33,8 @@ def batch_inferences(iterator, batch_size):
         try:
             inference = next(iterator)
         except StopIteration:
-            yield seq_ids, np.vstack(predictions)
+            if len(seq_ids)>0:
+                yield seq_ids, np.vstack(predictions)
             return
         seq_ids.append(inference[0])
         predictions.append(inference[1])
