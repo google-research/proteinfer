@@ -27,7 +27,7 @@ def _starting_hparams():
   """Set of shared starting parameters used in sets below."""
   hparams = contrib_training.HParams()
   hparams.add_hparam('batch_style', 'bucket')
-  hparams.add_hparam('gradient_clip', 1.0)
+  hparams.add_hparam('gradient_clipping_decay', 0.9999)
   hparams.add_hparam('learning_rate', 0.0005)
   hparams.add_hparam('lr_decay_rate', .997)
   hparams.add_hparam('lr_decay_steps', 1000)
@@ -43,6 +43,7 @@ def tuned_for_ec():
   """Hyperparameters tuned for EC classification."""
   # TODO(theosanderson): update these to true SOTA values
   hparams = contrib_training.HParams()
+  hparams.add_hparam('gradient_clipping_decay', 0.9999)
   hparams.add_hparam('batch_style', 'bucket')
   hparams.add_hparam('batch_size', 34)
   hparams.add_hparam('dilation_rate', 5)
