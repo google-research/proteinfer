@@ -25,7 +25,6 @@ import tensorflow.compat.v1 as tf
 from tensorflow.contrib import layers as contrib_layers
 from tensorflow.contrib.layers.python.layers import optimizers as optimizers_lib
 
-_GRADIENT_CLIPPING_DECAY = .9999
 
 _THRESHOLDS_FOR_RECALL_METRIC = [2, 3, 5, 10]
 REPRESENTATION_KEY = 'representation'
@@ -448,7 +447,7 @@ def _make_train_op(loss, hparams):
       loss=loss,
       global_step=tf.train.get_global_step(),
       clip_gradients=optimizers_lib.adaptive_clipping_fn(
-          decay=_GRADIENT_CLIPPING_DECAY,
+          decay=hparams.gradient_clipping_decay,
           report_summary=True,
       ),
       learning_rate=hparams.learning_rate,
