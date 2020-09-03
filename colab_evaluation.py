@@ -226,3 +226,39 @@ def assign_tp_fp_fn(predictions_df, ground_truth_df, threshold):
                       == False) & (combined['value'] > threshold)
     combined['fn'] = (combined['gt'] == True) & (combined['value'] < threshold)
     return combined
+
+def stats_by_group(df):
+    """Calculate statistics from a groupby'ed dataframe with TPs,FPs and FNs."""
+
+    EPSILON = 1e-10
+    result = df[['tp', 'fp', 'fn']].sum().reset_index().assign(
+        precision=lambda x: (x['tp'] + EPSILON) / (x['tp'] + x['fp'] + EPSILON),
+        recall=lambda x: (x['tp'] + EPSILON) / (x['tp'] + x['fn'] + EPSILON)
+    ).assign(
+        f1=
+        lambda x: 2 * x['precision'] * x['recall'] / (x['precision'] + x['recall'] + EPSILON),
+        count=lambda x: x['tp'] + x['fn'])
+    result['proportion'] = result['count'] / np.sum(result['count'])
+    result['proportion_text'] = (
+        result['proportion'] * 100).round(2).astype(str) + "%"
+    return result
+
+def get_stats(df):
+    """Calculate statistics from a dataframe with TPs,FPs and FNs."""
+    df['dummy_group'] = 'all'
+    data = stats_by_group(df.groupby('dummy_group')).drop(
+        columns=['dummy_group', 'proportion', 'proportion_text'])
+    return data
+
+def apply_threshold_and_return_stats(predictions_df,
+                                     ground_truth_df,
+                                     threshold=0.5,
+                                     grouping=None):
+    """Given predictions, ground truth and a threshold get statistics."""
+    calls = assign_tp_fp_fn(predictions_df, ground_truth_df, threshold)
+    if grouping:
+        calls['group'] = calls['label'].map(grouping)
+        return stats_by_group(
+            calls.groupby("group")).assign(threshold=threshold)
+    else:
+        return get_stats(calls).assign(threshold=threshold)
