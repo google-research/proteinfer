@@ -14,9 +14,9 @@
 # limitations under the License.
 """Version of evaluation utilities intended for use in lower memory environments, such as colab.
 
-This version of the evaluation code leverages the fact that the vast majority of label-example predictions 
+This version of the evaluation code leverages the fact that the vast majority of example-label predictions 
 are essentially zero, and so only contribute to false negatives. It therefore represents the data in "tidy
-format" with one row per example-label pair and excludes label-example pairs below a defined threshold.
+format" with one row per example-label pair and excludes example-label pairs below a defined threshold.
 """
 
 import numpy as np
@@ -96,6 +96,8 @@ def get_normalized_inference_results(shard_dir_path,
                                      label_normalizer,
                                      min_decision_threshold=1e-20):
     """Take a directory of sharded inferences and output a tidy and normalized dataframe.
+
+    Inferences are in the format defined in inference.py
     
     Args:
         shard_dir_path: directory of TFrecord inference shards
