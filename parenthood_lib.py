@@ -592,8 +592,8 @@ def parse_full_ec_file_to_transitive_parenthood(
 
 def get_applicable_label_dict(
     path = APPLICABLE_LABEL_JSON_PATH):
-  with tf.io.gfile.GFile(path, 'r') as f:
-    with gzip.GzipFile(fileobj=f, mode='r') as gzip_file:
+  with tf.io.gfile.GFile(path, 'rb') as f:
+    with gzip.GzipFile(fileobj=f, mode='rb') as gzip_file:
       return json.load(gzip_file)
 
 
