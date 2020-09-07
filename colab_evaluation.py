@@ -28,6 +28,17 @@ import inference
 import utils
 import evaluation
 
+def read_blast_table(filename):
+  blast_out = pd.read_table(filename,names=['up_id','target',  'pc_identity', 'pc_positives', 'alignment_length', 'mismatches', 'gap_opens', 'q. start', 'q. end', 's. start', 'evalue', 'bit_score'])
+
+  def extract_accession(long_string):
+      return long_string.replace('accession="','').replace('"','')
+  
+  blast_out['up_id']=blast_out['up_id'].map(extract_accession)
+  blast_out['target']=blast_out['target'].map(extract_accession)
+  blast_out = blast_out[['up_id','target','pc_identity','alignment_length','bit_score']]
+  return blast_out
+
 def stats_by_group(df):
     """Calculate statistics from a groupby'ed dataframe with TPs,FPs and FNs."""
 
