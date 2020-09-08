@@ -241,7 +241,7 @@ def get_pr_curve_df(predictions_df,
     return pd.concat(output_dfs)
 
 
-def filter_pr_curve(precisions, recalls, thresholds, resolution=1e-3):
+def filter_pr_curve(precisions, recalls, thresholds, resolution=1e-4):
     """Filters out imperceptible shifts in a PR curve."""
     last_precision = None
     last_recall = None
