@@ -249,8 +249,7 @@ def filter_pr_curve(precisions, recalls, thresholds, resolution=1e-3):
     new_recalls = []
     new_thresholds = []
     for i in range(len(precisions)):
-        if last_precision is None or abs(precisions[i] -
-                                         last_precision) >= resolution or abs(
+        if last_precision is None  or abs(
                                              recalls[i] -
                                              last_recall) >= resolution:
             new_precisions.append(precisions[i])
