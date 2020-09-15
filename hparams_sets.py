@@ -44,22 +44,46 @@ def tuned_for_ec():
   # TODO(theosanderson): update these to true SOTA values
   hparams = contrib_training.HParams()
   hparams.add_hparam('batch_style', 'bucket')
-  hparams.add_hparam('batch_size', 34)
+  hparams.add_hparam('lr_decay_steps', 1000)
+  hparams.add_hparam('batch_size', 40)
   hparams.add_hparam('dilation_rate', 5)
-  hparams.add_hparam('filters', 411)
+  hparams.add_hparam('filters', 1173)
   hparams.add_hparam('first_dilated_layer', 1)  # This is 0-indexed
   hparams.add_hparam('kernel_size', 7)
-  hparams.add_hparam('num_layers', 5)
+  hparams.add_hparam('num_layers', 4)
   hparams.add_hparam('pooling', 'mean')
-  hparams.add_hparam('resnet_bottleneck_factor', 0.88152)
-  hparams.add_hparam('lr_decay_rate', 0.9977)
-  hparams.add_hparam('learning_rate', 0.00028748)
-  hparams.add_hparam('decision_threshold', 0.3746)
-  hparams.add_hparam('denominator_power', 0.88)
-
-  hparams.add_hparam('train_steps', 650000)
+  hparams.add_hparam('resnet_bottleneck_factor', 0.971880)
+  hparams.add_hparam('lr_decay_rate', 0.998833)
+  hparams.add_hparam('learning_rate', 0.000566475)
+  hparams.add_hparam('decision_threshold', 0.304729)
+  hparams.add_hparam('denominator_power', 1)
+  hparams.add_hparam('lr_warmup_steps', 3000)
+  hparams.add_hparam('train_steps', 592393)
   return hparams
 
+
+def max():
+  """Hyperparameters tuned for EC classification."""
+  # TODO(theosanderson): update these to true SOTA values
+  hparams = contrib_training.HParams()
+  hparams.add_hparam('batch_style', 'bucket')
+  hparams.add_hparam('lr_decay_steps', 1000)
+  hparams.add_hparam('batch_size', 40)
+  hparams.add_hparam('dilation_rate', 3)
+  hparams.add_hparam('filters', 1100)
+  hparams.add_hparam('gradient_clip_decay',1)
+  hparams.add_hparam('first_dilated_layer', 2)  # This is 0-indexed
+  hparams.add_hparam('kernel_size', 9)
+  hparams.add_hparam('num_layers', 5)
+  hparams.add_hparam('pooling', 'mean')
+  hparams.add_hparam('resnet_bottleneck_factor', 0.5)
+  hparams.add_hparam('lr_decay_rate', 0.997)
+  hparams.add_hparam('learning_rate', 1.5e-3)
+  hparams.add_hparam('decision_threshold', 0.5)
+  hparams.add_hparam('denominator_power', 1)
+  hparams.add_hparam('lr_warmup_steps', 3000)
+  hparams.add_hparam('train_steps', 500000)
+  return hparams
 
 def small_test_model():
   """A small test model that will run on a CPU quickly."""

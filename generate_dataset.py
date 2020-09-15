@@ -1,6 +1,7 @@
 import gzip
 import xml.etree.cElementTree
 import protein_dataset
+import utils
 import tensorflow.compat.v1 as tf
 import numpy as np
 import pandas as pd
@@ -10,6 +11,7 @@ from absl import flags
 from absl import app
 import tqdm
 import os
+
 
 """
 Generate a UniProt dataset.
@@ -119,7 +121,11 @@ class ClusteredDatasetSampler():
 def sample_fold():
     return np.random.choice(FOLDS, p=FOLD_PROBABILITIES)
 
-
+def _contains_non_standard_amino_acid(seq):
+    for c in seq:
+        if c not in utils.AMINO_ACID_VOCABULARY:
+            return True
+    return False
 def yield_dicts_from_xml_file(source):
     """Yield example dicts from a UniProt format XML file."""
     with tqdm.tqdm(position=0) as pbar:
@@ -138,11 +144,12 @@ def yield_dicts_from_xml_file(source):
                             db_ref_id = db_ref_id.replace("GO:",
                                                           "")  #avoid GO:GO:
                         labels.append(f"{db_ref_type}:{db_ref_id}")
-                yield ({
-                    protein_dataset.SEQUENCE_ID_KEY: accession,
-                    protein_dataset.SEQUENCE_KEY: sequence,
-                    protein_dataset.LABEL_KEY: labels
-                })
+                if not 'fragment' in elem.find(f"{NAMESPACE}sequence").attrib.keys() and not _contains_non_standard_amino_acid(sequence):
+                                 yield ({
+                                        protein_dataset.SEQUENCE_ID_KEY: accession,
+                                        protein_dataset.SEQUENCE_KEY: sequence,
+                                        protein_dataset.LABEL_KEY: labels
+                                 })
                 elem.clear()
 
 
