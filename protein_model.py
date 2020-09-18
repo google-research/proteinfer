@@ -26,6 +26,7 @@ from tensorflow.contrib import layers as contrib_layers
 from tensorflow.contrib.layers.python.layers import optimizers as optimizers_lib
 
 
+
 _THRESHOLDS_FOR_RECALL_METRIC = [2, 3, 5, 10]
 REPRESENTATION_KEY = 'representation'
 LOGITS_KEY = 'logits'
