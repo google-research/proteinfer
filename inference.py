@@ -23,11 +23,12 @@ import base64
 import gzip
 import io
 import itertools
-from typing import Iterator, Text, Tuple
+from typing import Dict, FrozenSet, Iterator, List, Text, Tuple
 
 from absl import logging
 import numpy as np
 import pandas as pd
+import parenthood_lib
 import protein_dataset
 import utils
 import tensorflow.compat.v1 as tf
@@ -143,7 +144,9 @@ class Inferrer(object):
                   np.array([len(s) for s in list_of_seqs])
           })
 
-  def get_activations(self, list_of_seqs, custom_tensor_to_retrieve=None):
+  def get_activations(self,
+                      list_of_seqs,
+                      custom_tensor_to_retrieve=None):
     """Gets activations where batching may be needed to avoid OOM.
 
     Inputs are strings of amino acids, outputs are activations from the network.
@@ -168,14 +171,19 @@ class Inferrer(object):
       return np.array([], dtype=float)
 
     batches = list(utils.batch_iterable(list_of_seqs, self.batch_size))
-    itr = tqdm.tqdm(batches, position=0) if self._use_tqdm else batches
-    output_matrix = None
+    if self._use_tqdm:
+      batches = tqdm.tqdm(
+          batches,
+          position=0,
+          desc='Annotating batches of sequences',
+          leave=True,
+          dynamic_ncols=True)
 
-    for i, batch in enumerate(itr):
+    for i, batch in enumerate(batches):
       batch_activations = self._get_activations_for_batch(
           batch, custom_tensor_to_retrieve=custom_tensor_to_retrieve)
 
-      if output_matrix is None:
+      if i == 0:
         # Allocate matrix to store all activations:
         output_shape = list(batch_activations.shape)
         output_shape[0] = len(list_of_seqs)
@@ -322,3 +330,47 @@ def parse_all_shards(shard_dir_path):
   return pd.DataFrame(
       list(itertools.chain(*list_of_shard_results)),
       columns=['sequence_name', 'predictions'])
+
+
+def get_preds_above_threshold(
+    input_df, inferrer_list, threshold,
+    label_normalizer):
+  """Runs ensembled inference; returns dataframe of filtered inference results.
+
+  Includes only most specific labels (i.e. those that are not implied by any
+  other label in the output).
+
+  Because more than one label can be predicted for a sequence, the same
+  sequence_name may appear in multiple output rows
+
+  Args:
+    input_df: pd.DataFrame with columns sequence (str), sequence_name (str).
+    inferrer_list: list of ensemble elements.
+    threshold: float. Keep inference results above this threshold.
+    label_normalizer: used to prune inference results to only the most specific
+      labels.
+
+  Returns:
+    pd.DataFrame with columns sequence_name (str), predicted_label (str), and
+    confidence (float).
+  """
+  predictions = np.mean([
+      inferrer.get_activations(input_df.sequence.values.tolist())
+      for inferrer in inferrer_list
+  ],
+                        axis=0)
+  cnn_label_vocab = inferrer_list[0].get_variable('label_vocab:0').astype(str)
+
+  reversed_normalizer = parenthood_lib.reverse_map(label_normalizer)
+  output_dict = {'sequence_name': [], 'predicted_label': [], 'confidence': []}
+
+  for idx, protein in enumerate(predictions):
+    proteins_above_threshold = protein > threshold
+    labels_predicted = cnn_label_vocab[proteins_above_threshold]
+    for label, confidence in zip(labels_predicted,
+                                 protein[proteins_above_threshold]):
+      output_dict['sequence_name'].append(input_df.sequence_name.values[idx])
+      output_dict['predicted_label'].append(label)
+      output_dict['confidence'].append(confidence)
+
+  return pd.DataFrame(output_dict)

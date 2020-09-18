@@ -29,16 +29,50 @@ from absl.testing import parameterized
 import numpy as np
 import pandas as pd
 import inference
+import test_util
 import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
 
 
 class _InferrerFixture(object):
+  """A mock inferrer object.
+
+  See docstring for get_activations.
+  """
   activation_type = 'serving_default'
 
-  def get_activations(self, l):
-    return np.array([len(s) for s in l])
+  def __init__(self, activation_rank=1):
+    """Constructs a mock inferrer with activation output of specified rank.
+
+    Args:
+      activation_rank: int. Use 1 for activations that have a single float per
+        sequence, 2. for a vector per sequence, etc.
+    """
+    self._activation_rank = activation_rank
+
+  def get_variable(self, x):
+    if x == 'label_vocab:0':
+      return np.array(['LABEL1'])
+    else:
+      raise ValueError(
+          'Fixture does not have an implementation for this variable')
+
+  def get_activations(self, input_seqs):
+    """Returns a np.array with contents that are the length of each seq.
+
+    The shape of the np.array is dictated by self._activation_rank - see
+    docstring of __init__ for more information.
+
+    Args:
+      input_seqs: list of string.
+
+    Returns:
+      np.array of rank self._activation_rank, where the entries are the length
+      of each input seq.
+    """
+    return np.reshape([len(s) for s in input_seqs],
+                      [-1] + [1] * (self._activation_rank - 1))
 
 
 class InferenceLibTest(parameterized.TestCase):
@@ -140,6 +174,25 @@ class InferenceLibTest(parameterized.TestCase):
     np.testing.assert_array_equal(actual[0][1], input_activations_1)
     np.testing.assert_array_equal(actual[1][1], input_activations_2)
     np.testing.assert_array_equal(actual[2][1], input_activations_3)
+
+  def testGetPredsAboveThreshold(self):
+    input_df = pd.DataFrame({
+        'sequence_name': ['seq1', 'seq2'],
+        'sequence': ['ACDE', 'WWWYYY']
+    })
+    inferrer_list = [_InferrerFixture(activation_rank=2)]
+    threshold = 5
+    label_normalizer = {'LABEL1': frozenset(['LABEL1'])}
+
+    # Assert that the first sequence was removed.
+    actual = inference.get_preds_above_threshold(input_df, inferrer_list,
+                                                 threshold, label_normalizer)
+    expected = pd.DataFrame({
+        'sequence_name': ['seq2'],
+        'confidence': [6.],
+        'predicted_label': ['LABEL1'],
+    })
+    test_util.assert_dataframes_equal(self, actual, expected)
 
 
 if __name__ == '__main__':
