@@ -165,7 +165,7 @@ class Inferrer(object):
 
     if not isinstance(list_of_seqs, list):
       raise ValueError('seq_input must be a list of strings.')
-    logging.info('Predicting for %d sequences', len(list_of_seqs))
+    logging.debug('Predicting for %d sequences', len(list_of_seqs))
 
     if list_of_seqs == []:  # pylint: disable=g-explicit-bool-comparison
       return np.array([], dtype=float)

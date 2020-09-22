@@ -34,6 +34,8 @@ import numpy as np
 import pandas as pd
 import inference
 import utils
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # or any {'0', '1', '2'}
+
 import tensorflow.compat.v1 as tf
 import tqdm
 
@@ -365,6 +367,8 @@ def load_assets_and_run(input_fasta_path, output_path,
 
 # TODO(mlbileschi): clean up deprecation log noise.
 def main(_):
+  tf.get_logger().setLevel(tf.logging.ERROR)
+
   load_assets_and_run(
       input_fasta_path=FLAGS.i,
       output_path=FLAGS.o,
