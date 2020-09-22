@@ -212,7 +212,7 @@ def make_padded_np_array(ragged_arrays):
 
 def absolute_paths_of_files_in_dir(dir_path):
   files = os.listdir(dir_path)
-  return [os.path.join(dir_path, f) for f in files]
+  return sorted([os.path.join(dir_path, f) for f in files])
 
 
 def load_gz_json(path):
