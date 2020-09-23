@@ -12,10 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 r"""Writes a dictionary of all transitive labels to apply to an example.
 
-Includes EC, and GO labels (Enzyme Commission, Gene Ontology).
+Includes EC, GO.
 
 The format is gzipped json from key (GO term, EC number) to
 list of all labels that should be applied to this term. For canonical labels,
@@ -24,19 +23,26 @@ For non-canonical labels (e.g. obsoleted labels), the value of this map for a
 key may not include the key itself, thus describing a normalized form for
 labels.
 
+mkdir data
+cd data
+wget http://current.geneontology.org/ontology/go.obo
+wget ftp://ftp.expasy.org/databases/enzyme/enzclass.txt
+wget ftp://ftp.expasy.org/databases/enzyme/enzyme.dat
+cd ..
+python parenthood_bin.py
+cp /tmp/parenthood.json.gz data/
+
 """
 
 import gzip
 import io
 import json
-from typing import Text, Dict, Set
-
 from absl import app
 from absl import flags
 from absl import logging
+from typing import Text, Dict, Set
 
 import parenthood_lib
-import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
 
@@ -44,32 +50,33 @@ flags.DEFINE_string('output_file', '/tmp/parenthood.json.gz',
                     'The file to which the parenthood file will be written')
 
 
-def _get_ec_transitive():
+def _get_ec_transitive() -> Dict[Text, Set[Text]]:
   """Loads dictionary of label to implied labels for EC numbers."""
   logging.info('Getting EC parenthood dict.')
 
-  with tf.io.gfile.Gfile(parenthood_lib.EC_LEAF_NODE_METADATA_PATH) as f:
-    leaf_node_contents = f.read().decode('utf-8')
-  with tf.io.gfile.Gfile(parenthood_lib.EC_NON_LEAF_NODE_METADATA_PATH) as f:
-    non_leaf_node_contents = f.read().decode('utf-8')
+  with open(parenthood_lib.EC_LEAF_NODE_METADATA_PATH) as f:
+    leaf_node_contents = f.read()
+  with open(parenthood_lib.EC_NON_LEAF_NODE_METADATA_PATH) as f:
+    non_leaf_node_contents = f.read()
 
   ec = parenthood_lib.parse_full_ec_file_to_transitive_parenthood(
       leaf_node_contents, non_leaf_node_contents)
   return ec
 
 
-def _get_go_transitive():
+def _get_go_transitive() -> Dict[Text, Set[Text]]:
   """Loads dictionary of label to implied labels for GO terms."""
   logging.info('Getting GO parenthood dict.')
-  with tf.io.gfile.Gfile(parenthood_lib.GO_METADATA_PATH) as f:
-    whole_go_contents = f.read().decode('utf-8')
+  with open(parenthood_lib.GO_METADATA_PATH) as f:
+    whole_go_contents = f.read()
   go_nontransitive = parenthood_lib.parse_full_go_file(whole_go_contents)
 
   go_transitive = parenthood_lib.transitive_go_parenthood(go_nontransitive)
   return go_transitive
 
 
-def get_output_dict():
+
+def get_output_dict() -> Dict[Text, Set[Text]]:
   """Get output dictionary of label to set of transitive applicable labels.
 
   Returns:
@@ -81,8 +88,9 @@ def get_output_dict():
   """
   ec = _get_ec_transitive()
   go = _get_go_transitive()
+  
   overlapping_keys = (
-      set(ec.keys()).intersection(go.keys()))
+      set(ec.keys()).intersection(go.keys())  )
   if overlapping_keys:
     raise ValueError('There was an overlap in keys between EC/GO. '
                      'Overlapping keys: {}'.format(overlapping_keys))
@@ -93,7 +101,7 @@ def get_output_dict():
   return to_write
 
 
-def write_output_dict(output_dict, output_path):
+def write_output_dict(output_dict: Dict[Text, Set[Text]], output_path: Text):
   """Writes `output_dict` as json to a gzipped file."""
   to_write_json = json.dumps(
       {k: sorted(list(v)) for k, v in output_dict.items()},
@@ -106,7 +114,7 @@ def write_output_dict(output_dict, output_path):
     f.write(to_write_json.encode('utf-8'))
 
   logging.info('Writing to file.')
-  with tf.io.gfile.Gfile(output_path, 'wb') as output_file:
+  with open(output_path, 'wb') as output_file:
     output_file.write(gzip_contents.getvalue())
 
 
