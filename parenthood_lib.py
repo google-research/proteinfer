@@ -22,16 +22,15 @@ from __future__ import division
 from __future__ import print_function
 
 import collections
-import gzip
 import itertools
-import json
 import os
 import re
 import typing
-from typing import (Dict, FrozenSet, Iterable, List, Optional, Set, Text, Tuple,
-                    Collection)
+from typing import (Collection, Dict, FrozenSet, Iterable, List, Optional, Set,
+                    Text, Tuple)
 
 import pandas as pd
+import utils
 import tensorflow.compat.v1 as tf
 import tqdm
 
@@ -592,9 +591,7 @@ def parse_full_ec_file_to_transitive_parenthood(
 
 def get_applicable_label_dict(
     path = APPLICABLE_LABEL_JSON_PATH):
-  with tf.io.gfile.GFile(path, 'rb') as f:
-    with gzip.GzipFile(fileobj=f, mode='rb') as gzip_file:
-      return json.load(gzip_file)
+  return utils.load_gz_json(path)
 
 
 def reverse_map(

@@ -19,12 +19,73 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import gzip
+import json
 import os
+import tarfile
+from typing import Optional, Text
+import urllib
+
 import numpy as np
+import tqdm
 
 AMINO_ACID_VOCABULARY = [
     'A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R',
     'S', 'T', 'V', 'W', 'Y'
+]
+
+OSS_ZIPPED_MODELS_ROOT_URL = 'https://storage.googleapis.com/brain-genomics-public/research/proteins/proteinfer/models/zipped_models/'
+_OSS_PFAM_ZIPPED_MODELS_URL_BASE = OSS_ZIPPED_MODELS_ROOT_URL + 'noxpd2_cnn_swissprot_pfam_random_swiss-cnn_for_swissprot_pfam_random-'
+_OSS_EC_ZIPPED_MODELS_URL_BASE = OSS_ZIPPED_MODELS_ROOT_URL + 'noxpd2_cnn_swissprot_ec_random_swiss-cnn_for_swissprot_ec_random-'
+_OSS_GO_ZIPPED_MODELS_URL_BASE = OSS_ZIPPED_MODELS_ROOT_URL + 'noxpd2_cnn_swissprot_go_random_swiss-cnn_for_swissprot_go_random-'
+
+MAX_NUM_ENSEMBLE_ELS_FOR_INFERENCE = 5
+
+PARENTHOOD_FILE_URL = 'https://storage.googleapis.com/brain-genomics-public/research/proteins/proteinfer/colab_support/parenthood.json.gz'
+LABEL_DESCRIPTION_URL = 'https://storage.googleapis.com/brain-genomics-public/research/proteins/proteinfer/colab_support/label_descriptions.json.gz'
+INSTALLED_PARENTHOOD_FILE_NAME = 'parenthood.json.gz'
+INSTALLED_LABEL_DESCRIPTION_FILE_NAME = 'label_descriptions.json.gz'
+
+# pyformat: disable
+PFAM_RANDOM_ENSEMBLE_ELEMENT_EXPERIMENT_IDS = [
+    '13703743', '13703976', '13704038', '13704097', '13704156', '13705318',
+    '13705635', '13705680', '13705733', '13705759', '13705805', '13706336',
+    '13707555', '13707708', '13707739', '13707862', '13708715', '13708866',
+    '13709033', '13709258', '13709363', '13709600', '13709998', '13710430',
+    '13711765', '13729975', '13730021', '13730128', '13730776', '13730885',
+    '13731191', '13731551', '13731565', '13731695', '13732031',
+]
+
+EC_RANDOM_ENSEMBLE_ELEMENT_EXPERIMENT_IDS = [
+    '13703966', '13704083', '13704104', '13704130', '13705280', '13705675',
+    '13705786', '13705802', '13705819', '13705839', '13706239', '13706986',
+    '13707020', '13707589', '13707925', '13708369', '13708672', '13708706',
+    '13708740', '13708951', '13709242', '13709584', '13709983', '13710037',
+    '13711670', '13729344', '13730041', '13730097', '13730679', '13730876',
+    '13730909', '13731218', '13731588', '13731728', '13731976',
+]
+
+GO_RANDOM_ENSEMBLE_ELEMENT_EXPERIMENT_IDS = [
+    '13703706', '13703742', '13703997', '13704131', '13705631', '13705668',
+    '13705677', '13705689', '13705708', '13705728', '13706170', '13706215',
+    '13707414', '13707438', '13707732', '13708169', '13708676', '13708925',
+    '13708995', '13709052', '13709428', '13709589', '13710370', '13710418',
+    '13711677', '13729352', '13730011', '13730387', '13730746', '13730766',
+    '13730958', '13731179', '13731598', '13731645', '13732022',
+]
+# pyformat: enable
+
+OSS_PFAM_ZIPPED_MODELS_URLS = [
+    '{}{}.tar.gz'.format(_OSS_PFAM_ZIPPED_MODELS_URL_BASE, p)
+    for p in PFAM_RANDOM_ENSEMBLE_ELEMENT_EXPERIMENT_IDS
+]
+OSS_EC_ZIPPED_MODELS_URLS = [
+    '{}{}.tar.gz'.format(_OSS_EC_ZIPPED_MODELS_URL_BASE, p)
+    for p in EC_RANDOM_ENSEMBLE_ELEMENT_EXPERIMENT_IDS
+]
+OSS_GO_ZIPPED_MODELS_URLS = [
+    '{}{}.tar.gz'.format(_OSS_GO_ZIPPED_MODELS_URL_BASE, p)
+    for p in GO_RANDOM_ENSEMBLE_ELEMENT_EXPERIMENT_IDS
 ]
 
 
@@ -151,4 +212,64 @@ def make_padded_np_array(ragged_arrays):
 
 def absolute_paths_of_files_in_dir(dir_path):
   files = os.listdir(dir_path)
-  return [os.path.join(dir_path, f) for f in files]
+  return sorted([os.path.join(dir_path, f) for f in files])
+
+
+def load_gz_json(path):
+  with open(path, 'rb') as f:
+    with gzip.GzipFile(fileobj=f, mode='rb') as gzip_file:
+      return json.load(gzip_file)
+
+
+def fetch_oss_pretrained_models(
+    model_type,
+    output_dir_path,
+    num_ensemble_elements = None):
+  """Fetch, unzip, and untar a number of models to output_dir_path.
+
+  Does not store the tar.gz versions, just the unzipped ones.
+
+  Args:
+    model_type: one of Pfam, EC, or GO.
+    output_dir_path: output directory to which ensemble elements should be
+      written.
+    num_ensemble_elements: number of elements to fetch. If None, fetch all
+      available.
+
+  Raises:
+    ValueError if model_type is invalid, or num_ensemble_elements is too large.
+  """
+  if model_type.lower() == 'pfam':
+    absolute_model_urls = OSS_PFAM_ZIPPED_MODELS_URLS
+  elif model_type.lower() == 'ec':
+    absolute_model_urls = OSS_EC_ZIPPED_MODELS_URLS
+  elif model_type.lower() == 'go':
+    absolute_model_urls = OSS_GO_ZIPPED_MODELS_URLS
+  else:
+    raise ValueError(
+        'Given model type {} was not valid. Valid model types are {}'.format(
+            model_type, ['Pfam', 'EC', 'GO']))
+
+  num_ensemble_elements = num_ensemble_elements if num_ensemble_elements is not None else len(
+      absolute_model_urls)
+
+  if num_ensemble_elements > len(absolute_model_urls):
+    raise ValueError(
+        'Requested {} ensemble elements, but only {} were available.'.format(
+            num_ensemble_elements, len(absolute_model_urls)))
+
+  absolute_model_urls = absolute_model_urls[:num_ensemble_elements]
+  for absolute_url in tqdm.tqdm(
+      absolute_model_urls,
+      desc='Downloading and unzipping {} models to {}'.format(
+          model_type, output_dir_path),
+      position=0,
+      leave=True):
+    # TODO(mlbileschi): consider parallelizing to make faster.
+
+    relative_file_name = os.path.basename(os.path.normpath(absolute_url))
+    output_path = os.path.join(output_dir_path, relative_file_name)
+
+    with urllib.request.urlopen(absolute_url) as url_contents:
+      with tarfile.open(fileobj=url_contents, mode='r|gz') as tar:
+        tar.extractall(output_dir_path)
