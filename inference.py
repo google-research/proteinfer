@@ -20,39 +20,163 @@ from __future__ import division
 from __future__ import print_function
 
 import base64
+import functools
 import gzip
 import io
 import itertools
+import os
 from typing import Dict, FrozenSet, Iterator, List, Text, Tuple
 
 from absl import logging
 import numpy as np
 import pandas as pd
-import parenthood_lib
-import protein_dataset
 import utils
+import six
 import tensorflow.compat.v1 as tf
+import tensorflow_hub as hub
 import tqdm
 
 
-class Inferrer(object):
-  """Fetches an op's value given features."""
+def call_module(module, one_hots, row_lengths, signature):
+  """Call a tf_hub.Module using the standard blundell signature.
 
-  def __init__(self,
-               savedmodel_dir_path,
-               activation_type=tf.saved_model.signature_constants
-               .DEFAULT_SERVING_SIGNATURE_DEF_KEY,
-               batch_size=64,
-               use_tqdm=False):
+  This expects that `module` has a signature named `signature` which conforms to
+      ('sequence',
+       'sequence_length') -> output
+
+  To use an existing SavedModel
+  file you may want to create a module_spec with
+  `tensorflow_hub.saved_model_module.create_module_spec_from_saved_model`.
+
+  Args:
+    module: a tf_hub.Module to call.
+    one_hots: a rank 3 tensor with one-hot encoded sequences of residues.
+    row_lengths: a rank 1 tensor with sequence lengths.
+    signature: the graph signature to validate and call.
+
+  Returns:
+    The output tensor of `module`.
+  """
+  if signature not in module.get_signature_names():
+    raise ValueError('signature not in ' +
+                     six.ensure_str(str(module.get_signature_names())) +
+                     '. Was ' + six.ensure_str(signature) + '.')
+  inputs = module.get_input_info_dict(signature=signature)
+  expected_inputs = [
+      'sequence',
+      'sequence_length',
+  ]
+  if set(inputs.keys()) != set(expected_inputs):
+    raise ValueError(
+        'The signature_def does not have the expected inputs. Please '
+        'reconfigure your saved model to only export signatures '
+        'with sequence and length inputs. (Inputs were %s, expected %s)' %
+        (str(inputs), str(expected_inputs)))
+
+  outputs = module.get_output_info_dict(signature=signature)
+  if len(outputs) > 1:
+    raise ValueError('The signature_def given has more than one output. Please '
+                     'reconfigure your saved model to only export signatures '
+                     'with one output. (Outputs were %s)' % str(outputs))
+
+  return list(
+      module({
+          'sequence': one_hots,
+          'sequence_length': row_lengths,
+      },
+             signature=signature,
+             as_dict=True).values())[0]
+
+
+def in_graph_inferrer(sequences,
+                      savedmodel_dir_path,
+                      signature,
+                      name_scope='inferrer'):
+  """Add an in-graph inferrer to the active default graph.
+
+  Additionally performs in-graph preprocessing, splitting strings, and encoding
+  residues.
+
+  Args:
+    sequences: A tf.string Tensor representing a batch of sequences with shape
+      [None].
+    savedmodel_dir_path: Path to the directory with the SavedModel binary.
+    signature: Name of the signature to use in `savedmodel_dir_path`. e.g.
+      'pooled_representation'
+    name_scope: Name scope to use for the loaded saved model.
+
+  Returns:
+    Output Tensor
+  Raises:
+    ValueError if signature does not conform to
+      ('sequence',
+       'sequence_length') -> output
+    or if the specified signature is not present.
+  """
+  # Add variable to make it easier to refactor with multiple tags in future.
+  tags = [tf.saved_model.tag_constants.SERVING]
+
+  # Tokenization
+  residues = tf.strings.unicode_split(sequences, 'UTF-8')
+  # Convert to one-hots and pad.
+  one_hots, row_lengths = utils.in_graph_residues_to_onehot(residues)
+  module_spec = hub.saved_model_module.create_module_spec_from_saved_model(
+      savedmodel_dir_path)
+  module = hub.Module(module_spec, trainable=False, tags=tags, name=name_scope)
+  return call_module(module, one_hots, row_lengths, signature)
+
+
+@functools.lru_cache(maxsize=None)
+def memoized_inferrer(
+    savedmodel_dir_path,
+    activation_type=tf.saved_model.signature_constants
+    .DEFAULT_SERVING_SIGNATURE_DEF_KEY,
+    batch_size=64,
+    use_tqdm=False,
+    session_config=None,
+    memoize_inference_results=False,
+    use_latest_savedmodel=False,
+):
+  """Alternative constructor for Inferrer that is memoized."""
+  return Inferrer(
+      savedmodel_dir_path=savedmodel_dir_path,
+      activation_type=activation_type,
+      batch_size=batch_size,
+      use_tqdm=use_tqdm,
+      session_config=session_config,
+      memoize_inference_results=memoize_inference_results,
+      use_latest_savedmodel=use_latest_savedmodel,
+  )
+
+
+class Inferrer(object):
+  """Uses a SavedModel to provide batched inference."""
+
+  def __init__(
+      self,
+      savedmodel_dir_path,
+      activation_type=tf.saved_model.signature_constants
+      .DEFAULT_SERVING_SIGNATURE_DEF_KEY,
+      batch_size=64,
+      use_tqdm=False,
+      session_config=None,
+      memoize_inference_results=False,
+      use_latest_savedmodel=False,
+  ):
     """Construct Inferrer.
 
     Args:
-      savedmodel_dir_path: path to directory where a SavedModel pb or pbtxt is
-        stored. The SavedModel must only have one input per signature and only
-        one output per signature.
+      savedmodel_dir_path: path to directory where a SavedModel pb or
+        pbtxt is stored. The SavedModel must only have one input per signature
+        and only one output per signature.
       activation_type: one of the keys in saved_model.signature_def.keys().
       batch_size: batch size to use for individual inference ops.
       use_tqdm: Whether to print progress using tqdm.
+      session_config: tf.ConfigProto for tf.Session creation.
+      memoize_inference_results: if True, calls to inference.get_activations
+        will be memoized.
+      use_latest_savedmodel: If True, the model will be loaded from
+        latest_savedmodel_path_from_base_path(savedmodel_dir_path).
 
     Raises:
       ValueError: if activation_type is not the name of a signature_def in the
@@ -62,55 +186,49 @@ class Inferrer(object):
       ValueError: if SavedModel.signature_def[activation_type] has more than
         one output.
     """
+    if use_latest_savedmodel:
+      savedmodel_dir_path = latest_savedmodel_path_from_base_path(
+          savedmodel_dir_path)
     self.batch_size = batch_size
-    with tf.Graph().as_default() as graph:
-      sess = tf.Session()
-      saved_model = tf.saved_model.loader.load(
-          sess, [tf.saved_model.tag_constants.SERVING], savedmodel_dir_path)
-
-      if activation_type not in saved_model.signature_def.keys():
-        raise ValueError('activation_type not in ' +
-                         str(saved_model.signature_def.keys()) + '. Was ' +
-                         activation_type + '.')
-
-      signature = saved_model.signature_def[activation_type]
-
-      expected_inputs = [
-          protein_dataset.SEQUENCE_KEY, protein_dataset.SEQUENCE_LENGTH_KEY
-      ]
-      if set(signature.inputs.keys()) != set(expected_inputs):
-        raise ValueError(
-            'The signature_def does not have the expected inputs. Please '
-            'reconfigure your saved model to only export signatures '
-            'with sequence and length inputs. (Inputs were %s, expected %s)' %
-            (str(signature.inputs.keys()), str(expected_inputs)))
-
-      if len(signature.outputs.keys()) > 1:
-        raise ValueError(
-            'The signature_def given has more than one output. Please '
-            'reconfigure your saved model to only export signatures '
-            'with one output. (Outputs were %s)' %
-            str(signature.outputs.keys()))
-      fetch_tensor_name = list(signature.outputs.values())[0].name
-
-    self._signature = signature
-    self._graph = graph
-    self._sess = sess
-    self._fetch_tensor_name = fetch_tensor_name
+    self._graph = tf.Graph()
+    self._model_name_scope = 'inferrer'
+    with self._graph.as_default():
+      self._sequences = tf.placeholder(
+          shape=[None], dtype=tf.string, name='sequences')
+      self._fetch = in_graph_inferrer(
+          self._sequences,
+          savedmodel_dir_path,
+          activation_type,
+          name_scope=self._model_name_scope)
+      self._sess = tf.Session(
+          config=session_config if session_config else tf.ConfigProto())
+      self._sess.run([
+          tf.initializers.global_variables(),
+          tf.initializers.local_variables(),
+          tf.initializers.tables_initializer(),
+      ])
 
     self._savedmodel_dir_path = savedmodel_dir_path
-    self._activation_type = activation_type
+    self.activation_type = activation_type
     self._use_tqdm = use_tqdm
+    if memoize_inference_results:
+      self._get_activations_for_batch = self._get_activations_for_batch_memoized
+    else:
+      self._get_activations_for_batch = self._get_activations_for_batch_unmemoized
 
   def __repr__(self):
     return ('{} with feed tensors savedmodel_dir_path {} and '
             'activation_type {}').format(
                 type(self).__name__, self._savedmodel_dir_path,
-                self._activation_type)
+                self.activation_type)
 
-  def _get_activations_for_batch(self,
-                                 list_of_seqs,
-                                 custom_tensor_to_retrieve=None):
+  def _get_tensor_by_name(self, name):
+    return self._graph.get_tensor_by_name('{}/{}'.format(
+        self._model_name_scope, name))
+
+  def _get_activations_for_batch_unmemoized(self,
+                                            seqs,
+                                            custom_tensor_to_retrieve=None):
     """Gets activations for each sequence in list_of_seqs.
 
       [
@@ -125,52 +243,63 @@ class Inferrer(object):
     sequence `i` is in family `j`.
 
     Args:
-      list_of_seqs: list of strings, with characters that are amino acids.
+      seqs: tuple of strings, with characters that are amino
+        acids.
       custom_tensor_to_retrieve: string name for a tensor to retrieve, if unset
         uses default for signature.
 
     Returns:
       np.array of floats containing the value from fetch_op.
     """
-    one_hots = [utils.residues_to_one_hot(seq) for seq in list_of_seqs]
-    padded_one_hots = utils.make_padded_np_array(one_hots)
-    tensor_name = custom_tensor_to_retrieve or self._fetch_tensor_name
+    if custom_tensor_to_retrieve:
+      fetch = self._get_tensor_by_name(custom_tensor_to_retrieve)
+    else:
+      fetch = self._fetch
     with self._graph.as_default():
-      return self._sess.run(
-          tensor_name, {
-              self._signature.inputs[protein_dataset.SEQUENCE_KEY].name:
-                  padded_one_hots,
-              self._signature.inputs[protein_dataset.SEQUENCE_LENGTH_KEY].name:
-                  np.array([len(s) for s in list_of_seqs])
-          })
+      return self._sess.run(fetch, {self._sequences: seqs})
 
-  def get_activations(self,
-                      list_of_seqs,
-                      custom_tensor_to_retrieve=None):
+  @functools.lru_cache(maxsize=None)
+  def _get_activations_for_batch_memoized(self,
+                                          seqs,
+                                          custom_tensor_to_retrieve=None):
+    return self._get_activations_for_batch_unmemoized(
+        seqs, custom_tensor_to_retrieve)
+
+  def get_activations(self, list_of_seqs, custom_tensor_to_retrieve=None):
     """Gets activations where batching may be needed to avoid OOM.
 
     Inputs are strings of amino acids, outputs are activations from the network.
 
     Args:
-      list_of_seqs: list of strings as input for inference.
+      list_of_seqs: iterable of strings as input for inference.
       custom_tensor_to_retrieve: string name for a tensor to retrieve, if unset
         uses default for signature.
 
     Returns:
       concatenated numpy array of activations with shape [num_of_seqs, ...]
     """
-    # TODO(theosanderson): inference can be made dramatically faster by sorting
-    # list of_seqs by length before inference (and presumably reversing the
-    # sort process afterwards)
-
-    if not isinstance(list_of_seqs, list):
-      raise ValueError('seq_input must be a list of strings.')
-    logging.info('Predicting for %d sequences', len(list_of_seqs))
-
-    if list_of_seqs == []:  # pylint: disable=g-explicit-bool-comparison
+    np_seqs = np.array(list_of_seqs, dtype=np.str_)
+    if np_seqs.size == 0:
       return np.array([], dtype=float)
 
-    batches = list(utils.batch_iterable(list_of_seqs, self.batch_size))
+    if len(np_seqs.shape) != 1:
+      raise ValueError('`list_of_seqs` should be convertible to a numpy vector '
+                       'of strings. Got {}'.format(np_seqs))
+
+    logging.debug('Predicting for %d sequences', len(list_of_seqs))
+
+    lengths = np.array([len(seq) for seq in np_seqs])
+    # Sort by reverse length, so that the longest element is first.
+    # This is because the longest element can cause memory issues, and we'd like
+    # to fail-fast in this case.
+    sorter = np.argsort(lengths)[::-1]
+    # The inverse of a permutation A is the permutation B such that B(A) is the
+    # the identity permutation (a sorted list).
+    reverser = np.argsort(sorter)
+
+    activation_list = []
+    batches = np.array_split(np_seqs[sorter],
+                             np.ceil(len(np_seqs) / self.batch_size))
     if self._use_tqdm:
       batches = tqdm.tqdm(
           batches,
@@ -178,21 +307,15 @@ class Inferrer(object):
           desc='Annotating batches of sequences',
           leave=True,
           dynamic_ncols=True)
-
-    for i, batch in enumerate(batches):
+    for batch in batches:
       batch_activations = self._get_activations_for_batch(
-          batch, custom_tensor_to_retrieve=custom_tensor_to_retrieve)
+          tuple(batch), custom_tensor_to_retrieve=custom_tensor_to_retrieve)
 
-      if i == 0:
-        # Allocate matrix to store all activations:
-        output_shape = list(batch_activations.shape)
-        output_shape[0] = len(list_of_seqs)
-        output_matrix = np.zeros(output_shape, np.float16)
-      starting_index = i * self.batch_size
-      output_matrix[starting_index:starting_index +
-                    batch_activations.shape[0]] = batch_activations
+      activation_list.append(batch_activations)
 
-    return output_matrix
+    activations = np.concatenate(activation_list, axis=0)[reverser]
+
+    return activations
 
   def get_variable(self, variable_name):
     """Gets the value of a variable from the graph.
@@ -204,7 +327,25 @@ class Inferrer(object):
       output from TensorFlow from attempt to retrieve this value.
     """
     with self._graph.as_default():
-      return self._sess.run(variable_name)
+      return self._sess.run(self._get_tensor_by_name(variable_name))
+
+
+def latest_savedmodel_path_from_base_path(base_path):
+  """Get the most recent savedmodel from a base directory path."""
+
+  protein_export_base_path = os.path.join(base_path, 'export/protein_exporter')
+
+  suffixes = [
+      x for x in tf.io.gfile.listdir(protein_export_base_path)
+      if 'temp-' not in x
+  ]
+
+  if not suffixes:
+    raise ValueError('No SavedModels found in %s' % protein_export_base_path)
+
+  # Sort by suffix to take the model corresponding the most
+  # recent training step.
+  return os.path.join(protein_export_base_path, sorted(suffixes)[-1])
 
 
 def predictions_for_df(df, inferrer):
@@ -332,13 +473,12 @@ def parse_all_shards(shard_dir_path):
       columns=['sequence_name', 'predictions'])
 
 
-def get_preds_above_threshold(
-    input_df, inferrer_list, threshold,
-    label_normalizer):
+def get_preds_at_or_above_threshold(input_df,
+                                    inferrer_list,
+                                    threshold):
   """Runs ensembled inference; returns dataframe of filtered inference results.
 
-  Includes only most specific labels (i.e. those that are not implied by any
-  other label in the output).
+  Includes predictions >= threshold.
 
   Because more than one label can be predicted for a sequence, the same
   sequence_name may appear in multiple output rows
@@ -347,13 +487,16 @@ def get_preds_above_threshold(
     input_df: pd.DataFrame with columns sequence (str), sequence_name (str).
     inferrer_list: list of ensemble elements.
     threshold: float. Keep inference results above this threshold.
-    label_normalizer: used to prune inference results to only the most specific
-      labels.
 
   Returns:
     pd.DataFrame with columns sequence_name (str), predicted_label (str), and
-    confidence (float).
+    confidence (float). `sequence_name`s are sorted in the original order they
+    came in.
   """
+  if threshold == 0.:
+    raise ValueError('The given threshold was 0. Please supply a '
+                     'value between 0 (exclusive) and 1 (inclusive). A value '
+                     'of zero will report every label for every protein.')
   predictions = np.mean([
       inferrer.get_activations(input_df.sequence.values.tolist())
       for inferrer in inferrer_list
@@ -361,11 +504,10 @@ def get_preds_above_threshold(
                         axis=0)
   cnn_label_vocab = inferrer_list[0].get_variable('label_vocab:0').astype(str)
 
-  reversed_normalizer = parenthood_lib.reverse_map(label_normalizer)
   output_dict = {'sequence_name': [], 'predicted_label': [], 'confidence': []}
 
   for idx, protein in enumerate(predictions):
-    proteins_above_threshold = protein > threshold
+    proteins_above_threshold = protein >= threshold
     labels_predicted = cnn_label_vocab[proteins_above_threshold]
     for label, confidence in zip(labels_predicted,
                                  protein[proteins_above_threshold]):

@@ -19,7 +19,6 @@ from __future__ import division
 from __future__ import print_function
 
 import gzip
-import os
 
 
 
@@ -30,6 +29,7 @@ import numpy as np
 import pandas as pd
 import inference
 import test_util
+import utils
 import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
@@ -75,16 +75,30 @@ class _InferrerFixture(object):
                       [-1] + [1] * (self._activation_rank - 1))
 
 
-class InferenceLibTest(parameterized.TestCase):
+class InGraphInferrerTest(tf.test.TestCase, parameterized.TestCase):
 
-  def setUp(self):
-    super(InferenceLibTest, self).setUp()
-    initial = './'
-    self.saved_model_path = os.path.join(FLAGS.test_srcdir,
-                                         (initial + 'testdata/saved_model/'))
+  def testCanInfer(self):
+
+    graph = tf.Graph()
+    with graph.as_default():
+      sequences = tf.placeholder(shape=[None], dtype=tf.string)
+      output_tensor = inference.in_graph_inferrer(
+          sequences, test_util.savedmodel_path(),
+          tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY)
+
+    input_seqs = [''.join(utils.FULL_RESIDUE_VOCAB), 'ACD']
+    with self.session(graph=graph) as sess:
+      sess.run(tf.global_variables_initializer())
+      sess.run(tf.tables_initializer())
+      result = sess.run(output_tensor, feed_dict={sequences: input_seqs})
+
+    self.assertLen(result, 2)
+
+
+class InferenceLibTest(parameterized.TestCase, tf.test.TestCase):
 
   def testBatchedInference(self):
-    inferrer = inference.Inferrer(self.saved_model_path, batch_size=5)
+    inferrer = inference.Inferrer(test_util.savedmodel_path(), batch_size=5)
 
     input_seq = 'AP'
     for total_size in range(15):
@@ -92,14 +106,42 @@ class InferenceLibTest(parameterized.TestCase):
       activations = inferrer.get_activations(full_list)
       self.assertLen(full_list, activations.shape[0])
 
+  def testSortUnsortInference(self):
+    inferrer = inference.Inferrer(test_util.savedmodel_path(), batch_size=1)
+
+    input_seqs = ['AP', 'APP', 'AP']
+    # Sorting will move long sequence to the end.
+    activations = inferrer.get_activations(input_seqs)
+    # Make sure it gets moved back to the middle.
+    self.assertAllClose(activations[0], activations[2])
+    self.assertNotAllClose(activations[0], activations[1])
+
   def testStringInput(self):
-    inferrer = inference.Inferrer(self.saved_model_path)
+    inferrer = inference.Inferrer(test_util.savedmodel_path())
     # Simulate failure to use a list.
-    with self.assertRaisesRegex(ValueError, 'must be a list of strings'):
+    with self.assertRaisesRegex(
+        ValueError, '`list_of_seqs` should be convertible to a '
+        'numpy vector of strings. Got *'):
       inferrer.get_activations('QP')
 
+  def testMemoizedInferrerLoading(self):
+    inferrer = inference.memoized_inferrer(
+        test_util.savedmodel_path(), memoize_inference_results=True)
+    memoized_inferrer = inference.memoized_inferrer(
+        test_util.savedmodel_path(), memoize_inference_results=True)
+
+    self.assertIs(inferrer, memoized_inferrer)
+
+  def testMemoizedInferenceResults(self):
+    inferrer = inference.Inferrer(
+        test_util.savedmodel_path(), memoize_inference_results=True)
+    activations = inferrer._get_activations_for_batch(('ADE',))
+    memoized_activations = inferrer._get_activations_for_batch(('ADE',))
+
+    self.assertIs(activations, memoized_activations)
+
   def testGetVariable(self):
-    inferrer = inference.Inferrer(self.saved_model_path)
+    inferrer = inference.Inferrer(test_util.savedmodel_path())
     output = inferrer.get_variable('conv1d/bias:0')
     self.assertNotEmpty(output)
 
@@ -175,24 +217,47 @@ class InferenceLibTest(parameterized.TestCase):
     np.testing.assert_array_equal(actual[1][1], input_activations_2)
     np.testing.assert_array_equal(actual[2][1], input_activations_3)
 
-  def testGetPredsAboveThreshold(self):
-    input_df = pd.DataFrame({
-        'sequence_name': ['seq1', 'seq2'],
-        'sequence': ['ACDE', 'WWWYYY']
-    })
+  @parameterized.named_parameters(
+      dict(
+          testcase_name='filters one sequence',
+          input_df=pd.DataFrame({
+              'sequence_name': ['seq1', 'seq2'],
+              'sequence': ['ACDE', 'WWWYYY']
+          }),
+          threshold=5.,
+          expected=pd.DataFrame({
+              'sequence_name': ['seq2'],
+              'confidence': [6.],
+              'predicted_label': ['LABEL1'],
+          })),
+      dict(
+          testcase_name='filters no sequences, but preserves input sequence_name ordering',
+          input_df=pd.DataFrame({
+              'sequence_name': ['seq2', 'seq1'],
+              'sequence': ['WWWYYY', 'ACDE']
+          }),
+          threshold=2.,
+          expected=pd.DataFrame({
+              # Note: doesn't sort by sequence_name.
+              'sequence_name': ['seq2', 'seq1'],
+              'confidence': [6., 4.],
+              'predicted_label': ['LABEL1', 'LABEL1'],
+          })),
+  )
+  def testGetPredsAboveThreshold(self, input_df, expected, threshold):
     inferrer_list = [_InferrerFixture(activation_rank=2)]
-    threshold = 5
-    label_normalizer = {'LABEL1': frozenset(['LABEL1'])}
 
     # Assert that the first sequence was removed.
-    actual = inference.get_preds_above_threshold(input_df, inferrer_list,
-                                                 threshold, label_normalizer)
-    expected = pd.DataFrame({
-        'sequence_name': ['seq2'],
-        'confidence': [6.],
-        'predicted_label': ['LABEL1'],
-    })
+    actual = inference.get_preds_at_or_above_threshold(input_df, inferrer_list,
+                                                       threshold)
     test_util.assert_dataframes_equal(self, actual, expected)
+
+  def testGetPredsAboveThresholdRaisesOnZeroThreshold(self):
+    inferrer_list = []
+    input_df = pd.DataFrame()
+
+    with self.assertRaisesRegex(ValueError, '0'):
+      inference.get_preds_at_or_above_threshold(input_df, inferrer_list, 0.)
 
 
 if __name__ == '__main__':

@@ -332,10 +332,7 @@ class ParenthoodLibTest(parameterized.TestCase):
     self.assertEqual(actual['EC:1.-.-.-'], 'Oxidoreductases.')
 
     self.assertIn('EC:1.2.3.4', actual)
-    self.assertEqual(
-        actual['EC:1.2.3.4'],
-        'Oxidoreductases. Acting on the aldehyde or oxo group of donors. With oxygen as acceptor. Oxalate oxidase.'
-    )
+    self.assertEqual(actual['EC:1.2.3.4'], 'Oxalate oxidase.')
 
   @parameterized.named_parameters(
       dict(

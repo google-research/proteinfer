@@ -18,14 +18,16 @@
 Write functional predictions as a TSV with columns
 - sequence_name (string)
 - predicted_label (string)
-- confidence (float)
+- confidence (float); number between 0 and 1. An estimate of the model's
+    confidence that the label is true.
 - label_description (string); a human-readable label description.
 """
 
+import decimal
 import io
 import logging
 import os
-from typing import Dict, List, Text, Tuple, FrozenSet
+from typing import Dict, List, Text, Tuple
 
 from absl import app
 from absl import flags
@@ -34,8 +36,10 @@ import numpy as np
 import pandas as pd
 import inference
 import utils
-import tensorflow.compat.v1 as tf
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # TF c++ logging set to ERROR
+import tensorflow.compat.v1 as tf  # pylint: disable=g-import-not-at-top
 import tqdm
+
 
 _logger = logging.getLogger('proteinfer')
 
@@ -53,9 +57,12 @@ flags.DEFINE_integer(
     'Maximum value of this flag is {}.'.format(
         utils.MAX_NUM_ENSEMBLE_ELS_FOR_INFERENCE))
 flags.DEFINE_float(
-    'reporting_threshold', .5,
-    'Number between 0 and 1. A higher number will be more accurate, '
-    'but will report fewer labels (it will have fewer false-positives).')
+    'reporting_threshold',
+    .5,
+    'Number between 0 (exclusive) and 1 (inclusive). Predicted labels with '
+    'confidence at least resporting_threshold will be included in the output.',
+    lower_bound=0.,
+    upper_bound=1.)
 
 flags.DEFINE_string('model_cache_path', 'cached_models',
                     'Path from which to use downloaded models and metadata.')
@@ -65,6 +72,12 @@ _InferrerEnsemble = List[inference.Inferrer]
 
 # (list_of_pfam_inferrers, list_of_ec_inferrers, list_of_go_inferrers)
 _Models = Tuple[_InferrerEnsemble, _InferrerEnsemble, _InferrerEnsemble]
+
+
+def _num_decimal_places(f):
+  """Get the number of decimal places in a float."""
+  # https://stackoverflow.com/a/6190291/1445296
+  return abs(decimal.Decimal('{}'.format(f)).as_tuple().exponent)
 
 
 def _gcs_path_to_relative_unzipped_path(p):
@@ -130,7 +143,7 @@ def load_models(model_cache_path, num_ensemble_elements):
 
     return pfam_inferrers, ec_inferrers, go_inferrers
 
-  except OSError as exc:
+  except tf.errors.NotFoundError as exc:
     err_msg = 'Unable to find cached models in {}.'.format(model_cache_path)
     if num_ensemble_elements > 1:
       err_msg += (
@@ -185,14 +198,13 @@ def input_text_to_df(input_text):
   """Converts fasta contents to a df with columns sequence_name and sequence."""
   with io.StringIO(initial_value=input_text) as f:
     fasta_records = list(FastaIO.FastaIterator(f))
-    fasta_df = pd.DataFrame([(f.name, f.seq) for f in fasta_records],
+    fasta_df = pd.DataFrame([(f.name, str(f.seq)) for f in fasta_records],
                             columns=['sequence_name', 'sequence'])
 
   return fasta_df
 
 
 def perform_inference(input_df, models,
-                      label_normalizer,
                       reporting_threshold):
   """Perform inference for Pfam, EC, and GO using given models.
 
@@ -200,8 +212,6 @@ def perform_inference(input_df, models,
     input_df: pd.DataFrame with columns sequence_name (str) and sequence (str).
     models: (list_of_pfam_inferrers, list_of_ec_inferrers,
       list_of_go_inferrers).
-    label_normalizer: contents of parenthood.json.gz. A mapping from labels to
-      their children.
     reporting_threshold: report labels with mean confidence across ensemble
       elements that exceeds this threshold.
 
@@ -213,9 +223,8 @@ def perform_inference(input_df, models,
   for inferrer_list in tqdm.tqdm(
       models, position=1, desc='Progress', leave=True):
     predictions.append(
-        inference.get_preds_above_threshold(input_df, inferrer_list,
-                                            reporting_threshold,
-                                            label_normalizer))
+        inference.get_preds_at_or_above_threshold(input_df, inferrer_list,
+                                                  reporting_threshold))
 
   print('\n')  # Because the tqdm bar is position 1, we need to print a newline.
 
@@ -223,14 +232,38 @@ def perform_inference(input_df, models,
   return predictions
 
 
+def _sort_df_multiple_columns(df, key):
+  """Sort df based on callable key.
+
+  Args:
+    df: pd.DataFrame.
+    key: function from rows of df (namedtuples) to tuple. This is used in the
+      builtin `sorted` method as the key.
+
+  Returns:
+    A sorted copy of df.
+  """
+  # Unpack into list to take advantage of builtin sorted function.
+  # Note that pd.DataFrame.sort_values will not work because sort_values'
+  # sorting function is applied to each column at a time, whereas we need to
+  # consider multiple fields at once.
+  df_rows_sorted = sorted(df.itertuples(index=False), key=key)
+  return pd.DataFrame(df_rows_sorted, columns=df.columns)
+
+
 def order_df_for_output(predictions_df):
   """Semantically group/sort predictions df for output.
 
   Sort order:
-  Sort by query sequence name.
+  Sort by query sequence name as they are in `predictions_df`.
   Put all Pfam labels first, then EC labels, then GO labels.
-  Given that, sort by descending confidence.
-  Given that, sort by description.
+  Given that,
+    - if it's an EC label, sort by label alphabetically.
+    - else, sort by confidence descending.
+      Given that, sort by description alphabetically.
+
+  The reason to sort EC differently is that the alphabetic ordering of EC labels
+  is meaningful, while the alphabetic orering of Pfam and GO labels is not.
 
   Args:
     predictions_df: df with columns sequence_name (str), predicted_label (str),
@@ -240,36 +273,44 @@ def order_df_for_output(predictions_df):
     df with columns sequence_name (str), predicted_label (str), confidence
     (float), description (str).
   """
+  seq_name_to_original_order = {
+      item: idx for idx, item in enumerate(predictions_df.sequence_name)
+  }
 
-  def _orderer(df_row):
-    """Fn passed to builtin sorted fn as a sorting key. See outer doctsring."""
-    # Order is Pfam, then EC, then GO.
-    if df_row.predicted_label.startswith('Pfam'):
-      label_type_sort_key = 0
-    elif df_row.predicted_label.startswith('EC'):
-      label_type_sort_key = 1
-    elif df_row.predicted_label.startswith('GO'):
-      label_type_sort_key = 2
-    else:
-      raise ValueError('Cant sort label {}. Expected Pfam, EC or GO.'.format(
-          df_row.predicted_label))
+  def filter_by_label_type(df, label_type):
+    return df[df.predicted_label.apply(lambda x: x.startswith(label_type))]
 
-    # Sort by confidence descending.
+  def _orderer_pfam_and_go(df_row):
+    """See outer function doctsring."""
     confidence_sort_key = -1 * df_row.confidence
-    return (df_row.sequence_name, label_type_sort_key, confidence_sort_key,
-            df_row.description)
+    return (seq_name_to_original_order[df_row.sequence_name],
+            confidence_sort_key, df_row.description)
 
-  # Unpack into list to take advantage of builtin sorted function.
-  # Note that pd.DataFrame.sort_values will not work because sort_values'
-  # sorting function is applied to each column at a time, whereas we need to
-  # consider multiple fields at once.
-  df_rows_sorted = sorted(predictions_df.itertuples(index=False), key=_orderer)
-  return pd.DataFrame(df_rows_sorted, columns=predictions_df.columns)
+  def _orderer_ec(df_row):
+    """See outer function doctsring."""
+    confidence_sort_key = -1 * df_row.confidence
+    return (seq_name_to_original_order[df_row.sequence_name],
+            df_row.predicted_label)
+
+  pfam_df = filter_by_label_type(predictions_df, 'Pfam')
+  ec_df = filter_by_label_type(predictions_df, 'EC')
+  go_df = filter_by_label_type(predictions_df, 'GO')
+
+  pfam_df_sorted = _sort_df_multiple_columns(pfam_df, _orderer_pfam_and_go)
+  ec_df_sorted = _sort_df_multiple_columns(ec_df, _orderer_ec)
+  go_df_sorted = _sort_df_multiple_columns(go_df, _orderer_pfam_and_go)
+  return pd.concat([pfam_df_sorted, ec_df_sorted, go_df_sorted])
 
 
-def format_df_for_output(
-    predictions_df,
-    label_to_description):
+def _format_float_confidence_for_output(input_float,
+                                        num_decimal_places):
+  # Create a separate function so as to test it against our expectations.
+  return np.around(input_float, num_decimal_places)
+
+
+def format_df_for_output(predictions_df,
+                         label_to_description,
+                         num_decimal_places):
   """Formats df for outputting.
 
   Args:
@@ -277,6 +318,8 @@ def format_df_for_output(
       confidence (float).
     label_to_description: contents of label_descriptions.json.gz. Map from label
       to a human-readable description.
+    num_decimal_places: number of decimal places to display in the confidence
+      output column.
 
   Returns:
     df with columns sequence_name (str), predicted_label (str), confidence
@@ -287,7 +330,7 @@ def format_df_for_output(
   predictions_df['description'] = predictions_df.predicted_label.apply(
       label_to_description.__getitem__)
   predictions_df['confidence'] = predictions_df.confidence.apply(
-      lambda x: np.around(x, 2))
+      lambda x: _format_float_confidence_for_output(x, num_decimal_places))
 
   return order_df_for_output(predictions_df)
 
@@ -300,7 +343,6 @@ def write_output(predictions_df, output_path):
 
 
 def run(input_text, models, reporting_threshold,
-        label_normalizer,
         label_to_description):
   """Runs inference and returns output as a pd.DataFrame.
 
@@ -310,8 +352,6 @@ def run(input_text, models, reporting_threshold,
       list_of_go_inferrers).
     reporting_threshold: report labels with mean confidence across ensemble
       elements that exceeds this threshold.
-    label_normalizer: contents of parenthood.json.gz. A mapping from labels to
-      their children.
     label_to_description: contents of label_descriptions.json.gz. Map from label
       to a human-readable description.
 
@@ -323,11 +363,12 @@ def run(input_text, models, reporting_threshold,
   predictions_df = perform_inference(
       input_df=input_df,
       models=models,
-      label_normalizer=label_normalizer,
       reporting_threshold=reporting_threshold)
 
   predictions_df = format_df_for_output(
-      predictions_df=predictions_df, label_to_description=label_to_description)
+      predictions_df=predictions_df,
+      label_to_description=label_to_description,
+      num_decimal_places=max(2, _num_decimal_places(reporting_threshold)))
 
   return predictions_df
 
@@ -352,19 +393,23 @@ def load_assets_and_run(input_fasta_path, output_path,
   input_text = parse_input_to_text(input_fasta_path)
 
   models = load_models(model_cache_path, num_ensemble_elements)
-  label_normalizer = utils.load_gz_json(
-      os.path.join(model_cache_path, utils.INSTALLED_PARENTHOOD_FILE_NAME))
   label_to_description = utils.load_gz_json(
       os.path.join(model_cache_path,
                    utils.INSTALLED_LABEL_DESCRIPTION_FILE_NAME))
 
   predictions_df = run(input_text, models, reporting_threshold,
-                       label_normalizer, label_to_description)
+                       label_to_description)
   write_output(predictions_df, output_path)
 
 
-# TODO(mlbileschi): clean up deprecation log noise.
 def main(_):
+  # TF logging is too noisy otherwise.
+  tf.get_logger().setLevel(tf.logging.ERROR)
+
+  if FLAGS.reporting_threshold == 0.:
+    raise ValueError('The reporting_threshold flag was 0. Please supply a '
+                     'value between 0 (exclusive) and 1 (inclusive). A value '
+                     'of zero will report every label for every protein.')
   load_assets_and_run(
       input_fasta_path=FLAGS.i,
       output_path=FLAGS.o,

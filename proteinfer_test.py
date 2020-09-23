@@ -39,6 +39,11 @@ class ProteinferTest(parameterized.TestCase):
         'sequence_name': ['SEQUENCE_NAME'],
         'sequence': ['ACDE'],
     })
+
+    # BioPython parses sequences as Bio.Seq.Seq which can, in most cases,
+    # act as sequences, but in others can lead to surprising behavior. Ensure
+    # we actually have a str.
+    self.assertEqual(type(actual_df.sequence.values[0]), str)
     test_util.assert_dataframes_equal(self, actual_df, expected)
 
   def test_parse_input_malformed_fasta(self):
@@ -54,8 +59,10 @@ class ProteinferTest(parameterized.TestCase):
         'confidence': [.991]
     })
     label_to_description = {'Pfam:PF000042': 'Oxygen carrier'}
+    num_decimal_places = 2
 
-    actual = proteinfer.format_df_for_output(input_df, label_to_description)
+    actual = proteinfer.format_df_for_output(input_df, label_to_description,
+                                             num_decimal_places)
     expected = pd.DataFrame({
         'sequence_name': ['SEQ_A'],
         'predicted_label': ['Pfam:PF000042'],
@@ -65,6 +72,19 @@ class ProteinferTest(parameterized.TestCase):
 
     test_util.assert_dataframes_equal(self, actual, expected)
 
+  @parameterized.parameters(
+      dict(input_confidence=1., num_decimal_places=2, expected=1.0),
+      dict(input_confidence=1., num_decimal_places=3, expected=1.0),
+      dict(input_confidence=0.1, num_decimal_places=2, expected=0.1),
+      dict(input_confidence=0.01, num_decimal_places=2, expected=0.01),
+      dict(input_confidence=0.006, num_decimal_places=2, expected=0.01),
+      dict(input_confidence=0.001, num_decimal_places=3, expected=0.001),
+  )
+  def test_format_float_confidence(self, input_confidence, num_decimal_places,
+                                   expected):
+    actual = proteinfer._format_float_confidence_for_output(
+        input_confidence, num_decimal_places)
+    self.assertEqual(actual, expected)
 
   def test_load_models_raises_on_model_missing_no_ensemble(self):
     expected_err_contents = ('Unable to find cached models in FAKE_PATH. Make '
@@ -96,7 +116,7 @@ class ProteinferTest(parameterized.TestCase):
 
   @parameterized.named_parameters(
       dict(
-          testcase_name='orders by sequence name',
+          testcase_name='orders by sequence name\'s original ordering',
           input_df=pd.DataFrame({
               'sequence_name': ['SEQ_B', 'SEQ_A'],
               'predicted_label': ['Pfam:PF00001', 'Pfam:PF00002'],
@@ -104,10 +124,12 @@ class ProteinferTest(parameterized.TestCase):
               'description': ['First GPCRA', 'Second GPCR'],
           }),
           expected=pd.DataFrame({
-              'sequence_name': ['SEQ_A', 'SEQ_B'],
-              'predicted_label': ['Pfam:PF00002', 'Pfam:PF00001'],
-              'confidence': [.9, .1],
-              'description': ['Second GPCR', 'First GPCRA'],
+              # Note that this df is not sorted by the sequence name's column
+              # alphabetically; instead it preserves the original ordering.
+              'sequence_name': ['SEQ_B', 'SEQ_A'],
+              'predicted_label': ['Pfam:PF00001', 'Pfam:PF00002'],
+              'confidence': [.1, .9],
+              'description': ['First GPCRA', 'Second GPCR'],
           }),
       ),
       dict(
@@ -141,6 +163,27 @@ class ProteinferTest(parameterized.TestCase):
           }),
       ),
       dict(
+          testcase_name='For EC, orders by label alphabetically, not description alphabetically (despite confidences)',
+          input_df=pd.DataFrame({
+              'sequence_name': ['SEQ_A', 'SEQ_A'],
+              'predicted_label': ['EC:1.2.3.-', 'EC:1.2.-.-'],
+              'confidence': [1., .9],
+              'description': [
+                  'AAA alphabetically FIRST EC label',
+                  'ZZZ alphabetically LAST EC label'
+              ],
+          }),
+          expected=pd.DataFrame({
+              'sequence_name': ['SEQ_A', 'SEQ_A'],
+              'predicted_label': ['EC:1.2.-.-', 'EC:1.2.3.-'],
+              'confidence': [.9, 1.],
+              'description': [
+                  'ZZZ alphabetically LAST EC label',
+                  'AAA alphabetically FIRST EC label'
+              ],
+          }),
+      ),
+      dict(
           testcase_name='orders by description given same label class and confidence',
           input_df=pd.DataFrame({
               'sequence_name': ['SEQ_A', 'SEQ_A'],
@@ -158,7 +201,7 @@ class ProteinferTest(parameterized.TestCase):
   )
   def test_order_df_for_output(self, input_df, expected):
     actual = proteinfer.order_df_for_output(input_df)
-    pd.testing.assert_frame_equal(actual, expected)
+    test_util.assert_dataframes_equal(self, actual, expected)
 
 
 if __name__ == '__main__':
