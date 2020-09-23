@@ -55,14 +55,6 @@ def download_models(model_cache_path,
   print('\n')  # Because the tqdm bar is position 1, we need to print a newline.
 
 
-def get_parenthood_file(model_cache_path):
-  out_path = os.path.join(model_cache_path,
-                          utils.INSTALLED_PARENTHOOD_FILE_NAME)
-  with tf.io.gfile.GFile(out_path, 'wb') as out_file:
-    with urllib.request.urlopen(utils.PARENTHOOD_FILE_URL) as url_contents:
-      out_file.write(url_contents.read())
-
-
 def get_description_file(model_cache_path):
   out_path = os.path.join(model_cache_path,
                           utils.INSTALLED_LABEL_DESCRIPTION_FILE_NAME)
@@ -86,7 +78,6 @@ def run(install_ensemble, model_cache_path):
   else:
     download_models(model_cache_path, num_ensemble_elements=1)
   get_description_file(model_cache_path)
-  get_parenthood_file(model_cache_path)
 
 
 def main(_):

@@ -287,8 +287,7 @@ def parse_full_go_file(file_contents = None):
 def go_label_to_description(
     go_file_contents = None):
   return {
-      t.term_id: f'{t.term_name}: {t.description}'
-      for t in parse_full_go_file(go_file_contents)
+      t.term_id: f'{t.term_name}' for t in parse_full_go_file(go_file_contents)
   }
 
 
@@ -523,23 +522,16 @@ def ec_label_to_description(
       about non-leaf nodes of the EC hierarchy (e.g. 1.2.3.-).
 
   Returns:
-    Dictionary from EC label to description. Non root-level terms have their
-    parents information included for easier human-readability.
+    Dictionary from EC label to description. Non root-level terms DO NOT have
+    their parents information included, for easier human-readability.
   """
   leaves = _get_leaf_node_ec_labels_from_file_contents(enzyme_dat_file_contents)
   non_leaves = _get_non_leaf_node_ec_labels_from_file_contents(
       enzyme_class_file_contents)
 
   term_to_description = {}
-  for term, description in sorted(
-      non_leaves + leaves, key=lambda x: x.count('-'), reverse=True):
-    if term.count('-') == 3:
-      term_to_description['EC:' + term] = description
-    else:
-      terms_parent = _replace_one_level_up_with_dash_for_ec(term)
-      term_to_description[
-          'EC:' +
-          term] = term_to_description['EC:' + terms_parent] + ' ' + description
+  for term, description in non_leaves + leaves:
+    term_to_description['EC:' + term] = description
 
   return term_to_description
 

@@ -19,20 +19,44 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import functools
 import gzip
 import json
 import os
 import tarfile
-from typing import Optional, Text
+from typing import (Callable, List, Optional, Text)
 import urllib
 
 import numpy as np
+import tensorflow.compat.v1 as tf  # tf
 import tqdm
+
 
 AMINO_ACID_VOCABULARY = [
     'A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R',
     'S', 'T', 'V', 'W', 'Y'
 ]
+
+_PFAM_GAP_CHARACTER = '.'
+
+# Other characters representing amino-acids not in AMINO_ACID_VOCABULARY.
+_ADDITIONAL_AA_VOCABULARY = [
+    # Substitutions
+    'U',
+    'O',
+    # Ambiguous Characters
+    'B',
+    'Z',
+    'X',
+    # Gap Character
+    _PFAM_GAP_CHARACTER
+]
+
+# Vocab of all possible tokens in a valid input sequence
+FULL_RESIDUE_VOCAB = AMINO_ACID_VOCABULARY + _ADDITIONAL_AA_VOCABULARY
+
+# Map AA characters to their index in FULL_RESIDUE_VOCAB.
+_RESIDUE_TO_INT = {aa: idx for idx, aa in enumerate(FULL_RESIDUE_VOCAB)}
 
 OSS_ZIPPED_MODELS_ROOT_URL = 'https://storage.googleapis.com/brain-genomics-public/research/proteins/proteinfer/models/zipped_models/'
 _OSS_PFAM_ZIPPED_MODELS_URL_BASE = OSS_ZIPPED_MODELS_ROOT_URL + 'noxpd2_cnn_swissprot_pfam_random_swiss-cnn_for_swissprot_pfam_random-'
@@ -89,6 +113,133 @@ OSS_GO_ZIPPED_MODELS_URLS = [
 ]
 
 
+def residues_to_indices(amino_acid_residues):
+  return [_RESIDUE_TO_INT[c] for c in amino_acid_residues]
+
+
+def normalize_sequence_to_blosum_characters(seq):
+  """Make substitutions, since blosum62 doesn't include amino acids U and O.
+
+  We take the advice from here for the appropriate substitutions:
+  https://www.cgl.ucsf.edu/chimera/docs/ContributedSoftware/multalignviewer/multalignviewer.html
+
+  Args:
+    seq: amino acid sequence. A string.
+
+  Returns:
+    An amino acid sequence string that's compatible with the blosum substitution
+    matrix.
+  """
+  return seq.replace('U', 'C').replace('O', 'X')
+
+
+@functools.lru_cache(maxsize=1)
+def _build_one_hot_encodings():
+  """Create array of one-hot embeddings.
+
+  Row `i` of the returned array corresponds to the one-hot embedding of amino
+    acid FULL_RESIDUE_VOCAB[i].
+
+  Returns:
+    np.array of shape `[len(FULL_RESIDUE_VOCAB), 20]`.
+  """
+  base_encodings = np.eye(len(AMINO_ACID_VOCABULARY))
+  to_aa_index = AMINO_ACID_VOCABULARY.index
+
+  special_mappings = {
+      'B':
+          .5 *
+          (base_encodings[to_aa_index('D')] + base_encodings[to_aa_index('N')]),
+      'Z':
+          .5 *
+          (base_encodings[to_aa_index('E')] + base_encodings[to_aa_index('Q')]),
+      'X':
+          np.ones(len(AMINO_ACID_VOCABULARY)) / len(AMINO_ACID_VOCABULARY),
+      _PFAM_GAP_CHARACTER:
+          np.zeros(len(AMINO_ACID_VOCABULARY)),
+  }
+  special_mappings['U'] = base_encodings[to_aa_index('C')]
+  special_mappings['O'] = special_mappings['X']
+  special_encodings = np.array(
+      [special_mappings[c] for c in _ADDITIONAL_AA_VOCABULARY])
+  return np.concatenate((base_encodings, special_encodings), axis=0)
+
+
+def residues_to_one_hot(amino_acid_residues):
+  """Given a sequence of amino acids, return one hot array.
+
+  Supports ambiguous amino acid characters B, Z, and X by distributing evenly
+  over possible values, e.g. an 'X' gets mapped to [.05, .05, ... , .05].
+
+  Supports rare amino acids by appropriately substituting. See
+  normalize_sequence_to_blosum_characters for more information.
+
+  Supports gaps and pads with the '.' and '-' characters; which are mapped to
+  the zero vector.
+
+  Args:
+    amino_acid_residues: string. consisting of characters from
+      AMINO_ACID_VOCABULARY
+
+  Returns:
+    A numpy array of shape (len(amino_acid_residues),
+     len(AMINO_ACID_VOCABULARY)).
+
+  Raises:
+    KeyError: if amino_acid_residues has a character not in FULL_RESIDUE_VOCAB.
+  """
+  residue_encodings = _build_one_hot_encodings()
+  int_sequence = residues_to_indices(amino_acid_residues)
+  return residue_encodings[int_sequence]
+
+
+def fasta_indexer():
+  """Get a function for converting tokenized protein strings to indices."""
+  mapping = tf.constant(FULL_RESIDUE_VOCAB)
+  table = tf.lookup.index_table_from_tensor(mapping)
+
+  def mapper(residues):
+    return tf.ragged.map_flat_values(table.lookup, residues)
+
+  return mapper
+
+
+def fasta_encoder():
+  """Get a function for converting indexed amino acids to one-hot encodings."""
+  encoded = residues_to_one_hot(''.join(FULL_RESIDUE_VOCAB))
+  one_hot_embeddings = tf.constant(encoded, dtype=tf.float32)
+
+  def mapper(residues):
+    return tf.ragged.map_flat_values(
+        tf.gather, indices=residues, params=one_hot_embeddings)
+
+  return mapper
+
+
+def in_graph_residues_to_onehot(residues):
+  """Performs mapping in `residues_to_one_hot` in-graph.
+
+  Args:
+    residues: A tf.RaggedTensor with tokenized residues.
+
+  Returns:
+    A tuple of tensors (one_hots, row_lengths):
+      `one_hots` is a Tensor<shape=[None, None, len(AMINO_ACID_VOCABULARY)],
+                             dtype=tf.float32>
+       that contains a one_hot encoding of the residues and pads out all the
+       residues to the max sequence length in the batch by 0s.
+       `row_lengths` is a Tensor<shape=[None], dtype=tf.int32> with the length
+       of the unpadded sequences from residues.
+
+  Raises:
+    tf.errors.InvalidArgumentError: if `residues` contains a token not in
+    `FULL_RESIDUE_VOCAB`.
+  """
+  ragged_one_hots = fasta_encoder()(fasta_indexer()(residues))
+  return (ragged_one_hots.to_tensor(default_value=0),
+          tf.cast(ragged_one_hots.row_lengths(), dtype=tf.int32))
+
+
 def calculate_bucket_batch_sizes(bucket_boundaries, max_expected_sequence_size,
                                  largest_batch_size):
   """Calculated batch sizes for each bucket given a set of boundaries.
@@ -124,30 +275,6 @@ def calculate_bucket_batch_sizes(bucket_boundaries, max_expected_sequence_size,
         'allowed. Bucket boundaries passed in were: %s, leading to batch sizes of: %s'
         % (bucket_boundaries, bucket_absolute_batch_sizes))
   return bucket_absolute_batch_sizes
-
-
-def residues_to_one_hot(residue_sequence):
-  """Given a sequence of amino acids, return one hot array.
-
-  Args:
-    residue_sequence: string. consisting of characters from
-      AMINO_ACID_VOCABULARY
-
-  Returns:
-    A numpy array of shape (len(amino_acid_residues),
-     len(AMINO_ACID_VOCABULARY)).
-
-  Raises:
-    ValueError: if sparse_amino_acid has a character not in the vocabulary.
-  """
-  onehots = np.zeros((len(residue_sequence), len(AMINO_ACID_VOCABULARY)))
-
-  for i, char in enumerate(residue_sequence):
-    if char in AMINO_ACID_VOCABULARY:
-      onehots[i, AMINO_ACID_VOCABULARY.index(char)] = 1
-    else:
-      raise ValueError('Could not one-hot code character {}'.format(char))
-  return onehots
 
 
 def batch_iterable(iterable, batch_size):
@@ -212,7 +339,7 @@ def make_padded_np_array(ragged_arrays):
 
 def absolute_paths_of_files_in_dir(dir_path):
   files = os.listdir(dir_path)
-  return [os.path.join(dir_path, f) for f in files]
+  return sorted([os.path.join(dir_path, f) for f in files])
 
 
 def load_gz_json(path):

@@ -18,10 +18,23 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+
+import os
+
 from absl import flags
+from absl.testing import absltest
 import numpy as np
 
 FLAGS = flags.FLAGS
+
+
+def model_testdata_path():
+  return os.path.join(absltest.get_default_test_srcdir(),
+                      './')
+
+
+def savedmodel_path():
+  return os.path.join(model_testdata_path(), 'testdata/saved_model')
 
 
 def assert_dataframes_equal(abseil_testcase_instance,
