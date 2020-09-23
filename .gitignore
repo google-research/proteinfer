@@ -1,1 +1,2 @@
 cached_models/**
+__pycache__/*
