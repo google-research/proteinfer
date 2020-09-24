@@ -300,9 +300,9 @@ def yield_examples(tfrecord_path):
 
       example = {LABEL_KEY: []}
       example[SEQUENCE_ID_KEY] = example_proto.features.feature.get(
-          SEQUENCE_ID_KEY).bytes_list.value[0]
+          SEQUENCE_ID_KEY).bytes_list.value[0].decode("utf-8") 
       example[SEQUENCE_KEY] = example_proto.features.feature.get(
-          SEQUENCE_KEY).bytes_list.value[0]
+          SEQUENCE_KEY).bytes_list.value[0].decode("utf-8") 
       try:
         example[LABEL_KEY] = example_proto.features.feature.get(
             LABEL_KEY).bytes_list.value
