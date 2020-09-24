@@ -56,9 +56,9 @@ def _get_ec_transitive():
   logging.info('Getting EC parenthood dict.')
 
   with open(parenthood_lib.EC_LEAF_NODE_METADATA_PATH) as f:
-    leaf_node_contents = f.read().decode('utf-8')
+    leaf_node_contents = f.read()
   with open(parenthood_lib.EC_NON_LEAF_NODE_METADATA_PATH) as f:
-    non_leaf_node_contents = f.read().decode('utf-8')
+    non_leaf_node_contents = f.read()
 
   ec = parenthood_lib.parse_full_ec_file_to_transitive_parenthood(
       leaf_node_contents, non_leaf_node_contents)
