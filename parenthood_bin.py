@@ -48,10 +48,10 @@ def _get_ec_transitive():
   """Loads dictionary of label to implied labels for EC numbers."""
   logging.info('Getting EC parenthood dict.')
 
-  with tf.io.gfile.Gfile(parenthood_lib.EC_LEAF_NODE_METADATA_PATH) as f:
-    leaf_node_contents = f.read().decode('utf-8')
-  with tf.io.gfile.Gfile(parenthood_lib.EC_NON_LEAF_NODE_METADATA_PATH) as f:
-    non_leaf_node_contents = f.read().decode('utf-8')
+  with tf.io.gfile.GFile(parenthood_lib.EC_LEAF_NODE_METADATA_PATH) as f:
+    leaf_node_contents = f.read()
+  with tf.io.gfile.GFile(parenthood_lib.EC_NON_LEAF_NODE_METADATA_PATH) as f:
+    non_leaf_node_contents = f.read()
 
   ec = parenthood_lib.parse_full_ec_file_to_transitive_parenthood(
       leaf_node_contents, non_leaf_node_contents)
@@ -61,8 +61,8 @@ def _get_ec_transitive():
 def _get_go_transitive():
   """Loads dictionary of label to implied labels for GO terms."""
   logging.info('Getting GO parenthood dict.')
-  with tf.io.gfile.Gfile(parenthood_lib.GO_METADATA_PATH) as f:
-    whole_go_contents = f.read().decode('utf-8')
+  with tf.io.gfile.GFile(parenthood_lib.GO_METADATA_PATH) as f:
+    whole_go_contents = f.read()
   go_nontransitive = parenthood_lib.parse_full_go_file(whole_go_contents)
 
   go_transitive = parenthood_lib.transitive_go_parenthood(go_nontransitive)
@@ -106,7 +106,7 @@ def write_output_dict(output_dict, output_path):
     f.write(to_write_json.encode('utf-8'))
 
   logging.info('Writing to file.')
-  with tf.io.gfile.Gfile(output_path, 'wb') as output_file:
+  with tf.io.gfile.GFile(output_path, 'wb') as output_file:
     output_file.write(gzip_contents.getvalue())
 
 
