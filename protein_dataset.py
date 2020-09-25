@@ -161,7 +161,7 @@ def non_batched_dataset(train_dev_or_test,
   dataset_files = [
       os.path.join(data_root_dir, f)
       for f in tf.gfile.ListDirectory(data_root_dir)
-      if train_dev_or_test in f
+      if train_dev_or_test in f and ".tfrecord" in f
   ]
 
   tfrecord_dataset = tf.data.TFRecordDataset(dataset_files)
