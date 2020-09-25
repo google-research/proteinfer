@@ -7,7 +7,7 @@ funcsigs==1.0.2
 gast==0.2.2
 grpcio==1.19.0
 h5py==2.9.0
-Keras-Applications==1.0.7
+Keras-Applications==1.0.8
 Keras-Preprocessing==1.0.9
 Markdown==3.0.1
 mock==2.0.0
@@ -21,10 +21,10 @@ python-dateutil==2.8.0
 pytz==2018.9
 scikit-learn==0.23.2
 six==1.12.0
-tensorboard==1.13.1
-tensorflow==1.13.1
-tensorflow-gpu==1.13.1
-tensorflow-estimator==1.13.0
+tensorboard==1.15
+tensorflow==1.15
+tensorflow-gpu==1.15
+tensorflow-estimator==1.15.1
 tensorflow-hub==0.9.0
 termcolor==1.1.0
 tqdm==4.28.1
