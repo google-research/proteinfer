@@ -24,7 +24,6 @@ python generate_dataset.py --id_mapping_file=idmapping_selected.tab.gz --uniprot
 python generate_dataset.py --uniprot_xml=uniprot_sprot.xml.gz --parenthood_file=./data/parenthood.json.gz --dataset_type=random --output_prefix=random
 python generate_dataset.py --tfrecord_files=random*.tfrecord --vocab_prefix=EC --dataset_type=vocab --output_prefix=./vocabs
 
-
 """
 
 FOLDS = np.array([
