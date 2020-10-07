@@ -209,7 +209,7 @@ class ColabEvaluationTest(parameterized.TestCase):
             'proportion_text': ['100.0%'],
             'threshold': [0.5]
         })
-        pd.testing.assert_frame_equal(actual,expected)
+        pd.testing.assert_frame_equal(actual,expected, check_dtype=False)
 
 
     def test_read_blast_table(self):
