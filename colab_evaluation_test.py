@@ -153,7 +153,7 @@ class ColabEvaluationTest(parameterized.TestCase):
             'label': ['ENTRY1', 'ENTRY1', 'ENTRY2', 'ENTRY6'],
             'gt': [True, True, True, True]
         })
-        pr_curve = colab_evaluation.get_pr_curve_df(pred, gt)
+        pr_curve = colab_evaluation.get_pr_curve_df(pred, gt, filtered=False)
 
         np.testing.assert_almost_equal(pr_curve['recall'],
                                        np.array([1, 0.75, 0.75, .5]))
@@ -183,6 +183,39 @@ class ColabEvaluationTest(parameterized.TestCase):
         actual = tp_fp_fn.loc[:, ["tp", "fp", "fn"]]
         pd.testing.assert_frame_equal(expected, actual)
 
+
+    def test_apply_threshold_and_return_stats(self):
+        pred = pd.DataFrame({
+            'up_id': ['SEQ0', 'SEQ0', 'SEQ1', 'SEQ1', 'SEQ1'],
+            'label': ['ENTRY1', 'ENTRY2', 'ENTRY0', 'ENTRY1', 'ENTRY2'],
+            'value': [0.9, 0.5, 1.0, 1.0, 1.0]
+        })
+        gt = pd.DataFrame({
+            'up_id': ['SEQ0', 'SEQ1', 'SEQ1', 'SEQ3'],
+            'label': ['ENTRY1', 'ENTRY1', 'ENTRY2', 'ENTRY6'],
+            'gt': [True, True, True, True]
+        })
+        actual = colab_evaluation.apply_threshold_and_return_stats(pred,gt,grouping = {"ENTRY0":'A',"ENTRY1":'A',"ENTRY2":'A',"ENTRY6":'A'})
+        expected = pd.DataFrame({
+            'group': ['A'],
+            'tp': [3.0],
+            'fp': [1.0],
+            'fn': [1.0],
+            'precision': [0.75],
+            'recall': [0.75],
+            'f1': [0.75],
+            'count': [4.0],
+            'proportion': [1.0],
+            'proportion_text': ['100.0%'],
+            'threshold': [0.5]
+        })
+        pd.testing.assert_frame_equal(actual,expected, check_dtype=False)
+
+
+    def test_read_blast_table(self):
+        actual = colab_evaluation.read_blast_table("testdata/blast.tsv")
+        expected = pd.DataFrame({'up_id': ['ABC'], 'target': ['DEF'], 'pc_identity': [50], 'alignment_length': [100], 'bit_score': [500]})
+        pd.testing.assert_frame_equal(actual, expected)
 
 if __name__ == '__main__':
     absltest.main()
