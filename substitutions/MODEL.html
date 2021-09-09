@@ -1,0 +1,484 @@
+<a name="model"></a>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<a name="fig3"></a>
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<style title="block_width">
+  div.block {
+    width: 2.6vw;
+  }
+</style>
+<style>
+  div.block {
+    height: 3vw;
+    background: #f7d9d9;
+    margin: 0;
+    margin-left: 0.13%;
+    margin-right: 0.13%;
+    margin-bottom: 3px;
+    float: left;
+    margin-top: 5px;
+    text-align: center;
+    font-size: 1.2vw;
+    display: flex;
+    justify-content: center;
+    /* align horizontal */
+    align-items: center;
+    /* align vertical */
+  }
+
+  div.group {
+    background: #EEEEEE;
+    padding: 5px;
+    margin: 5px;
+    margin-left: 0px;
+    margin-right: 0px;
+  }
+
+  div.group h3 {
+    margin: 3px;
+    font-size: 10px;
+    color: #AAA;
+    float: right;
+  }
+
+  div#tooltipper {
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 100;
+    color: white;
+    width: 300px;
+    height: 110px;
+    display: none;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    line-height: 18px;
+  }
+
+  div#tooltipper div {
+    margin: 0;
+    padding: 0;
+    line-height: 18px;
+  }
+
+  div.clear {
+    clear: both;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  div.class_block {
+    width: 8%;
+  }
+
+  div.embedding_block {
+    width: 12%;
+  }
+
+  body {
+    margin-left: 30px;
+    margin-right: 30px;
+  }
+
+  div.input_letter {
+    color: gray;
+  }
+
+  input {
+    width: 2em;
+  }
+
+  span.ui-spinner {
+    margin-right: 1em;
+    width: 4em;
+    color: #333;
+  }
+
+  span#shape {
+    font-weight: bold;
+  }
+
+  .computed {
+    margin-top: 0.2em;
+    font-size: 80%
+  }
+
+  div.shape {
+    font-style: italic;
+  }
+</style>
+
+<script>
+
+  num_filters = 10;
+  inputs = {};
+  numbers = {};
+  tooltips = {};
+  original_colors = {};
+  sequence_length = null;
+
+  function class_display(i) {
+    name = "class_" + i;
+    inputs[name] = ['embedding'];
+    tooltips[name] = "<div>Probability of class membership</div><div class='computed'>Computed by: <i>sigmoid( mat_mul( learnt_class_embedding_for_class_0, mean_pooled_example_embedding))<div class='shape'>Shape: Scalar</div></i>";
+    return "<div class='block class_block'  style='background-color:#f7d9d9' id='" + name + "'>Label " + (i + 1) + "</div>"
+
+  }
+
+  function clear() {
+    return "<div style=clear:both></div>"
+  }
+
+  function get_color(layer_index) {
+    colors = ['#efe6dd', '#e9efdd', '#ddefe1', '#ddedef', '#dddeef', '#f7d9d9'];
+    return colors[layer_index]
+  }
+
+  function mean_pool_display() {
+    inputs['embedding'] = [];
+    for (var i = 0; i < sequence_length; i++) {
+      inputs['embedding'].push('layer_' + (num_layers.val() - 1) + '_' + i)
+    }
+    tooltips['embedding'] = "<div>Embedding of entire protein.</div><div class='computed'>Computed by: mean-pool across sequence dimension of previous layer. <div class='shape'>Shape: [n_features,]</div></div>";
+    return "<div class='block embedding_block' style='background-color:#f7d9d9' id='embedding'>Embedding</div>" + clear()
+
+  }
+
+  function single_resid_block(layer_index, position) {
+
+    these_inputs = [];
+    these_numbers = [];
+    if (layer_index > 0) {
+      previous_layer = "layer_" + (layer_index - 1)
+    } else {
+      previous_layer = "one_hot"
+    }
+    if (layer_index == 0) {
+      spacing = 1
+    } else {
+      spacing = dilation_rate.val() ** (layer_index - 1)
+    }
+
+    half_kernel_size = Math.round(kernel_size.val() / 2);
+    for (var i = 0; i < kernel_size.val(); i++) {
+      position_in_kernel = i + 1 - half_kernel_size;
+      this_position = position + position_in_kernel * spacing;
+      if (this_position >= 0 & this_position < sequence_length) {
+        these_inputs.push(previous_layer + "_" + this_position);
+        these_numbers.push(i + 1)
+      }
+    }
+
+    inputs["layer_" + layer_index + "_" + position] = these_inputs;
+    if (layer_index > 0) {
+      tooltips["layer_" + layer_index + "_"
+        + position] = "<div>Embedding of region centred at this position. </div><div  class='computed'>Computed by: residual block with (dilated) inputs from previous layer, added to activations from previous layer.<div class='shape'>Shape: [n_features,]</div></div>"
+    } else {
+      tooltips["layer_" + layer_index + "_"
+        + position] = "<div>Embedding of region centred at this position. </div><div  class='computed'>Convolution across one-hots.<div class='shape'>Shape: [n_features,]</div></div>"
+    }
+    numbers["layer_" + layer_index + "_" + position] = these_numbers;
+    return "<div class='block' id='layer_" + layer_index + "_" + position
+      + "' style='background-color:" + get_color(layer_index) + "'> </div>"
+  }
+
+  function make_resid_layer(layer_index) {
+    html = "";
+
+    for (var i = 0; i < sequence_length; i++) {
+      html = html + single_resid_block(layer_index, i)
+    }
+
+    return html + clear()
+  }
+
+  function single_one_hot_block(position) {
+    inputs["one_hot_" + position] = ["raw_" + position];
+    tooltips["one_hot_"
+      + position] = "<div>One-hot representation of this amino acid. </div><div  class='computed'>Computed by: lookup table.<div class='shape'>Shape: [20,]</div></div>";
+    return "<div id='one_hot_" + position
+      + "'class='block' style='background-color:#b8e2f7'> </div>"
+  }
+
+  function make_one_hot_layer(layer_index) {
+    html = "";
+
+    for (var i = 0; i < sequence_length; i++) {
+      html = html + single_one_hot_block(i)
+    }
+
+    return html + clear()
+  }
+
+  model_eg_seq = "MELTLNSSSSLIKRKDAKSSRNQESSSNNMTFAKMKPPTYQFQAKNSVKEMKFTHEKTFT" +
+    "PEGETLEKWEKLHVLSYPHSKNDASVPVFVMLPLDTVTMSGHLNKPRAMNASLMALKGAG";
+
+  function single_input_block(position) {
+    inputs["raw_" + position] = [];
+    tooltips["raw_" + position] = "<div><span id='shape'>Single amino acid as character.</div>";
+    if (position == 0) {
+      letter = "M"
+    } else {
+      myArray = 'ACDEFGHIKLMNPQRSTVWY'.split('');
+      letter = myArray[Math.floor(Math.random() * myArray.length)];
+    }
+    return "<div class='block input_letter' id='raw_" + position
+      + "' style='background-color:#f7b8e0'>" + letter + "</div>"
+  }
+
+  function make_input_layer(layer_index) {
+    html = "";
+
+    for (var i = 0; i < sequence_length; i++) {
+      html = html + single_input_block(i)
+    }
+
+    return html + clear()
+  }
+
+  function getStyleSheet(unique_title) {
+    for (var i = 0; i < document.styleSheets.length; i++) {
+      var sheet = document.styleSheets[i];
+      if (sheet.title == unique_title) {
+        return sheet;
+      }
+    }
+  }
+
+  function makeModel() {
+    sequence_length = Math.round(seq_length.val());
+    width = (84 - sequence_length * 0.2) / sequence_length;
+    getStyleSheet("block_width").cssRules[0
+    ].style.width = width + "%";
+
+    html = "";
+    html += "<div class='group'><h3>Class probabilities</h3><div class=clear></div>";
+    for (var i = 0; i < num_classes.val(); i++) {
+      html = html + class_display(i)
+
+    }
+    html = html + clear();
+    html += "</div>";
+    html += "<div class='group'><h3>Embedding</h3><div class=clear></div>";
+    html = html + mean_pool_display();
+    html += "</div>";
+    html += "<div class='group'><h3>Residual layers</h3><div class=clear></div>";
+    for (var i = num_layers.val() - 1; i >= 0; i--) {
+      html = html + make_resid_layer(i)
+
+    }
+    html += "</div>";
+    html += "<div class='group'><h3>One-hot encoding</h3><div class=clear></div>";
+    html += make_one_hot_layer();
+    html += "</div>";
+    html += "<div class='group'><h3>Input</h3><div class=clear></div>";
+    html += make_input_layer();
+    html += "</div>";
+    document.getElementById('container').innerHTML = html;
+    $('.block').each(function (x, a) {
+      a.onmouseenter = function (e) {
+        mouseover(e.target.id)
+      };
+      a.onmouseleave = function (e) {
+        mouseleave(e.target.id)
+      }
+    }
+    )
+
+  }
+
+</script>
+
+<figure style="grid-column: page;">
+  <div style="position:relative">
+
+    <figcaption class="captiontext" style="margin-bottom:15px;"><a name="fig3">Figure 3</a>: Architecture diagram. You
+      can explore our network
+      architecture below. Move your mouse over a node of the network to find out how it is calculated
+      and highlight nodes that feed into it. You can adjust the hyperparameters to tweak the network
+      displayed.
+    </figcaption>
+
+    <div style="color:gray;margin-bottom:10px;"><label for="num_layers">Num layers:</label>
+      <input id="num_layers" name="value" value=5>
+      <label for="kernel_size">Kernel size:</label>
+      <input id="kernel_size" name="value" value=5>
+      <label for="dilation_rate">Dilation rate:</label>
+      <input id="dilation_rate" name="value" value=2>
+      <label for="num_classes">Number of labels:</label>
+      <input id="num_classes" name="value" value=5>
+      <label for="seq_length">Sequence length:</label>
+      <input id="seq_length" name="value" value=30>
+
+
+    </div>
+
+    <div id="container">
+
+
+    </div>
+    <script>
+      var highlight_colors = [
+        '#ffa500',
+        '#eea10d',
+        '#de9d1a',
+        '#cd9927',
+        '#bd9635',
+        '#ac9242',
+        '#9c8e4f',
+        '#8b8a5c',];
+
+      function max_num_recursions() {
+        return parseInt(num_layers.val()) + 2;
+      }
+
+      // Convenience function to highlight all blocks when input is embedding
+      // or labels. Is considerably faster than using recursion.
+      function highlight_all_nn_pos() {
+        for (var i = 0; i < sequence_length; i++) {
+          for (var layer_num = 1; layer_num <= parseInt(num_layers.val()); layer_num++) {
+            highlight('layer_' + (layer_num - 1) + '_' + i, 0, "");
+          }
+          highlight("one_hot_" + i, 0, "");
+          highlight("raw_" + i, 0, "");
+        }
+      }
+
+      function set_tooltip(id) {
+        tooltip = $('#tooltipper')[0];
+        tooltip.style.display = 'block';
+        tooltip.style.top = (box.offsetTop - 120) + "px";
+        tooltip.style.left = (box.offsetLeft + 35) + "px";
+        tooltip.innerHTML = tooltips[id];
+      }
+      function rgb2hex(rgb) {
+
+        if (/^#[0-9A-F]{6}$/i.test(rgb)) return rgb;
+
+        rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+
+        function hex(x) {
+          return ("0" + parseInt(x).toString(16)).slice(-2);
+        }
+        return "#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
+      }
+
+      function blendColors(colorA, colorB, amount) {
+        const [rA, gA, bA] = rgb2hex(colorA).toUpperCase().match(/\w\w/g).map((c) => parseInt(c, 16));
+        const [rB, gB, bB] = rgb2hex(colorB).toUpperCase().match(/\w\w/g).map((c) => parseInt(c, 16));
+
+
+        const r = Math.round(rA + (rB - rA) * amount).toString(16).padStart(2, '0');
+        const g = Math.round(gA + (gB - gA) * amount).toString(16).padStart(2, '0');
+        const b = Math.round(bA + (bB - bA) * amount).toString(16).padStart(2, '0');
+        return '#' + r + g + b;
+      }
+      function highlight(id, num_recursions, label) {
+        var id;
+        var num_recursions;
+        box = $('#' + id)[0];
+        if (!(id in original_colors)) {
+          original_colors[id] = box.style.backgroundColor
+        }
+
+        if (num_recursions == max_num_recursions()) {
+          set_tooltip(id);
+        }
+
+        color_index = max_num_recursions() - num_recursions;
+
+        values = [0.8, 0.8, 0.7, 0.3, 0.2, 0.2, 0.2, 0.2, 0.1]
+        values2 = [0.8, 0.8, 0.7, 0.6, 0.5, 0.4, 0.4, 0.4, 0.4]
+        if (color_index > values.length) {
+          color_index = values.length - 1
+        }
+        box.style.backgroundColor = blendColors(original_colors[id], blendColors(box.style.backgroundColor, "#FFA500", values[color_index]), 0.8);
+
+
+        if (id == 'embedding') {
+          highlight_all_nn_pos();
+        }
+
+        if (label) {
+          box.innerHTML = label
+        }
+
+        if (num_recursions > 0 && id != 'embedding') {
+          var tolight = inputs[id];
+          var numbering = [];
+          if (id in numbers) {
+            var numbering = numbers[id]
+          }
+          for (var k = 0; k < tolight.length; k++) {
+            if (numbering.length > 0 & num_recursions == max_num_recursions()) {
+              h_label = numbering[k]
+            } else {
+              h_label = ""
+            }
+            highlight(tolight[k], Math.max(num_recursions - 1, 0), h_label)
+          }
+        }
+
+        if (id.startsWith('class')) {
+          $('#embedding')[0].style.backgroundColor = 'white';
+        }
+      }
+
+      function mouseover(id) {
+        highlight(id, max_num_recursions(), "");
+      }
+
+      function unhighlight(id) {
+        tooltip = $('#tooltipper')[0];
+        tooltip.style.display = 'none';
+        if (id in original_colors) {
+          $('#' + id)[0].style.backgroundColor = original_colors[id];
+          if (!id.includes('class') & !id.includes('embed') & !id.includes('raw')) {
+            $('#' + id)[0].innerHTML = "";
+          }
+        }
+      }
+
+      function mouseleave(id) {
+        $('.block').each(function (a, x) {
+          unhighlight(x.id)
+        })
+      }
+    </script>
+
+    <script>
+      var seq_length = $("#seq_length").spinner({
+        min: 10, max: 200, step: 10, stop: function (e, ui) {
+          makeModel();
+        }
+      });
+
+      var num_classes = $("#num_classes").spinner({
+        min: 1, max: 30, step: 1, stop: function (e, ui) {
+          makeModel();
+        }
+      });
+
+      var num_layers = $("#num_layers").spinner({
+        min: 1, max: 6, stop: function (e, ui) {
+          makeModel();
+        }
+      });
+      var kernel_size = $("#kernel_size").spinner({
+        min: 1, max: 50, step: 2, stop: function (e, ui) {
+          makeModel();
+        }
+      });
+      var dilation_rate = $("#dilation_rate").spinner({
+        min: 1, max: 5, stop: function (e, ui) {
+          makeModel();
+        }
+      });
+
+      setTimeout("makeModel();", 5000);
+
+    </script>
+
+    <div id="tooltipper"></div>
+</figure>

@@ -1,0 +1,340 @@
+<!--
+  This template is modified from the Distill template (http://distill.pub)
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!doctype html>
+<!--- ProtVista --->
+<base target="_blank">
+<script src="./protvista/protvista.min.js"></script>
+
+<link href="style.css" rel="stylesheet">
+<link href="./protvista/css/main.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Raleway:300,400,500,600" rel="stylesheet">
+
+<head>
+  <title>ProteInfer</title>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-141852537-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'UA-141852537-1');
+  </script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+
+  <script src="templatev2.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+  <script src="https://unpkg.com/ngl"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <!--Has to go after plotly because plotly overrides Promise https://github.com/plotly/plotly.js/issues/1032 -->
+  <script src="//cdn.jsdelivr.net/npm/bluebird@3.5.5/js/browser/bluebird.min.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://unpkg.com/webcola/WebCola/cola.min.js"></script>
+
+  <!--cytoscape-->
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.8.1/dist/cytoscape.min.js"></script>
+  <script src="https://dagrejs.github.io/project/graphlib-dot/v0.6.3/graphlib-dot.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/graphlib@2.1.7/dist/graphlib.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dagre@0.8.4/dist/dagre.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape-panzoom@2.5.3/cytoscape-panzoom.js"></script>
+  <link rel=stylesheet href="https://cdn.jsdelivr.net/npm/cytoscape-panzoom@2.5.3/cytoscape.js-panzoom.css">
+  <link rel=stylesheet href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.3.0/cytoscape-cola.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.2.2/cytoscape-dagre.min.js"></script>
+  <link rel=stylesheet href=https://splasho.com/petitions/mg/metricsgraphics.css>
+  <!--end cytoscape-->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+    integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+    integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+    crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+    integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+    crossorigin="anonymous"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      renderMathInElement(document.body, {
+        delimiters:
+          [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "\\[", right: "\\]", display: true }
+          ]
+      });
+    });
+  </script>
+  <script src='metricsgraphics.js'></script>
+
+  <script src="./script.js"></script>
+
+  <meta name="viewport" content="width=930">
+  <meta charset="utf8">
+  <link rel='icon' href='glycine-favicon.png' type='image/x-icon' />
+</head>
+
+<body>
+  <d-front-matter>
+    <script id='distill-front-matter' type="text/json">{
+    "title": "ProteInfer: deep neural models for protein functional inference",
+    "published": "Sep 13, 2021",
+    "authors": [
+      {
+        "author":"Theo Sanderson",
+        "affiliations": [{"name": "Francis Crick Institute"}]
+      },
+      {
+        "author":"Maxwell Bileschi",
+        "affiliations": [{"name": "Google Research"}]
+      },
+      
+      {
+        "author":"David Belanger",
+        "affiliations": [{"name": "Google Research"}]
+      }
+      ,
+      {
+        "author":"Lucy Colwell",
+        "affiliations": [{"name": "Google Research"}]
+      }
+
+    
+    ],
+    "katex": {
+      "delimiters": [
+        {"left": "$$", "right": "$$", "display": false}
+      ]
+    }
+  }
+
+
+  </script>
+
+
+  </d-front-matter>
+  <d-title>
+    <h1 id="title">ProteInfer: deep networks for protein functional inference</h1>
+
+    <p>We describe an approach for predicting the functional properties of a protein from its amino acid sequence using
+      neural networks. Below, you can try an implementation of our technique that makes predictions locally on your
+      device using TensorFlow.JS. Read on for an explanation of how it works, interactive figures that explore the
+      models, and notebooks reproducing our analysis.
+    </p>
+    <p id="use_desktop_browser">
+      This page works best on non-mobile browsers.
+    </p>
+    <figure id="top_figure">
+      <script>
+        $(function () {
+          $($(".tooltip_top")).tooltip();
+        });
+      </script>
+
+      <div id="example_selector" class="top_figure_box_with_caption_container">
+        <figcaption
+          title="Click on one of these proteins to input its sequence to the neural network. You can also paste in your own sequence."
+          class="label_top">
+          Select protein
+        </figcaption>
+        <div id="egselector">
+
+          <div id="ecoli" onclick="markExampleAsHighlighted(event); loadDemoEColi();"
+            class="an_eg eg_selected arrow_box">
+            <i>E.&nbsp;coli</i> TrpCF
+          </div>
+
+          <div id="tg" class="an_eg" onclick="markExampleAsHighlighted(event); loadDemoHeme();">
+            <i>H.&nbsp;sapiens</i> hemoglobin
+          </div>
+
+          <div id="hsap" class="an_eg" onclick="markExampleAsHighlighted(event); loadAmylase();">
+            <i>H.&nbsp;sapiens</i> amylase
+          </div>
+
+          <div id="yourseq" class="an_eg" onclick="markExampleAsHighlighted(event); clearInputSeq(); customInputSeq();">
+            Your protein sequence
+          </div>
+        </div>
+      </div>
+
+      <div id="amino_acid_input_container" class="top_figure_box_with_caption_container">
+        <figcaption
+          title="The sequence entered here will be processed by the neural network to predict protein functions."
+          class="label_top">
+          Protein<br>sequence
+        </figcaption>
+
+        <div id="textbox-container">
+          <textarea id="input_seq" contenteditable="true"
+            placeholder="Enter a full-length protein sequence for prediction, with optional FASTA header line."
+            onkeyup="waitTilDoneTypingThenMakePrediction(event);" rows="6" spellcheck="false" autocorrect="off"
+            disabled="true"></textarea>
+        </div>
+      </div>
+
+      <div id="protein_description_container" class="top_figure_box_with_caption_container">
+        <figcaption title="Information about this protein" class="label_top">
+          Known protein function
+        </figcaption>
+
+        <div id="protein_description_div">
+          <div id="protein_description_contents">
+
+          </div>
+
+          <sup><a id="protein_more_info_link" style="display: none" href="" target="_blank">?</a></sup>
+        </div>
+      </div>
+
+      <div id="prediction_function_container" class="top_figure_box_with_caption_container">
+        <figcaption></figcaption>
+        <div id="content_container">
+          <div id="input_seq_error_cont"></div>
+
+          <div id="enzyme_stuff">
+            <div>
+              <h3>Predicted <span class="ec_title_highlight">Enzymatic</span> Activity</h3>
+              <button id="learn_more_ec_button" class="collapsible_learn_more" onclick="toggleECSummaryHelpText()">Learn
+                more</button>
+              <div id="learn_more_ec_contents" class="learn_more_contents">
+                Below we predict the EC numbers of the protein, and highlight in green the amino acids (residues) most
+                important for that prediction. Enzyme Commission (EC) numbers<sup><a
+                    href="https://en.wikipedia.org/wiki/Enzyme_Commission_number" target="_blank">[1]</a></sup> describe
+                the enzymatic function of a protein: they tell us what reactions the proteins catalyze. There are
+                experimentally validated EC numbers for the examples given, but there are a lot of unannotated proteins.
+                <br>
+                <br>
+                Amino acids that are green are predicted to be more involved with a particular enzymatic activity.
+                <br>
+                <br>
+                The rotating molecule gives an in-depth 3D view of the predictions. This structure is determined by
+                x-ray crystallography, and so is not available for custom input sequences.
+                <br>
+                <br>
+                You can also scroll all the way in on the horizontal bars (summary mode) to see specific residues
+                involved.
+              </div>
+              <img id="ec_loader" src="ajax-loader.gif" class="ajax_loader" />
+
+              <div id="ec_container">
+                <div id="protvista" style="display: none;"></div>
+
+                <div>
+                  <div id="pdb_unavailable" style="display: none">
+                  </div>
+                  <div id="pdb_main_container">
+                    <div id="pdb_main_grid">
+                      <div id="large_pdb_controls">
+                        <div id="unswitch_to_ec" class="return_to_summary_mode_text">
+                          <span> Return to summary mode</span>
+                        </div>
+                        <div id="activation_options_container">
+                          Select which activations to highlight:
+                          <div id="activation_options"></div>
+                        </div>
+                      </div>
+                      <div id="color_bar_and_pdb_view" style="position:relative">
+                        <div id="pdb_mag"
+                          style="display:none;position:absolute; left:70px;top:30px;z-index:200;opacity:0.7; pointer-events: none;">
+                          <img src="magnifying_glass.png" style="width:90px;  pointer-events: none;">
+                        </div>
+                        <img id="ec_color_bar" src="ec_color_bar.svg" style="display: none;">
+                        <div id="pdb_view" class="pdb_small_viewer"></div>
+
+                      </div>
+                      <div></div>
+                      <!--Empty div because we want to skip an entry in the template grid.-->
+                      <div id="large_ec_instructions">Scroll and drag to explore the important residues (green) for the
+                        selected function.</div>
+
+                    </div>
+                    <div id="pdb_magnifying_glass_text" class="magnifying_glass_text" onclick="switchToPDBView()">
+                      Illustration of sequence activations mapped onto known PDB structure
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="go_container">
+            <hr id="ec_go_separator">
+            <h3>Top <span class="go_title_highlight">Gene Ontology</span> predictions</h3>
+            <button id="learn_more_go_button" class="collapsible_learn_more" onclick="toggleGOSummaryHelpText()">Learn
+              more</button>
+            <div id="learn_more_go_contents" class="learn_more_contents">
+              Below we predict the GO terms of the protein. Gene Ontology (GO) <sup><a
+                  href="https://en.wikipedia.org/wiki/Gene_ontology" target="_blank">[2]</a></sup> describe the
+              molecular function and biological processes that proteins take part in. GO terms are often experimentally
+              validated, but there are a lot of unannotated proteins.
+              <br>
+              <br>
+              GO terms have a hierarchical structure, from most general to most specific. In summary mode, on the left,
+              we present the most specific GO terms predicted for this protein; on the right, you can explore the
+              complete hierarchy of the terms. We show the confidence of a prediction when hovering, from 0 (more gray)
+              to 1.0 (more yellow).
+            </div>
+            <img id="go_loader" src="ajax-loader.gif" class="ajax_loader" />
+
+            <div id="go_content_container" style="display: none;">
+              <div id="go_grid">
+              </div>
+              <div id="go_stuff">
+                <div id="unswitch_to_go" class="return_to_summary_mode_text">
+                  <span>Return to summary mode</span>
+                </div>
+                <img id="go_color_bar" src="go_color_bar.svg" style="display: none;">
+                <div id="cy" class="cy_small_viewer">
+                  <div id="magnify_go"
+                    style="display:none;position:absolute; left:200px;top:50px;z-index:200;opacity:0.5;  pointer-events: none;">
+                    <img src="magnifying_glass.png" style="width:100px; pointer-events: none;">
+                  </div>
+
+                </div>
+
+                <div id="large_go_instructions">Scroll and drag to explore the GO term predictions and their
+                  relationships.</div>
+
+                <div id="go_magnifying_glass_text" class="magnifying_glass_text" onclick="switchToGOView()">
+                  Click to view hierarchical Gene Ontology predictions
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <script>
+
+
+        $("#pdb_view").click(x => switchToPDBView());
+        $("#cy").click(x => switchToGOView());
+
+        $(".return_to_summary_mode_text").click(x => switchToSummaryView());
+      </script>
+
+    </figure>
+  </d-title>
+  <d-byline></d-byline>
+  <p id="biorxiv_reference" style="display:none">To cite this paper or tool, refer to (DO NOT SUBMIT).<br>This
+    manuscript is a pre-print,
+    also available in a non-interactive format at bioRxiv.</p>
+  <d-article>
+    <a class="marker" href="#section-1" id="section-1"><span>1</span></a>

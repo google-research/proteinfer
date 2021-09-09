@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   viewBox="0.0 0.0 460.8005249343832 24.0"
+   fill="none"
+   stroke="none"
+   stroke-linecap="square"
+   stroke-miterlimit="10"
+   id="svg108"
+   sodipodi:docname="ec_color_bar.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <metadata
+     id="metadata114">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs112" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1853"
+     inkscape:window-height="1025"
+     id="namedview110"
+     showgrid="false"
+     inkscape:zoom="1.8250847"
+     inkscape:cx="86.8588"
+     inkscape:cy="61.785612"
+     inkscape:window-x="67"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g106" />
+  <clipPath
+     id="p.0">
+    <path
+       d="m0 0l460.80054 0l0 24.0l-460.80054 0l0 -24.0z"
+       clip-rule="nonzero"
+       id="path82" />
+  </clipPath>
+  <g
+     clip-path="url(#p.0)"
+     id="g106">
+    <path
+       fill="#000000"
+       fill-opacity="0.0"
+       d="m0 0l460.80054 0l0 24.0l-460.80054 0z"
+       fill-rule="evenodd"
+       id="path85" />
+    <defs
+       id="defs94">
+      <linearGradient
+         id="p.1"
+         gradientUnits="userSpaceOnUse"
+         gradientTransform="matrix(21.467426340872525 0.0 0.0 21.467426340872525 0.0 0.0)"
+         spreadMethod="pad"
+         x1="7.335779914185525E-4"
+         y1="0.2728910128077015"
+         x2="21.46815991886394"
+         y2="0.2728910128077015">
+        <stop
+           offset="0.0"
+           stop-color="#ffffff"
+           id="stop87" />
+        <stop
+           offset="0.5"
+           stop-color="#b4b4b4"
+           id="stop89" />
+        <stop
+           offset="1.0"
+           stop-color="#00ff00"
+           id="stop91" />
+      </linearGradient>
+    </defs>
+    <path
+       fill="url(#p.1)"
+       d="m0.015748031 0l460.8504 0l0 5.858268l-460.8504 0z"
+       fill-rule="evenodd"
+       id="path96" />
+    <path
+       fill="#000000"
+       fill-opacity="0.0"
+       d="m372.38583 -4.75853l122.48819 0l0 24.0l-122.48819 0z"
+       fill-rule="evenodd"
+       id="path98" />
+    <path
+       fill="#000000"
+       fill-opacity="0.0"
+       d="m-8.892388 -4.75853l134.26772 0l0 24.0l-134.26772 0z"
+       fill-rule="evenodd"
+       id="path102" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
+       x="1.0958388"
+       y="17.573456"
+       id="text118"><tspan
+         sodipodi:role="line"
+         id="tspan116"
+         x="1.0958388"
+         y="17.573456"
+         style="font-size:12px">Not used to make prediction </tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
+       x="460.23834"
+       y="18.121376"
+       id="text118-3"><tspan
+         sodipodi:role="line"
+         id="tspan116-6"
+         x="460.23834"
+         y="18.121376"
+         style="font-size:12px;text-align:end;text-anchor:end">Used to make prediction</tspan></text>
+  </g>
+</svg>

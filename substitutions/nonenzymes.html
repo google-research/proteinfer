@@ -1,0 +1,161 @@
+</p>
+
+<style>
+  .colab-root {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.75);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px !important;
+    text-decoration: none;
+    color: #aaa;
+    border: none;
+    font-weight: 300;
+    border: solid 1px rgba(0, 0, 0, 0.08);
+    border-bottom-color: rgba(0, 0, 0, 0.15);
+    text-transform: uppercase;
+    line-height: 16px
+  }
+
+  span.svelte-jc9cgl {
+    background-image: url(colab.svg);
+    background-repeat: no-repeat;
+    background-size: 20px;
+    background-position-y: 2px;
+    display: inline-block;
+    padding-left: 24px;
+    border-radius: 4px;
+    text-decoration: none
+  }
+
+  a.colab-root:hover {
+    color: #666;
+    background: white;
+    border-color: rgba(0, 0, 0, 0.2)
+  }
+</style>
+<style>
+  div.eg_selected2 {
+    color: hsl(24, 100%, 45%);
+    text-decoration: underline
+  }
+</style>
+<!-- <span id="figure-number-aligned-interpolation-comparison" class="figcaption kicker-text-align add-colab-link--section-aligned-interpolation" style="grid-column: kicker; margin-top: 20px;">
+     <p><a href="#figure-aligned-interpolation-comparison" class="figure-number">2</a></p>
+   <a href="https://colab.sandbox.google.com/drive/1jBqDHFZMXjzBkFOFLBD9nk7ImFaZpYWB" class="colab-root">Reproduce in a <span class="svelte-jc9cgl">Notebook</span></a></span>-->
+<figure class="l-middle-outset" style="text-align:center">
+  <!--<figcaption class="caption_text" style="padding-top:10%;">
+    Here we have embedded all <strong>non-enzymes</strong> in the SwissProt test set using the
+    network trained for EC classification. No differential supervision, therefore, has been supplied
+    for any of these sequences. In examing the embedding space with UMAP we find that important
+    protein properties such as cellular localisation are reflected.
+  </figcaption>-->
+  <div>
+
+    <div id="egselector">
+      <div class="an_eg eg_selected2" id="membrane" onclick="drawNE('GO:0031224','Intrinsic component of membrane' );$( '.eg_selected2' ).removeClass( 'eg_selected2' );
+	  	  $( '#membrane' ).addClass( 'eg_selected2' );  ">Intrinsic component of membrane
+      </div>
+      <div class="an_eg" id="ribosome" onclick="drawNE('GO:0005840','Ribosome' );$( '.eg_selected2' ).removeClass( 'eg_selected2' );
+  	  	  $( '#ribosome' ).addClass( 'eg_selected2' );  ">Structural constituent of ribosome
+      </div>
+      <div class="an_eg " id="nbinding" onclick="drawNE('GO:0000166','Nucleotide-binding' );$( '.eg_selected2' ).removeClass( 'eg_selected2' );
+  	  	  $( '#nbinding' ).addClass( 'eg_selected2' );  ">Nucleotide-binding
+      </div>
+      <!--<div class="an_eg " id="Nucleus" onclick="drawNE('GO:0005634','Nucleus' );$( '.eg_selected2' ).removeClass( 'eg_selected2' );
+  	  	  $( '#Nucleus' ).addClass( 'eg_selected2' );  ">Nucleus
+      </div>-->
+
+
+    </div>
+  </div>
+  <div id="NEembeddingDiv" style="height:30em;"></div>
+  <script>
+    var NE_embedding_data;
+    $.getJSON("non_enzymes.json", function (data) {
+      NE_embedding_data = data
+    }).then(function () {
+      drawNE('GO:0031224', 'Membrane');
+    });
+
+    function drawNE(filter, text) {
+      selected_x = [];
+      selected_y = [];
+      unselected_x = [];
+      unselected_y = [];
+
+      for (i in NE_embedding_data['go']) {
+        go_labels = NE_embedding_data['go'][i];
+        if (go_labels.indexOf(filter) != -1) {
+          selected_x.push(NE_embedding_data['x'][i]);
+          selected_y.push(NE_embedding_data['y'][i])
+        } else {
+          unselected_x.push(NE_embedding_data['x'][i]);
+          unselected_y.push(NE_embedding_data['y'][i])
+        }
+      }
+      var trace1 = {
+        x: selected_x,
+        y: selected_y,
+        mode: 'markers',
+        name: text,
+        marker: {
+          color:
+            'red', size: 4
+        },
+        type: 'scattergl'
+      };
+      var trace2 = {
+        name: "Others",
+        x: unselected_x,
+        y: unselected_y,
+        marker: {
+          color:
+            'gray', size: 2
+        },
+        mode: 'markers',
+        type: 'scattergl'
+      };
+
+      var data = [trace2, trace1];
+      layout_ne = {
+        legend: { "orientation": "h" },
+        xaxis: {
+          autorange: true,
+          showgrid: false,
+          zeroline: false,
+          showline: false,
+          autotick: true,
+          ticks: '',
+          showticklabels: false
+        },
+        yaxis: {
+          autorange: true,
+          showgrid: false,
+          zeroline: false,
+          showline: false,
+          autotick: true,
+          ticks: '',
+          showticklabels: false
+        }, hovermode: 'closest', margin: { t: 0 }
+      };
+      Plotly.newPlot('NEembeddingDiv', data, layout_ne);
+    }
+
+
+  </script>
+  <script type="text/javascript">window.addEventListener("resize", function () {
+      Plotly.Plots.resize(document.getElementById("NEembeddingDiv"));
+    });</script>
+  <figcaption class="captiontext" style="text-align:left"><a name="fig9">Figure 9:</a> A neural network trained on
+    enzyme
+    function learns general protein properties, beyond enzymatic functionality. We took the
+    embeddings for all non-enzymatic sequences in SwissProt and projected them using UMAP. To
+    illustrate the structure contained in these embeddings we highlight genes based on GO labels (on
+    which this network was never trained).
+  </figcaption>
+</figure>
+
+<style>
+
+</style>

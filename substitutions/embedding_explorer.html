@@ -1,0 +1,510 @@
+</p>
+<a name="fig8"></a>
+<style>
+  .ectt {
+    font-size: 50%;
+    color: red;
+  }
+
+  ::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 7px;
+    height: 7px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, .5);
+    -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+  }
+
+  .colab-root {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.75);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px !important;
+    text-decoration: none;
+    color: #aaa;
+    border: none;
+    font-weight: 300;
+    border: solid 1px rgba(0, 0, 0, 0.08);
+    border-bottom-color: rgba(0, 0, 0, 0.15);
+    text-transform: uppercase;
+    line-height: 16px
+  }
+
+  span.svelte-jc9cgl {
+    background-image: url(colab.svg);
+    background-repeat: no-repeat;
+    background-size: 20px;
+    background-position-y: 2px;
+    display: inline-block;
+    padding-left: 24px;
+    border-radius: 4px;
+    text-decoration: none
+  }
+
+  a.colab-root:hover {
+    color: #666;
+    background: white;
+    border-color: rgba(0, 0, 0, 0.2)
+  }
+</style>
+<span id="figure-number-aligned-interpolation-comparison"
+  class="figcaption kicker-text-align add-colab-link--section-aligned-interpolation"
+  style="grid-column: kicker; margin-top: 20px;">
+
+  <a href="https://colab.research.google.com/github/google-research/proteinfer/blob/master/colabs/Embeddings.ipynb"
+    class="colab-root">Reproduce in a
+    <span class="svelte-jc9cgl">Notebook</span></a></span>
+<style>
+  div .ec_level {
+    width: 4em;
+    overflow: auto;
+    height: 7em;
+    border-right: 1px dashed #DDD;
+    text-align: center;
+  }
+
+  div .empty_ec {
+    background: url('leftarrow.png');
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .ec_level ul {
+    list-style: none
+  }
+
+  .ec_level ul li {
+    list-style: none;
+    margin-bottom: 0em;
+    cursor: pointer;
+    color: #CCC;
+    font-weight: bold;
+  }
+
+  .locked ul li {
+    color: #DDD !important;
+  }
+
+  .ec_level ul li:hover {
+    list-style: none;
+    margin-bottom: 0em;
+    cursor: pointer;
+    font-weight: bold;
+    text-decoration: underline;
+    color: gray;
+  }
+
+  .locked ul li:hover {
+    color: gray !important;
+  }
+
+  .ec_level ul li.selected_item {
+    list-style: none;
+    margin-bottom: 0em;
+    cursor: pointer;
+    font-weight: bold;
+    color: black !important;
+  }
+</style>
+<figure class="l-middle-outset" style="text-align:center">
+  <div style="border:1px solid #EEE; padding:10px; padding-bottom:0px;">
+    <div style=" display: flex;   flex-direction: row; margin-bottom:1em; ">
+
+      <div class="ec_level" id="ec_top">
+        <ul>
+          <li onclick="setFilter()" class="selected_item">EC:</li>
+        </ul>
+      </div>
+      <div class="ec_level" id="ec_level_0">
+        <ul>
+          <li>EC:1.</li>
+        </ul>
+      </div>
+      <div class="ec_level" id="ec_level_1">2</div>
+      <div class="ec_level" id="ec_level_2">3</div>
+      <div class="ec_level" id="ec_level_3">HI</div>
+      <figcaption style="width:40%;text-align:left; padding-left:20px;" class="captiontext">
+        <p>Each
+          point below represents a protein sequence in the embedding space, coloured according to EC
+          number.</p>
+        <p>Dive into the EC hierarchy by clicking on the numbers to the left.</p><a onclick="setFilter()"
+          style="cursor:pointer">Reset</a>
+      </figcaption>
+    </div>
+    <div id="ec_preview" style="font-size:50%;color:gray;"></div>
+    <div id="embeddingDiv" style="height:30em;"></div>
+  </div>
+  <script>
+
+    function changeCharacters(input) {
+      if (input) {
+        out = input.replace("<small>", "").replace("</small>", "").replace("&prime;", "'").replace(
+          "&alpha;", "α").replace("&beta;", "β").replace("&mdash;", "-");
+
+        return "<span class='ectt'>" + out + "</span>"
+      }
+    }
+
+    function sortEC(ec1, ec2) {
+      if (ec1 == "Other") {
+        return 1
+      }
+      if (ec2 == "Other") {
+        return -1
+      }
+      ec1_split = ec1.split(":")[1].split(".");
+      ec2_split = ec2.split(":")[1].split(".");
+      for (let i in ec1_split) {
+        if (ec1_split[i] != ec2_split[i]) {
+          return ec1_split[i] - ec2_split[i]
+        }
+
+      }
+      return 0
+
+    }
+
+    colorway = ['#e6194B', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#42d4f4', '#f032e6',
+      '#bfef45', '#fabebe', '#469990', '#e6beff', '#9A6324', '#fffac8', '#800000', '#aaffc3',
+      '#808000', '#ffd8b1', '#000075', '#ffe119'];
+
+    function makeTraces(filters = []) {
+
+      traces = {};
+      all_x = [];
+      all_y = [];
+      for (embeddingDiv_counter in embeddingDiv['ec_data']) {
+        included = true;
+        for (f in filters) {
+          if (filters[f] != embeddingDiv['ec_data'][embeddingDiv_counter][f]) {
+            included = false
+          }
+        }
+        if (included) {
+
+          this_level = embeddingDiv['ec_data'][embeddingDiv_counter][filters.length];
+          if (filters.length == 0) {
+            dot = ""
+          } else {
+            dot = "."
+          }
+          if (filters.length == 3) {
+            dot2 = ""
+          } else {
+            dot2 = "."
+          }
+          if (filters.length < 4) {
+            the_name = "EC:" + filters.join(".") + dot + this_level + dot2 + Array(
+              3 - filters.length).fill("-").join(".")
+          } else {
+            the_name = "EC:" + filters.join(".")
+          }
+
+          all_x.push(embeddingDiv['x'][embeddingDiv_counter]);
+          all_y.push(embeddingDiv['y'][embeddingDiv_counter]);
+
+          whichtrace = the_name
+
+        } else {
+          whichtrace = "Other"
+        }
+        if (!traces[whichtrace]) {
+          traces[whichtrace] = { 'x': [], 'y': [], 'id': [], 'text': [] }
+        }
+        traces[whichtrace]['x'].push(embeddingDiv['x'][embeddingDiv_counter]);
+        traces[whichtrace]['y'].push(embeddingDiv['y'][embeddingDiv_counter]);
+        // traces[whichtrace]['id'].push(embeddingDiv['id'][embeddingDiv_counter])
+        traces[whichtrace]['text'].push(
+          "<b>" + embeddingDiv['id'][embeddingDiv_counter] + "</b><br>EC:"
+          + embeddingDiv['ec_data'][embeddingDiv_counter].join(".") + "<br>" + changeCharacters(
+            ecNames[embeddingDiv['ec_data'][embeddingDiv_counter].join(".")]))
+
+      }
+      //sort and create traces
+      sizes = [3, 5, 7, 10];
+      output_traces = [];
+      keys = Object.keys(traces);
+      keys.sort(sortEC);
+      for (var k in keys) {
+        key = keys[k];
+        trace = traces[key];
+        if (key == "Other") {
+          marker = { opacity: 0.4, size: 3, color: "gray" }
+        } else {
+          marker = { opacity: 1, size: sizes[filters.length] }
+        }
+
+        output_traces.push({
+          type: "scattergl",
+          mode: "markers",
+          x: trace['x'],
+          y: trace['y'],
+          text: trace['text'],
+          id: trace['id'],
+          name: key,
+          marker: marker,
+          hoverinfo: 'text'
+        }
+        );
+
+      }
+      all_x = all_x.sort(function (a, b) {
+        return a - b
+      });
+      all_y = all_y.sort(function (a, b) {
+        return a - b
+      });
+      lq_index = Math.round(all_x.length * 0.02);
+      uq_index = Math.round((all_x.length - 1) * 0.98);
+      lqx = all_x[lq_index];
+      uqx = all_x[uq_index];
+      lqy = all_y[lq_index];
+      uqy = all_y[uq_index];
+      minX = lqx - (uqx - lqx) * 0.2;
+      maxX = uqx + (uqx - lqx) * 0.2;
+      minY = lqy - (uqy - lqy) * 0.2;
+      maxY = uqy + (uqy - lqy) * 0.2;
+      layout = {
+        colorway: colorway,
+        hovermode: 'closest',
+        xaxis: { range: [minX, maxX] },
+        yaxis: { range: [minY, maxY] },
+        margin: { t: 20, b: 19 }
+      };
+
+      return [output_traces, layout]
+    }
+
+    embeddingDiv = null;
+    ec_tree = null;
+    currentFilter = [];
+
+    function getFilterPreview(ec_path, ec_value) {
+      if (ec_path.length < 3) {
+        if (ec_path.length > 0) {
+          dot = "."
+        } else {
+          dot = ""
+        }
+        the_name = ec_path.join(".") + dot + ec_value + "." + Array(3 - ec_path.length).fill(
+          "-").join(".")
+      } else {
+        the_name = ec_path.join(".") + "." + ec_value
+      }
+      return ecNames[the_name]
+
+    }
+
+    function setFilter(ec_path, ec_value) {
+      if (!locked) {
+
+        if (!ec_path & !ec_value) {
+          ec_path = []
+        } else {
+          if (ec_path != [undefined]) {
+            ec_path.push(ec_value)
+          } else {
+            ec_path = [ec_value]
+          }
+        }
+        currentFilter = ec_path;
+
+        populateTree();
+        redraw(currentFilter);
+
+      }
+    }
+
+    function populateTree() {
+      current_ec_tree = ec_tree;
+      path = [];
+      for (i = 0; i < 4; i++) {
+        var listElement = document.createElement('ul');
+        container = $('#ec_level_' + i)[0];
+        container.innerHTML = "";
+        container.appendChild(listElement);
+        number_added = 0;
+        if (i == 0 | currentFilter[i - 1]) {
+          keys = Object.keys(current_ec_tree);
+          keys.sort(function (a, b) {
+            return a - b
+          });
+          for (k in keys) {
+            number_added++;
+            key = keys[k];
+            var listItem = document.createElement('li');
+            listItem.ec_path = path.slice();
+            listItem.ec_value = key;
+            if (i == currentFilter.length) {
+              listItem.style.color = colorway[k % colorway.length];
+            }
+            listItem.title = getFilterPreview(path, key);
+            listItem.onclick = function () {
+              setFilter(this.ec_path, this.ec_value);
+            };
+            listItem.classList.add('tooltip_ec');
+            if (i != 3) {
+              listItem.innerHTML = key + ".";
+            } else {
+
+              listItem.innerHTML = key + "";
+            }
+
+            if (key == currentFilter[i]) {
+              listItem.classList.add('selected_item')
+            }
+
+            listElement.appendChild(listItem);
+
+          }
+
+          current_ec_tree = current_ec_tree[currentFilter[i]];
+          path.push(currentFilter[i]);
+          container.classList.remove('empty_ec')
+        } else {
+          container = $('#ec_level_' + i)[0];
+
+          container.classList.add('empty_ec')
+
+        }
+
+      }
+      render_tooltips();
+      $('.ui-tooltip').remove();
+    }
+
+    $.getJSON("./embedding.json", function (data) {
+      embeddingDiv = data;
+      ec_tree = {};
+      for (i in embeddingDiv['ec_data']) {
+        ec_set = embeddingDiv['ec_data'][i];
+        if (!(ec_set[0] in ec_tree)) {
+          ec_tree[ec_set[0]] = {}
+        }
+        if (!(ec_set[1] in ec_tree[ec_set[0]])) {
+          ec_tree[ec_set[0]][ec_set[1]] = {}
+        }
+        if (!(ec_set[2] in ec_tree[ec_set[0]][ec_set[1]])) {
+          ec_tree[ec_set[0]][ec_set[1]][ec_set[2]] = {}
+        }
+        if (!(ec_set[3] in ec_tree[ec_set[0]][ec_set[1]][ec_set[2]])) {
+          ec_tree[ec_set[0]][ec_set[1]][ec_set[2]][ec_set[3]] = 0
+        }
+        ec_tree[ec_set[0]][ec_set[1]][ec_set[2]][ec_set[3]] += 1
+
+      }
+    }).then(function () {
+      draw();
+      populateTree();
+    });
+
+    var targetLayout;
+    var oldLayout;
+    var frame = 0;
+    var nextData;
+
+    function draw() {
+      [data, layout] = makeTraces([]);
+
+      Plotly.plot('embeddingDiv', data, layout)
+    }
+
+    function redraw(filters) {
+      graphDiv = document.getElementById('embeddingDiv');
+      to_delete = [];
+      for (trace_id in graphDiv.data) {
+        if (graphDiv.data[trace_id].name != "Other" & !(graphDiv.data[trace_id].name
+          + ".").startsWith("EC:" + filters.join(".") + ".")) {
+          to_delete.push(Number(trace_id))
+        }
+      }
+      var update = {
+        opacity: 0.4,
+        'marker.color': 'gray'
+      };
+      Plotly.restyle(graphDiv, update, to_delete);
+      res = makeTraces(filters);
+      data = res[0];
+      layout = res[1];
+      nextData = data;
+      targetLayout = layout;
+      oldLayout = JSON.parse(JSON.stringify(graphDiv.layout));
+      //Plotly.plot('embeddingDiv', data).then(function(value) {
+      zoomStep()
+      // })
+
+    }
+
+    locked = false;
+
+    function zoomStep() {
+
+      max_frame = 20;
+      if (frame > max_frame) {
+        locked = false;
+        $('.locked').removeClass('locked');
+        graphDiv = document.getElementById('embeddingDiv');
+        while (graphDiv.data.length > 0) {
+          Plotly.deleteTraces(graphDiv, [0])
+        }
+        Plotly.plot('embeddingDiv', nextData, targetLayout, { responsive: true });
+        frame = 0;
+        return
+      }
+      locked = true;
+      $('.ec_level').addClass('locked');
+      interpolation = frame / max_frame;
+
+      minX = oldLayout.xaxis.range[0] * (1 - interpolation) + targetLayout.xaxis.range[0]
+        * interpolation;
+      maxX = oldLayout.xaxis.range[1] * (1 - interpolation) + targetLayout.xaxis.range[1]
+        * interpolation;
+      minY = oldLayout.yaxis.range[0] * (1 - interpolation) + targetLayout.yaxis.range[0]
+        * interpolation;
+      maxY = oldLayout.yaxis.range[1] * (1 - interpolation) + targetLayout.yaxis.range[1]
+        * interpolation;
+      Plotly.relayout('embeddingDiv', {
+
+        xaxis: { range: [minX, maxX] },
+        yaxis: { range: [minY, maxY] }
+      });
+      setTimeout("zoomStep()", 50);
+      frame = frame + 1
+
+    }
+  </script>
+  <script>
+    function render_tooltips() {
+
+      $('.tooltip_ec').tooltip({
+        position: {
+          my: "left middle",
+          at: "right middle",
+          collision: "none"
+        },
+        open: function () {
+          // make sure all other tooltips are closed when opening a new one
+          $('.tooltip_ec').not(this).tooltip('close');
+        }
+      });
+    }
+
+  </script>
+  <script type="text/javascript">window.addEventListener("resize", function () {
+      Plotly.Plots.resize(document.getElementById("embeddingDiv"));
+    });</script>
+  <figcaption class="captiontext" style="text-align:left">Figure 8: Interactive exploration of the
+    consistency
+    between the hierarchical structure of our embedding space and the hierarchy of EC numbers. Hover
+    over an individual point to see which protein it corresponds to. Points are coloured according
+    to the level of EC annotation currently reached using the numbers above. Draw a box with the
+    mouse to zoom in.
+  </figcaption>
+</figure>
+<style>
+
+</style>

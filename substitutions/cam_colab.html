@@ -1,0 +1,17 @@
+<p>Our networks are trained with unaligned full-length proteins, each of which may have multiple enzymatic functions, or
+  none. We therefore asked to what extent the network captured information about which sub-parts of a sequence relate to
+  a particular function.</p>
+<span id="figure-number-aligned-interpolation-comparison"
+  class="figcaption kicker-text-align add-colab-link--section-aligned-interpolation"
+  style="grid-column: kicker; margin-top: 20px;">
+
+  <a href="https://colab.research.google.com/github/google-research/proteinfer/blob/master/colabs/Class_Activation_Mapping.ipynb"
+    class="colab-root">Reproduce in a <span class="svelte-jc9cgl">Notebook</span></a></span>
+
+<p>Neural networks are sometimes seen as “black-boxes” whose inner working are difficult to interpret. However, the
+  particular network architecture we selected allowed us to employ class activation mapping (CAM) <d-cite
+    key="classactivationmapping"></d-cite> to attribute the network's decision to particular positions in the input
+  sequence. In this approach, we take the layer of the network immediately before pooling over the sequence dimension,
+  and apply to it the linear transformation used to map from embedding space to predictions. In doing so we generate an
+  estimate of how much each position contributes to each prediction.</p>
+<p>

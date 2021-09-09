@@ -1,0 +1,140 @@
+<a name="fig1"></a>
+<figure>
+  <div style="display:flex; justify-content:space-between">
+    <div id="fake_users1"></div>
+    <div id="prop_data"></div>
+  </div>
+  <figcaption>
+    Figure 1: Growth in the size of the TrEMBL database over time, and corresponding decline in the
+    proportion
+    of protein sequences for which we have curated annotations.
+  </figcaption>
+</figure>
+
+
+<script>
+  prop_data = [{ 'date': new Date('2015-04-01'), 'value': 0.0117352815985507 },
+  { 'date': new Date('2015-05-01'), 'value': 0.0115580035055404 },
+  { 'date': new Date('2015-06-01'), 'value': 0.0112542648464436 },
+  { 'date': new Date('2015-07-01'), 'value': 0.0111103198700587 },
+  { 'date': new Date('2015-08-01'), 'value': 0.0109777389694477 },
+  { 'date': new Date('2015-09-01'), 'value': 0.0108058342985914 },
+  { 'date': new Date('2015-10-01'), 'value': 0.0104131963258816 },
+  { 'date': new Date('2015-11-01'), 'value': 0.0100811134035234 },
+  { 'date': new Date('2015-12-01'), 'value': 0.00995312541754734 },
+  { 'date': new Date('2016-01-01'), 'value': 0.00921493577857951 },
+  { 'date': new Date('2016-02-01'), 'value': 0.00902966302823931 },
+  { 'date': new Date('2016-03-01'), 'value': 0.00873640512554169 },
+  { 'date': new Date('2016-04-01'), 'value': 0.00865118718214883 },
+  { 'date': new Date('2016-05-01'), 'value': 0.00886902615150529 },
+  { 'date': new Date('2016-06-01'), 'value': 0.00861153319634886 },
+  { 'date': new Date('2016-07-01'), 'value': 0.0084385982974376 },
+  { 'date': new Date('2016-08-01'), 'value': 0.00825021728699474 },
+  { 'date': new Date('2016-09-01'), 'value': 0.00812850915710022 },
+  { 'date': new Date('2016-10-01'), 'value': 0.00782499393506499 },
+  { 'date': new Date('2016-11-01'), 'value': 0.00779174876099898 },
+  { 'date': new Date('2017-01-01'), 'value': 0.00750861316373137 },
+  { 'date': new Date('2017-02-01'), 'value': 0.00714545327034499 },
+  { 'date': new Date('2017-03-01'), 'value': 0.00690661101523046 },
+  { 'date': new Date('2017-04-01'), 'value': 0.00653373684524042 },
+  { 'date': new Date('2017-05-01'), 'value': 0.0065028364441088 },
+  { 'date': new Date('2017-06-01'), 'value': 0.00635641577791481 },
+  { 'date': new Date('2017-07-01'), 'value': 0.00630559524966829 },
+  { 'date': new Date('2017-08-01'), 'value': 0.00621307482066711 },
+  { 'date': new Date('2017-09-01'), 'value': 0.00616979026406577 },
+  { 'date': new Date('2017-10-01'), 'value': 0.00596336307996914 },
+  { 'date': new Date('2017-11-01'), 'value': 0.00563491981477778 },
+  { 'date': new Date('2017-12-01'), 'value': 0.00544153997885597 },
+  { 'date': new Date('2018-01-01'), 'value': 0.00517124653207614 },
+  { 'date': new Date('2018-02-01'), 'value': 0.00511516335690894 },
+  { 'date': new Date('2018-03-01'), 'value': 0.00499897487324349 },
+  { 'date': new Date('2018-04-01'), 'value': 0.00485601906733064 },
+  { 'date': new Date('2018-05-01'), 'value': 0.00481930091760711 },
+  { 'date': new Date('2018-06-01'), 'value': 0.00480662303948518 },
+  { 'date': new Date('2018-07-01'), 'value': 0.0046405034822197 },
+  { 'date': new Date('2018-08-01'), 'value': 0.00447225908472174 },
+  { 'date': new Date('2018-09-01'), 'value': 0.00440597197994595 },
+  { 'date': new Date('2018-10-01'), 'value': 0.00418464686015763 },
+  { 'date': new Date('2018-11-01'), 'value': 0.00407320994681866 },
+  { 'date': new Date('2019-01-01'), 'value': 0.00400214723208994 },
+  { 'date': new Date('2019-02-01'), 'value': 0.00382754255208977 }];
+</script>
+<script>data = [{ 'date': new Date('2015-04-15'), 'value': 46714516 },
+  { 'date': new Date('2015-05-15'), 'value': 47452313 },
+  { 'date': new Date('2015-06-15'), 'value': 48744721 },
+  { 'date': new Date('2015-07-15'), 'value': 49401998 },
+  { 'date': new Date('2015-08-15'), 'value': 50011027 },
+  { 'date': new Date('2015-09-15'), 'value': 50825784 },
+  { 'date': new Date('2015-10-15'), 'value': 52783601 },
+  { 'date': new Date('2015-11-15'), 'value': 54540801 },
+  { 'date': new Date('2015-12-15'), 'value': 55270679 },
+  { 'date': new Date('2016-01-15'), 'value': 59718159 },
+  { 'date': new Date('2016-02-15'), 'value': 60971489 },
+  { 'date': new Date('2016-03-15'), 'value': 63039659 },
+  { 'date': new Date('2016-04-15'), 'value': 63686057 },
+  { 'date': new Date('2016-05-15'), 'value': 62148086 },
+  { 'date': new Date('2016-06-15'), 'value': 64028668 },
+  { 'date': new Date('2016-07-15'), 'value': 65378749 },
+  { 'date': new Date('2016-08-15'), 'value': 66905753 },
+  { 'date': new Date('2016-09-15'), 'value': 67940995 },
+  { 'date': new Date('2016-10-15'), 'value': 70656157 },
+  { 'date': new Date('2016-11-15'), 'value': 71002161 },
+  { 'date': new Date('2017-01-15'), 'value': 73711881 },
+  { 'date': new Date('2017-02-15'), 'value': 77483538 },
+  { 'date': new Date('2017-03-15'), 'value': 80204459 },
+  { 'date': new Date('2017-04-15'), 'value': 84827567 },
+  { 'date': new Date('2017-05-15'), 'value': 85272789 },
+  { 'date': new Date('2017-06-15'), 'value': 87291332 },
+  { 'date': new Date('2017-07-15'), 'value': 88032926 },
+  { 'date': new Date('2017-08-15'), 'value': 89396316 },
+  { 'date': new Date('2017-09-15'), 'value': 90050711 },
+  { 'date': new Date('2017-10-15'), 'value': 93236986 },
+  { 'date': new Date('2017-11-15'), 'value': 98705220 },
+  { 'date': new Date('2017-12-15'), 'value': 102248261 },
+  { 'date': new Date('2018-01-15'), 'value': 107627435 },
+  { 'date': new Date('2018-02-15'), 'value': 108857716 },
+  { 'date': new Date('2018-03-15'), 'value': 111425245 },
+  { 'date': new Date('2018-04-15'), 'value': 114759640 },
+  { 'date': new Date('2018-05-15'), 'value': 115678811 },
+  { 'date': new Date('2018-06-15'), 'value': 116030110 },
+  { 'date': new Date('2018-07-15'), 'value': 120243849 },
+  { 'date': new Date('2018-08-15'), 'value': 124797108 },
+  { 'date': new Date('2018-09-15'), 'value': 126780198 },
+  { 'date': new Date('2018-10-15'), 'value': 133507323 },
+  { 'date': new Date('2018-11-15'), 'value': 137213158 },
+  { 'date': new Date('2019-01-15'), 'value': 139694261 },
+  { 'date': new Date('2019-02-15'), 'value': 146106279 }];
+
+  //data = MG.convert.date(data, 'date');
+  MG.data_graphic({
+
+    data: data,
+    width: 310,
+    height: 200,
+    inflator: 1.08,
+    top: 0,
+    x_label: "Date",
+    y_label: "Number of entries",
+    left: 90,
+    target: document.getElementById('fake_users1'),
+    x_accessor: 'date',
+    y_accessor: 'value'
+  });</script>
+
+<script>
+  MG.data_graphic({
+    format: 'percentage',
+    data: prop_data,
+    width: 360,
+    right: 50,
+    height: 200,
+    inflator: 1.08,
+    yax_format: d3.format('.2p'),
+    top: 0,
+    x_label: "Date",
+    y_label: "Curated proportion",
+    left: 90,
+    target: document.getElementById('prop_data'),
+    x_accessor: 'date',
+    y_accessor: 'value'
+  });</script>
