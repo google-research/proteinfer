@@ -1034,8 +1034,12 @@ function generateGOOutput(
 }
 
 function drawTopPreds(itemsForGraph) {
+  goParenthoodFastLookup = {}
+  for (const k in goParenthood) {
+    goParenthoodFastLookup[k] = new Set(goParenthood[k]);
+  }
   candidates = Object.keys(itemsForGraph).filter(
-      x => isALeafNode(x, Object.keys(itemsForGraph)));
+      x => isALeafNode(x, Object.keys(itemsForGraph), goParenthoodFastLookup));
   sortedCandidates = candidates.sort(
       (x, y) => itemsForGraph[y] - itemsForGraph[x]);
   toPrint = sortedCandidates.filter(
@@ -1076,10 +1080,10 @@ function missingParentNodes(listOfNodes) {
   return toReturn.slice(listOfNodes.length)
 }
 
-function isALeafNode(n, onlyConsiderTheseNodes) {
+function isALeafNode(n, onlyConsiderTheseNodes, goParenthoodFastLookup) {
   onlyConsiderTheseNodes = new Set(onlyConsiderTheseNodes);
   for (var i in goParenthood) {
-    if (onlyConsiderTheseNodes.has(i) && goParenthood[i].has(n)) {  // n has a parent in the subgraph.
+    if (onlyConsiderTheseNodes.has(i) && goParenthoodFastLookup[i].has(n)) {  // n has a parent in the subgraph.
       return false;
     }
   }
@@ -1133,7 +1137,7 @@ function drawGraph(items) {
 
   nodes.forEach(function (x) {
     if (x in goParenthood) {
-      parents = new Array(goParenthood[x]).filter(value => goVocab.includes(value));
+      parents = goParenthood[x].filter(value => goVocab.includes(value));
       parents.forEach(function (y) {
         item = {data: {source: y, target: x}};
         nodeElements.push(item);
@@ -1251,11 +1255,7 @@ async function makeGOPrediction(sanetizedInput) {
 
 function loadGOMetadata() {
   parenthoodPromise = $.getJSON('models/go/go_parenthood.json', function (data) {
-    goParenthood = {};
-
-    for (const k in data) {
-      goParenthood[k] = new Set(data[k]);
-    }
+    goParenthood = data;
   });
   namesPromise = $.getJSON('models/go/go_names.json', function (data) {
     goNames = data;
