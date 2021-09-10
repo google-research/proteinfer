@@ -1077,8 +1077,9 @@ function missingParentNodes(listOfNodes) {
 }
 
 function isALeafNode(n, onlyConsiderTheseNodes) {
+  onlyConsiderTheseNodes = new Set(onlyConsiderTheseNodes);
   for (var i in goParenthood) {
-    if (onlyConsiderTheseNodes.includes(i) && goParenthood[i].includes(n)) {  // n has a parent in the subgraph.
+    if (onlyConsiderTheseNodes.has(i) && goParenthood[i].has(n)) {  // n has a parent in the subgraph.
       return false;
     }
   }
@@ -1132,7 +1133,7 @@ function drawGraph(items) {
 
   nodes.forEach(function (x) {
     if (x in goParenthood) {
-      parents = goParenthood[x].filter(value => goVocab.includes(value));
+      parents = new Array(goParenthood[x]).filter(value => goVocab.includes(value));
       parents.forEach(function (y) {
         item = {data: {source: y, target: x}};
         nodeElements.push(item);
@@ -1250,7 +1251,11 @@ async function makeGOPrediction(sanetizedInput) {
 
 function loadGOMetadata() {
   parenthoodPromise = $.getJSON('models/go/go_parenthood.json', function (data) {
-    goParenthood = data;
+    goParenthood = {};
+
+    for (const k in data) {
+      goParenthood[k] = new Set(data[k]);
+    }
   });
   namesPromise = $.getJSON('models/go/go_names.json', function (data) {
     goNames = data;
