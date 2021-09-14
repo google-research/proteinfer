@@ -217,7 +217,7 @@ function sanitizeInput(input) {
       // Sometimes an asterisk is used as the stop codon; remove that.
       .replace(/\*$/, '');
 
-  if (sanitized.match(/[^\w]|_/)) {
+  if (sanitized.match(/[^A-Z]/)) {
     // There is some punctuation: reject.
     return new Error("Only one sequence (and one header line) are allowed; check for punctuation.")
   }
