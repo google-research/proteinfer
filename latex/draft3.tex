@@ -117,7 +117,7 @@ BLASTp is arguably a practitioner's default choice for functional annotation, so
 
 We produced a precision-recall curve by using the bit score of the closest sequence as a measure of confidence, varying the cutoff above which we retain the imputed labels \cite{zhou2019cafa, eddy2011accelerated}. We also considered an ensemble of neural networks \cite{bileschi}, where the average of the ensemble elements' predicted probabilities is used as a confidence score. %
 %startleaveout
-(See \Cref{sup:fig:with_ensemble}, \Cref{sup:fig:without_ensemble}.)
+(See \Cref{fig:with_ensemble}, \Cref{fig:without_ensemble}.)
 %stopleaveout
 
 %%%METHOD%%%
@@ -125,9 +125,8 @@ We found that BLASTp was able to achieve higher recall values than ProteInfer fo
 On the clustered train-test split based on UniRef50 (see \textit{clustered} in \Cref{fig:toplevel}B%htmlver:<a href="#fig5" target="_self">Fig. 5</a>
 ), we see a performance drop in all methods: this is expected, as remote homology tasks are designed to challenge methods to generalize farther in sequence space. The $\texttt{F}_{max}$ score of a single neural network fell to 0.914 (95\% CI: 0.913--0.915, precision: 0.959 recall: 0.875), substantially lower than BLAST (0.950, 95\% CI: 0.950--0.951), though again an ensemble of both BLAST and ProteInfer outperformed both (0.979, 95\% CI: 0.979--0.980). We find that neural network methods learn different information about proteins than alignment-based methods, and a combination of the two further improves remote homology detection. 
 
-We also examined the relationship between the number of examples of a label in the training dataset and the performance of the model. In an image recognition task, this is an important consideration since one image of, say, a dog, can be utterly different to another. Large numbers of labels are therefore required to learn filters that are able to predict members of a class. In contrast, for sequence data we found that even for labels that occurred less than five times in the training set, 58\% of examples in the test set were correctly recalled, while achieving a precision of 88\%, for an F1 of 0.7 (\Cref{trainset}%htmlver: <a href="#fig6" target="_self">Fig. 6</a>
-). High levels of performance are maintained with few training examples because of the evolutionary relationship between sequences, which means that one ortholog of a gene may be similar in sequence to another (\Cref{seq_similarity}%htmlver: 
-). The simple BLAST implementation described above also performs well, and better than a single neural network, likely again exploiting the fact that many sequence have close neighbours in sequence space with similar functions. We again find that ensembling the BLAST and ProteInfer outputs provides performance exceeding that of either technique used alone.
+We also examined the relationship between the number of examples of a label in the training dataset and the performance of the model. In an image recognition task, this is an important consideration since one image of, say, a dog, can be utterly different to another. Large numbers of labels are therefore required to learn filters that are able to predict members of a class. In contrast, for sequence data we found that even for labels that occurred less than five times in the training set, 58\% of examples in the test set were correctly recalled, while achieving a precision of 88\%, for an F1 of 0.7 (\Cref{sup:fig:ec_f1_by_training_size}%htmlver: <a href="#fig6" target="_self">Fig. 6</a>
+). High levels of performance are maintained with few training examples because of the evolutionary relationship between sequences, which means that one ortholog of a gene may be similar in sequence to another. The simple BLAST implementation described above also performs well, and better than a single neural network, likely again exploiting the fact that many sequence have close neighbours in sequence space with similar functions. We again find that ensembling the BLAST and ProteInfer outputs provides performance exceeding that of either technique used alone.
 %%%NUM_TRAIN_EGS%%%
 \subsection*{Deep models link sequence regions to function}
 %%%cam_colab%%% %
@@ -424,30 +423,30 @@ When assigning examples to folds in our clustered dataset, we note that there ar
     \centering
     \includegraphics[width=1\linewidth]{Figures/random_truncated.pdf}
     \caption{EC number prediction: random split} 
-    \label{with_ensemble:a} 
+    \label{fig:with_ensemble:a} 
     \vspace{4ex}
   \end{subfigure}%% 
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
     \includegraphics[width=1\linewidth]{Figures/random_truncated_go.pdf}
     \caption{GO term prediction: random split} 
-    \label{with_ensemble:b} 
+    \label{fig:with_ensemble:b} 
     \vspace{4ex}
   \end{subfigure} 
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
     \includegraphics[width=1\linewidth]{Figures/clustered_truncated.pdf}
     \caption{EC number prediction: clustered split} 
-    \label{with_ensemble:c} 
+    \label{fig:with_ensemble:c} 
   \end{subfigure}%%
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
     \includegraphics[width=1\linewidth]{Figures/clustered_truncated_go.pdf}
     \caption{GO term prediction: clustered split} 
-    \label{with_ensemble:d} 
+    \label{fig:with_ensemble:d} 
   \end{subfigure} 
   \caption{Bootstrapped precision-recall curves for EC number prediction and gene ontology term prediction for random and clustered splits for four methods: BLAST top pick, single ProteInfer CNN, ensembled ProteInfer CNNs, and ensembled ProteInfer CNNs scaled by BLAST score. }
-  \label{with_ensemble} 
+  \label{fig:with_ensemble} 
 \end{figure}
 
 
@@ -457,30 +456,30 @@ When assigning examples to folds in our clustered dataset, we note that there ar
     \centering
     \includegraphics[width=0.9\linewidth]{Figures/prc_ec_random_unzoomed.png}
     \caption{EC number prediction: random split} 
-    \label{without_ensemble:a} 
+    \label{fig:without_ensemble:a} 
     \vspace{4ex}
   \end{subfigure}%% 
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
     \includegraphics[width=0.9\linewidth]{Figures/prc_go_random_unzoomed.png}
     \caption{GO term prediction: random split} 
-    \label{without_ensemble:b} 
+    \label{fig:without_ensemble:b} 
     \vspace{4ex}
   \end{subfigure} 
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
     \includegraphics[width=0.9\linewidth]{Figures/prc_ec_clustered_unzoomed.png}
     \caption{EC number prediction: clustered split} 
-    \label{without_ensemble:c} 
+    \label{fig:without_ensemble:c} 
   \end{subfigure}%%
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
     \includegraphics[width=0.9\linewidth]{Figures/prc_go_clustered_unzoomed.png}
     \caption{GO term prediction: clustered split} 
-    \label{without_ensemble:d} 
+    \label{fig:without_ensemble:d} 
   \end{subfigure} 
   \caption{Full precision-recall curves for EC number prediction and gene ontology term prediction for random and clustered splits for four methods: BLAST top pick, single ProteInfer CNN, ensembled ProteInfer CNNs }
-  \label{without_ensemble} 
+  \label{fig:without_ensemble} 
 \end{figure}
 
 
