@@ -1,0 +1,40 @@
+\documentclass[times, onecolumn, watermark]{zHenriquesLab-StyleBioRxiv}
+\usepackage{blindtext}
+
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{dblfloatfix} 
+\usepackage{cleveref}
+
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\usepackage{setspace}
+%\doublespacing
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+% Please give the surname of the lead author for the running footer
+\leadauthor{Sanderson} 
+\newcommand{\note}[1]{\textcolor{gray}{#1}}
+\newcommand{\todo}[1]{\textcolor{olive}{[todo:#1]}}
+\newcommand{\beginsupplement}{%
+        \setcounter{table}{0}
+        \renewcommand{\thetable}{S\arabic{table}}%
+        \setcounter{figure}{0}
+        \renewcommand{\thefigure}{S\arabic{figure}}%
+     }
+
+%Better figure placement:
+\renewcommand{\topfraction}{.85}
+\renewcommand{\bottomfraction}{.7}
+\renewcommand{\textfraction}{.15}
+\renewcommand{\floatpagefraction}{.66}
+\renewcommand{\dbltopfraction}{.66}
+\renewcommand{\dblfloatpagefraction}{.66}
+\setcounter{topnumber}{9}
+\setcounter{bottomnumber}{9}
+\setcounter{totalnumber}{20}
+\setcounter{dbltopnumber}{9}
+
+\begin{document}
+\input{draft3.tex}
+
+\end{document}

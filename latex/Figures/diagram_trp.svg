@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 22.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 596.7 70.2" style="enable-background:new 0 0 596.7 70.2;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:none;stroke:#000000;stroke-miterlimit:10;}
+	.st1{fill:#89D89B;stroke:#000000;stroke-miterlimit:10;}
+	.st2{font-family:'Arial-BoldMT';}
+	.st3{font-size:14.3735px;}
+	.st4{fill:#8A96D0;stroke:#000000;stroke-miterlimit:10;}
+	.st5{fill:#D08A8A;stroke:#000000;stroke-miterlimit:10;}
+	.st6{font-size:12px;}
+</style>
+<line class="st0" x1="9.4" y1="35.3" x2="588.9" y2="35.3"/>
+<path class="st1" d="M187.1,50.1H44.3c-6.6,0-12-5.4-12-12v-5.5c0-6.6,5.4-12,12-12h142.8c6.6,0,12,5.4,12,12v5.5
+	C199.1,44.7,193.7,50.1,187.1,50.1z"/>
+<text transform="matrix(1 0 0 1 40.5486 39.0777)" class="st2 st3">Anthranilate synthase</text>
+<path class="st4" d="M355.5,50.1H223c-6.6,0-12-5.4-12-12v-5.5c0-6.6,5.4-12,12-12h132.5c6.6,0,12,5.4,12,12v5.5
+	C367.5,44.7,362.1,50.1,355.5,50.1z"/>
+<text transform="matrix(1 0 0 1 219.2556 39.0777)" class="st2 st3">I3GP synthase</text>
+<path class="st5" d="M565.6,50.1H396.9c-6.6,0-12-5.4-12-12v-5.5c0-6.6,5.4-12,12-12h168.7c6.6,0,12,5.4,12,12v5.5
+	C577.6,44.7,572.2,50.1,565.6,50.1z"/>
+<text transform="matrix(1 0 0 1 393.1326 39.0777)" class="st2 st3">PR anthranilate isomerase</text>
+<text transform="matrix(1 0 0 1 9.4357 31.6551)" class="st2 st6">N</text>
+<text transform="matrix(1 0 0 1 580.0056 31.655)" class="st2 st6">C</text>
+</svg>
