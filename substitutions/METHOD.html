@@ -56,9 +56,13 @@
   <div id="group2" style="display: none;">
     Train-test split: <button onclick="selectRandomb()">random</button> / <b>clustered</b>
     <div id="method_graph2" style="height:25em;"></div>
-    <figcaption class="captiontext" style="text-align:left">Separating sequences to reduce the sequence similarity of
-      test and train sets compromises the recall of ProteInfer to a greater extent than BLAST search. This is an
-      illustration of the sensitivity of neural networks to disjoint train and test distributions.
+    <figcaption class="captiontext" style="text-align:left">This panel shows results for EC number prediction for an
+      alternative clustered split
+      which divides proteins into disjoint clusters according to UniRef50 membership. Reducing the sequence similarity
+      of
+      test and train sets in this way provides a closer analogue to a situation in which a relatively novel protein
+      sequence is being characterized, and compromises the recall of ProteInfer to a greater extent than BLAST search.
+      This is an illustration of the sensitivity of neural networks to disjoint train and test distributions.
     </figcaption>
   </div>
   <style>

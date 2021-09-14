@@ -125,7 +125,7 @@ We found that BLASTp was able to achieve higher recall values than ProteInfer fo
 On the clustered train-test split based on UniRef50 (see \textit{clustered} in \Cref{fig:toplevel}B%htmlver:<a href="#fig5" target="_self">Fig. 5</a>
 ), we see a performance drop in all methods: this is expected, as remote homology tasks are designed to challenge methods to generalize farther in sequence space. The $\texttt{F}_{max}$ score of a single neural network fell to 0.914 (95\% CI: 0.913--0.915, precision: 0.959 recall: 0.875), substantially lower than BLAST (0.950, 95\% CI: 0.950--0.951), though again an ensemble of both BLAST and ProteInfer outperformed both (0.979, 95\% CI: 0.979--0.980). We find that neural network methods learn different information about proteins than alignment-based methods, and a combination of the two further improves remote homology detection. 
 
-We also examined the relationship between the number of examples of a label in the training dataset and the performance of the model. In an image recognition task, this is an important consideration since one image of, say, a dog, can be utterly different to another. Large numbers of labels are therefore required to learn filters that are able to predict members of a class. In contrast, for sequence data we found that even for labels that occurred less than five times in the training set, 58\% of examples in the test set were correctly recalled, while achieving a precision of 88\%, for an F1 of 0.7 (\Cref{sup:fig:ec_f1_by_training_size}%htmlver: <a href="#fig6" target="_self">Fig. 6</a>
+We also examined the relationship between the number of examples of a label in the training dataset and the performance of the model. In an image recognition task, this is an important consideration since one image of, say, a dog, can be utterly different to another. Large numbers of labels are therefore required to learn filters that are able to predict members of a class. In contrast, for sequence data we found that even for labels that occurred less than five times in the training set, 58\% of examples in the test set were correctly recalled, while achieving a precision of 88\%, for an F1 of 0.7 (\Cref{sup:fig:ec_f1_by_training_size}%htmlver:<a href="#fig6" target="_self">Fig. 6</a>
 ). High levels of performance are maintained with few training examples because of the evolutionary relationship between sequences, which means that one ortholog of a gene may be similar in sequence to another. The simple BLAST implementation described above also performs well, and better than a single neural network, likely again exploiting the fact that many sequence have close neighbours in sequence space with similar functions. We again find that ensembling the BLAST and ProteInfer outputs provides performance exceeding that of either technique used alone.
 %%%NUM_TRAIN_EGS%%%
 \subsection*{Deep models link sequence regions to function}
@@ -133,7 +133,7 @@ We also examined the relationship between the number of examples of a label in t
 Proteins that use separate domains to carry out more than one enzymatic function are particularly useful in interpreting the behaviour of our model. For example, \textit{S. cerevisiae} fol1 (accession Q4LB35) catalyses three sequential steps of tetrahydrofolate synthesis, using three different protein domains (\Cref{fig:cam}A%htmlver:
 ). This protein is in our held-out test set, so no information about its labels was directly provided to the model.
 
-To investigate what sequence regions the neural network is using to make its functional predictions, we used class activation mapping (CAM) \citep{classactivationmapping} to identify the sub-sequences responsible for the model predictions. We found that separate regions of sequence cause the prediction of each enzymatic activity, and that these regions correspond to the known functions of these regions (\Cref{fig:cam}B%htmlver: <a href="#fig7" target="_self">Fig. 7</a>
+To investigate what sequence regions the neural network is using to make its functional predictions, we used class activation mapping (CAM) \citep{classactivationmapping} to identify the sub-sequences responsible for the model predictions. We found that separate regions of sequence cause the prediction of each enzymatic activity, and that these regions correspond to the known functions of these regions (\Cref{fig:cam}B%htmlver:<a href="#fig7" target="_self">Fig. 7</a>
 ).  This demonstrates that our network identifies relevant elements of a sequence in determining function. 
 
 %%%3FUNCTIONB%%%
@@ -177,20 +177,20 @@ To visualise this space, we selected proteins with a single leaf-level EC number
         \caption{Intrinsic component of membrane}
         \label{fig:mouse}
     \end{subfigure}
-    \caption{\textbf{A neural network trained on enzyme function learns general protein properties, beyond enzymatic activity.} We took the embeddings for all non-enzymatic sequences in the test set and projected them using UMAP. To illustrate the structure contained in these embeddings we highlight genes based on GO labels (on which this network was never trained).}\label{fig:unsupervised_embedding}
+    \caption{\textbf{A neural network trained on enzyme function learns general protein properties, beyond enzymatic activity.} This figure shows EC-trained ProteInfer embeddings for all non-enzymatic sequences in the test set, projected using UMAP. To illustrate the structure contained in these embeddings we highlight genes based on GO labels (on which this network was never trained).}\label{fig:unsupervised_embedding}
 \end{figure*}
 The resulting representation captures the hierarchical nature of EC classification, with the largest clusters in embedding space corresponding to top level EC groupings (\Cref{fig:umap}A%htmlver:
 ). These clusters in turn are further divided into sub-regions on the basis of subsequent levels of the EC hierarchy (\Cref{fig:umap}B%%htmlver:
 ). Exceptions to this rule generally recapitulate biological properties. For instance, Q8RUD6 is annotated as Arsenate reductase (glutaredoxin) (EC:1.20.4.1) \cite{pmid25464340} was not placed with other oxidoreductases (EC:1.-.-.-) but rather with Sulfurtransferases (EC:2.8.1.-). Q8RUD6 can however act as a sulfertransferase \cite{pmid17408957}. 
 
 
-Note that the model is directly trained with labels reflecting the EC hierarchy; the structure in \Cref{fig:umap} %htmlver: <a href="#fig8" target="_self">Fig. 8</a>
+Note that the model is directly trained with labels reflecting the EC hierarchy; the structure in \Cref{fig:umap} %htmlver:<a href="#fig8" target="_self">Fig. 8</a>
  was not discovered automatically from the data. However, we can also ask whether the embedding captures more general protein characteristics, beyond those on which it was directly supervised.
 
 To investigate this, we took the subset of proteins in Swiss-Prot that are non-enzymes, and so lack any EC annotations. The network would achieve perfect accuracy on these examples if it e.g. mapped all of them to a single embedding that corresponds to zero predicted probability for every enzymatic label. Do these proteins therefore share the same representation in embedding space? The UMAP projection of these sequences' embeddings revealed clear structure to the embedding space, which we visualised by highlighting several GO annotations which the network was never supervised on. For example, one region of the embedding space contained ribosomal proteins, while other regions could be identified containing nucleotide binding proteins, or membrane proteins (\Cref{fig:unsupervised_embedding}%htmlver:interactive figure below
 ).
 %%%nonenzymes%%%
-To quantitatively measure whether these embeddings capture the function of non-enzyme proteins, we trained a simple random forest classification model that used these whether a protein was annotated with the \textit{intrinsic component of membrane} GO term. We trained on 100 non-enzymes as above\footnote{18.6\% of the non-enzymes were membrane proteins, and so when repeating this procedure with different splits, there were usually $\leq 20$ positive examples among the 100}, evaluated on the rest of the examples, and achieved a precision of 97\% and recall of 65\% for an F1 score of 0.78. Model training and data-labelling typically took around 10 seconds for smaller models. This demonstrates the power of embeddings to simplify other studies with limited labeled data, as has been observed in recent work \citep{Alley589333,biswas2020low}.
+To quantitatively measure whether these embeddings capture the function of non-enzyme proteins, we trained a simple random forest classification model that used these embeddings to predict whether a protein was annotated with the \textit{intrinsic component of membrane} GO term. We trained on a small set of non-enzymes, with ~500 membrane proteins, and evaluated on the rest of the examples. This simple model achieved a precision of 97\% and recall of 60\% for an F1 score of 0.74. Model training and data-labelling took around 15 seconds. This demonstrates the power of embeddings to simplify other studies with limited labeled data, as has been observed in recent work \citep{Alley589333,biswas2020low}.
 %%%SWEEP_embedding%%%
 
 \subsection*{Rapid client-side in-browser protein function prediction}
@@ -232,7 +232,7 @@ An attractive property of deep learning models is that they can be run efficient
 \end{figure*}
 
 To assess our model's performance using an additional experimentally-validated source of ground truth, we focused our attention on a large set of bacterial genes for which functions have recently been identified in a high-throughput experimental genetic study \citep{phenotypes}. In particular, this study listed newly identified EC numbers for 171 proteins, representing cases when there was previously either misannotation or inconsistent annotation in the SEED or KEGG databases. Therefore, this set of genes may be enriched for proteins whose functions are difficult to assess computationally.
-We examined how well our network was able to make predictions for this experimental dataset at each level of the EC hierarchy (\Cref{fig:levels}%htmlver: <a href="#fig10" target="_self">Fig. 11</a>
+We examined how well our network was able to make predictions for this experimental dataset at each level of the EC hierarchy (\Cref{fig:levels}%htmlver:<a href="#fig10" target="_self">Fig. 11</a>
 ), using as a decision threshold the value that optimised F1 identified during tuning. The network had high accuracy for identification of broad enzyme class, with 90\% accuracy at the top level of the EC hierarchy. To compute accuracy, we examined the subset of these 171 proteins for which there was a single enzymatic annotation from \cite{phenotypes}, giving us predictions for 119 enzymes. At the second level of the hierarchy, accuracy was 90\% and the network declined to make a prediction for 12\% of classes. Even at the third level, accuracy was 86\% with the network making a prediction in 77\% of cases. At the finest level of classification, the proportion of examples for which a prediction was made fell to 28\%, with 42\% of these predictions correct.
 
 As an  example, the \textit{Sinorhizobium meliloti} protein Q92SI0 is annotated in UniProt as a Inosine-uridine nucleoside N-ribohydrolase (EC 3.2.2.1).  Analysing the gene with InterProScan \citep{interproscan} also gives this prediction, but our model instead predicts it to be a uridine nucleosidase (EC 3.2.2.3), and this was indeed the result found in this experimental work. Similarly, \textit{Pseudomonas fluorescens} A0A166Q345 was correctly classified by our model as a D-galacturonate dehydrogenase (EC 1.1.1.203) as opposed to a misannotation on UniProt and with InterProScan.
@@ -252,7 +252,7 @@ An ensemble of multiple CNN elements was again able to achieve a slightly better
 
 To benchmark against a common signature-based methodology, we used InterProScan to assign protein family signatures to each test sequence. We chose InterProScan for its coverage of labels as well as its use of multiple profile-based annotation methods, including HMMER and PROSITE, mentioned above. We note that while InterProScan predicts GO labels directly, it does not do so for EC labels, which is why we did not use InterProScan to benchmark our work on predicting EC labels. We found that InterProScan gave good precision, but within this UniProt data had lower recall, giving it a precision of 0.937 and recall of 0.543 for an F1 score of 0.688. ProteInfer's recall at a precision of .937 is substantially higher (0.835) than InterProScan at assigning GO labels.  
 
-There are multiple caveats to these comparisons, both in terms of the trustworthiness of the annotations and how to implement the baselines. One challenge is that the completeness of Swiss-Prot's GO term annotations varies \cite{jiang2014impact}. As an extreme example, \textit{Pan paniscus} (Pygmy Chimpanzee) and \textit{Pan troglodytes} (Chimpanzee) have an identical Apolipoprotein A-II protein,\footnote{Accessions P0DM95 and Q8MIQ5.}, where the first protein has 24 GO annotations, while the latter has 143 GO annotations.\footnote{This count is done using not only the set of all labels that appear in Swiss-Prot, but also any parents of those labels.} One way this is reflected in the performance of the models is that some BLAST matches that have extremely large bit-scores are not annotated identically, and thus hurt the precision of the BLAST model. It is also important to note that our model has the advantage of being specifically trained on the UniProt labelling schema upon which it is being evaluated. InterPro works quite differently, with GO terms being assigned to families, and so inconsistencies in terms of how these are assigned can explain reduced performance -- for instance InterPro families simply do not feature all of the GO terms found in UniProt. Thus these results should be seen as specific to the task of reproducing the curated results in UniProt rather than a broader objective ground truth.
+There are multiple caveats to these comparisons, both in terms of the trustworthiness of the annotations and how to implement the baselines. One challenge is that the completeness of Swiss-Prot's GO term annotations varies \cite{jiang2014impact}. As an extreme example, \textit{Pan paniscus} (Pygmy Chimpanzee) and \textit{Pan troglodytes} (Chimpanzee) have an identical Apolipoprotein A-II protein,\footnote{Accessions P0DM95 and Q8MIQ5.}, where the first protein has 24 GO annotations, while the latter has 143 GO annotations.\footnote{This count is done using not only the set of all labels that appear in Swiss-Prot, but also any parents of those labels.} One way this is reflected in the performance of the models is that some BLAST matches that have extremely large bit-scores are not annotated identically, and thus hurt the precision of the BLAST model. It is also important to note that our model has the advantage of being specifically trained on the UniProt labelling schema upon which it is being evaluated. InterPro works quite differently, with GO terms being assigned to families, and so inconsistencies in terms of how these are assigned can explain reduced performance -- for instance InterPro families simply do not feature all of the GO terms found in UniProt. Thus these results should be seen as specific to the task of reproducing the curated results in UniProt.
 
 \section*{Discussion}
 
@@ -262,17 +262,12 @@ Using Swiss-Prot to benchmark our tool against traditional alignment-based metho
 
 Further, our work characterizes proteins by assigning labels from a fixed, pre-defined set, but there are many proteins with functions that are not covered by this set. These categories of functions may not even be known to the scientific community yet. There is a large body of alternative work that identifies groups of related sequences (e.g. \cite{pmid12952885}), where a novel function could be discovered, for example, using follow-up experiments.
 
-Finally, despite the successes of deep learning in many application domains, a number of troublesome behaviours have also been identified. For example, probabilities output by deep models are often over-confident, rather than well-calibrated \citep{guo}, and networks perform poorly on out-of-distribution data without being aware that they are outside their own range of expertise \citep{amoidei}. Though these issues still need to be addressed and better understood by both the machine learning and bioinformatics communities, deep learning continues to challenge state of the art methods for functional characterization of proteins. We thus believe deep learning will have a central place in future advancements in this field.
+Finally, despite the successes of deep learning in many application domains, a number of troublesome behaviours have also been identified. For example, probabilities output by deep models are often over-confident, rather than well-calibrated \citep{guo}, and networks perform poorly on out-of-distribution data without being aware that they are outside their own range of expertise \citep{amoidei}. Though these issues still need to be addressed and better understood by both the machine learning and bioinformatics communities, deep learning continues to make advances in a wide range of areas relating to the understanding protein function. We thus believe deep learning will have a central place in the future of this field.
 
 
 
 Our code, data, and notebooks reproducing the analyses shown in this work are available online at \url{https://github.com/google-research/proteinfer} and \url{https://console.cloud.google.com/storage/browser/brain-genomics-public/research/proteins/proteinfer/datasets/}.
-%startleaveout
-\begin{acknowledgements}
-%stopleaveout
-%startleaveout
-\end{acknowledgements}
-%stopleaveout
+
 %startleaveout
 \section*{Bibliography}
 \bibliography{../bibliography}
@@ -484,7 +479,9 @@ When assigning examples to folds in our clustered dataset, we note that there ar
 
 
 
-\pagebreak
+\clearpage
+
+
 \subsection{Stratified performance}
 \begin{figure}[htbp]
 \centering
@@ -492,7 +489,9 @@ When assigning examples to folds in our clustered dataset, we note that there ar
   \caption{Performance of EC model stratified by number of training examples available for each test example.}
   \label{sup:fig:ec_f1_by_training_size}
 \end{figure}
-\pagebreak
+
+\clearpage
+
 \subsection{Hyperparameters}
 We tuned over batch size, dilation rate, filters, first dilated layer, kernel size, learning rate, number of layers, mean vs max pooling, and Adam $\beta_1$, $\beta_2$ and $\epsilon$~\citep{kingma2014adam} over a number of studies to determine the set of parameters that optimized $\texttt{F}_{max}$. We found, as in~\cite{bileschi}, that the network was relatively unresponsive to slight changes in hyperparameters, and found that many of the hyperparameters that performed well in~\cite{bileschi} also performed well for this task. We chose to keep identical hyperparameters for the EC and GO tasks across both the random and clustered splits for simplicity, and we note that parameters with good performance on the random task performed respectively well on the clustered split. 
 \begin{table}[htbp]

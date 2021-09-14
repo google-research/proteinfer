@@ -46,16 +46,22 @@
     Train-test split: <b id="clustered_link">random</b> / <button onclick="selectClustered()">clustered</button>
     <div id="method_grapha" style="height:25em;"></div>
     <figcaption class="captiontext" style="text-align:left">Figure 12: ProteInfer predictions for gene
-      ontology. ProteInfer provides high precision predictions, while BLAST provides higher recall. Again an ensemble of
+      ontology. ProteInfer provides high precision predictions, while BLAST provides higher recall, and a higher overall
+      F1. An ensemble of
       BLAST with ensembled ProteInfer networks exceeds the performance for F1 for any individual predictor alone.
     </figcaption>
   </div>
   <div id="group2a" style="display: none;">
     Train-test split: <button onclick="selectRandom()">random</button> / <b>clustered</b>
     <div id="method_graph2a" style="height:25em;"></div>
-    <figcaption class="captiontext" style="text-align:left">Figure 12: ProteInfer predictions for gene
-      ontology. ProteInfer provides high precision predictions, while BLAST provides higher recall. The clustered
-      dataset compromises ProteInfer CNN performance to a greater extent than it does for BLAST.
+    <figcaption class="captiontext" style="text-align:left">Figure 12: This panel shows results for GO term prediction
+      for an
+      alternative clustered split
+      which divides proteins into disjoint clusters according to UniRef50 membership. Reducing the sequence similarity
+      of
+      test and train sets in this way provides a closer analogue to a situation in which a relatively novel protein
+      sequence is being characterized, and compromises the recall of ProteInfer to a greater extent than BLAST search.
+      This is an illustration of the sensitivity of neural networks to disjoint train and test distributions.
     </figcaption>
   </div>
 
