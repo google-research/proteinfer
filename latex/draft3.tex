@@ -7,15 +7,18 @@
 \author[2]{David Belanger}
 \author[2]{Lucy Colwell}
 
+
 \affil[1]{Francis Crick Institute}
 \affil[2]{Google AI}
-%General points -editorialise in methods. Deep learning. Motivation. Talk about curation in abstract. Metagenomes. Discussion: mention value of dataset, and the need for future work. More discussion of the existence of prediction methods from 3D. Mention that are dataset is less of a toy than most previous.
+\affil[*]{Equal contribution}
+
+
 \maketitle
 %TC:break Abstract
 %the command above serves to have a word count for the abstract
 
 % Subtitle from html version
-% We describe an approach for predicting the functional properties of a protein from its amino acid sequences using neural networks. You can try an implementation of our technique below, which runs locally on your own device using TensorFlowJS. Read on for an explanation of how it works, and interactive figures and notebooks analysing the network.
+
 
 \begin{abstract}
 Predicting the function(s) of a protein from its amino acid sequence has been a long-standing challenge for the bioinformatics community. Standard approaches use sequence alignment to compare a query sequence either to thousands of models of protein families or to large databases of individual protein sequences. In our work, we instead employ deep convolutional neural networks to directly predict a variety of protein functions - EC numbers and GO terms - directly from an unaligned amino acid sequence. This performs comparably to alignment-based methods, and the computational efficiency of a single neural network permits novel and lightweight software interfaces. In response, we have provided an in-browser graphical interface for protein function prediction in which all computation is performed on the user's personal computer with no data uploaded to remote servers. Moreover, these models place full-length amino acid sequences into a generalised functional space, facilitating downstream analysis and interpretation. To read the interactive version of this paper, please visit \url{https://google-research.github.io/proteinfer/}.
@@ -188,7 +191,7 @@ Note that the model is directly trained with labels reflecting the EC hierarchy;
 To investigate this, we took the subset of proteins in Swiss-Prot that are non-enzymes, and so lack any EC annotations. The network would achieve perfect accuracy on these examples if it e.g. mapped all of them to a single embedding that corresponds to zero predicted probability for every enzymatic label. Do these proteins therefore share the same representation in embedding space? The UMAP projection of these sequences' embeddings revealed clear structure to the embedding space, which we visualised by highlighting several GO annotations which the network was never supervised on. For example, one region of the embedding space contained ribosomal proteins, while other regions could be identified containing nucleotide binding proteins, or membrane proteins (\Cref{fig:unsupervised_embedding}%htmlver:interactive figure below
 ).
 %%%nonenzymes%%%
-To quantitatively measure whether these embeddings capture the function of non-enzyme proteins, we trained a simple random forest classification model to predict whether a protein was annotated with the \textit{intrinsic component of membrane} GO term. We trained on 100 non-enzymes as above\footnote{18.6\% of the non-enzymes were membrane proteins, and so when repeating this procedure with different splits, there were usually $\leq 20$ positive examples among the 100}, evaluated on the rest of the examples, and achieved a precision of 97\% and recall of 65\% for an F1 score of 0.78. Model training and data-labelling typically took around 10 seconds for smaller models. This demonstrates the power of embeddings to simplify other studies with limited labeled data, as has been observed in recent work \citep{Alley589333,biswas2020low}.
+To quantitatively measure whether these embeddings capture the function of non-enzyme proteins, we trained a simple random forest classification model that used these whether a protein was annotated with the \textit{intrinsic component of membrane} GO term. We trained on 100 non-enzymes as above\footnote{18.6\% of the non-enzymes were membrane proteins, and so when repeating this procedure with different splits, there were usually $\leq 20$ positive examples among the 100}, evaluated on the rest of the examples, and achieved a precision of 97\% and recall of 65\% for an F1 score of 0.78. Model training and data-labelling typically took around 10 seconds for smaller models. This demonstrates the power of embeddings to simplify other studies with limited labeled data, as has been observed in recent work \citep{Alley589333,biswas2020low}.
 %%%SWEEP_embedding%%%
 
 \subsection*{Rapid client-side in-browser protein function prediction}
