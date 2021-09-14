@@ -859,7 +859,7 @@ function loadDemo(inputSeqContents, proteinDescription, proteinMoreInfoLink,
     correspondingPDB = NO_PDB_STRUCTURE_SENTINEL;
   }
 
-  currentLoadingPromise = currentLoadingPromise.then(x=>switchToAppropriateViewMode());
+  currentLoadingPromise = currentLoadingPromise.then(x=>switchToSummaryView());
 
   return currentLoadingPromise;
 }
