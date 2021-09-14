@@ -1463,10 +1463,6 @@ function switchToPDBView() {
     return;
   }
 
-  $('#pdb_mag').hide();
-  $('#pdb_view').removeClass('pdb_small_viewer');
-  $('#pdb_view').addClass('pdb_large_viewer');
-
   $('#protvista').hide();
   $('#viewonPDB').hide();
   $('#go_container').hide();
@@ -1476,22 +1472,28 @@ function switchToPDBView() {
   $('#large_ec_instructions').show();
   $('.return_to_summary_mode_text').show();
   $("#ec_color_bar").show();
-  pdbView.handleResize();
+  $('#pdb_mag').hide();
 
+  if (!pdbViewIsLarge()) {
+    $('#pdb_view').removeClass('pdb_small_viewer');
+    $('#pdb_view').addClass('pdb_large_viewer');
 
-  enableInteractions();
-  enableNGLTooltip();
+    pdbView.handleResize();
 
-  loadPDB(correspondingPDB);
+    enableInteractions();
+    enableNGLTooltip();
 
-  $('.magnifying_glass_text').hide();
+    loadPDB(correspondingPDB);
 
-  // Don't switchToPDBView if you're already here and you click - this interferes with other
-  // interactions with ngl.
-  $("#pdb_view").off('click');
+    $('.magnifying_glass_text').hide();
 
-  // Do this last because we want everything already resized before rerendering.
-  rerenderPDBAndGO();
+    // Don't switchToPDBView if you're already here and you click - this interferes with other
+    // interactions with ngl.
+    $("#pdb_view").off('click');
+
+    // Do this last because we want everything already resized before rerendering.
+    rerenderPDBAndGO();
+  }
 }
 
 /**
