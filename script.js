@@ -1372,7 +1372,7 @@ function enableInteractions() {
 }
 
 function toggleHelpButtonText(button) {
-  if (button.text() == "Learn more") {
+  if (button.text().match(/more/)) {
     button.text("Less");
   } else {
     button.text("Learn more");
