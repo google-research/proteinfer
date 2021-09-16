@@ -59,10 +59,6 @@ cd ~/proteinfer
 python3 install_models.py --install_ensemble
 python3 proteinfer.py -i testdata/test_hemoglobin.fasta -o ~/hemoglobin_predictions.tsv --num_ensemble_elements=5
 
-# Note: you may see an error `RuntimeError: cannot join current thread`
-# This is a known issue and only has to do with the progress bars,
-# and has no effect on the predictions.
-
 # View your predictions.
 cat ~/hemoglobin_predictions.tsv
 ```
