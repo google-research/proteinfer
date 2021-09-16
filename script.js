@@ -602,8 +602,6 @@ async function makeECPrediction(sanitizedInput) {
   $("#go_content").show();
   $("#go_loader").show();
   setTimeout(x=>makeGOPrediction(sanitizedInput),1);
-  console.log("completed EC inference")
-
 }
 
 function hideLoaders() {
@@ -1062,10 +1060,6 @@ function drawTopPreds(itemsForGraph) {
 function missingParentNodes(listOfNodes) {
   toReturn = listOfNodes.slice();
   for (let i = 0; i < toReturn.length; i++) {
-    if (listOfNodes.length>200){
-      console.log("Too many GO predictions, unsafe input?")
-      throw Error("Error in GO rendering")
-    }
     node = toReturn[i];
     parents = goParenthood[node];
     for (p in parents) {
