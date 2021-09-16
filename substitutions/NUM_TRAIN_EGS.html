@@ -94,8 +94,8 @@
     var figure = JSON.parse(json);
     var figure2 = JSON.parse(clustered_json);
 
-    Plotly.newPlot('numegs_graph', figure.data, figure.layout);
-    Plotly.newPlot('numegs_graph2', figure2.data, figure2.layout);
+    Plotly.newPlot('numegs_graph', figure.data, figure.layout,{responsive:true});
+    Plotly.newPlot('numegs_graph2', figure2.data, figure2.layout,{responsive:true});
   </script>
 </figure>
 <script type="text/javascript">window.addEventListener("resize", function () {
