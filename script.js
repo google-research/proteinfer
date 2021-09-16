@@ -1001,20 +1001,12 @@ function generateGOOutput(
 
   // Compute parent nodes, and include them even if they're below the threshold.
   allLabels = [];
-  addToGraph = true;
 
   for (var i in topKFiltered) {
     let label = goVocab[indices[i]];
     allLabels.push(label)
   }
-  try{
   parentNodesToInclude = missingParentNodes(allLabels);
-  }
-  catch(err){
-    addToGraph = false;
-
-  }
-  if(addToGraph){
 
   for (var i in topkScores) {
     if (topkScores[i] > threshold || parentNodesToInclude.includes(
@@ -1023,7 +1015,6 @@ function generateGOOutput(
       let label = goVocab[indices[i]];
       itemsForGraph[label] = overallValue;
     }
-  }
 }
 
   drawTopPreds(itemsForGraph);
