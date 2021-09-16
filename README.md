@@ -5,11 +5,6 @@ sequences using deep neural networks.
 
 ## Usage instructions
 
-Go to https://google-research.github.io/proteinfer/ to use an interactive demo in your
-browser, and read the related paper.
-
-Or if you're interested in the command line interface instead, see below.
-
 ### Install gcloud on your local machine if you don't have it installed
 ```
 sudo apt install -y google-cloud-sdk
