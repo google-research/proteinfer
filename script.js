@@ -638,11 +638,29 @@ function waitTilDoneTypingThenMakePrediction(event) {
   if (event.keyCode>=9 && event.keyCode <= 45) {
     return; // Non-input keycodes or whitespace.
   }
-  hideContentShowLoaders();
   clearTimeout(waitDoneTypingTimeout);
   waitDoneTypingTimeout = setTimeout(function () {
     customInputSeq()
-  }, 500);
+  }, 200);
+}
+
+function getInputStringAndRenderErrors() {
+  inputSequence = document.getElementById('input_seq').value;
+  if (! inputSequence) {
+    hideLoaders();
+    hideContent();
+    return Error('No input string')
+  }
+  let inputString = sanitizeInput(inputSequence);
+
+  if (inputString instanceof Error) {
+    hideContentShowError(inputString.toString());
+  } else if (inputString.length <= 40) {
+    hideContentShowError('Please enter a sequence of more than 40 amino acids for prediction.');
+    return Error('Input string too short');
+  }
+
+  return inputString;
 }
 
 /**
@@ -650,38 +668,14 @@ function waitTilDoneTypingThenMakePrediction(event) {
  * switches to the appropriate View mode (e.g. stays in GO view mode if coming
  * from that mode).
  *
- * If the input_seq is invalid, updates DOM to indicate that error, and returns
- * a fulfilled Promise.
- *
+ * @param inputString {string} Contents of text area.
  * @return {Promise<void>}
  * */
-function startPrediction() {
-  console.log("start prediction called")
-
-  inputSequence = document.getElementById('input_seq').value;
-  if (! inputSequence) {
-    hideLoaders();
-    hideContent();
-    return Promise.resolve();
-  }
-  let inputString = sanitizeInput(inputSequence);
-
-  if (inputString instanceof Error) {
-    hideContentShowError(inputString.toString());
-    return Promise.resolve();
-  }
-
-  if (inputString.length <= 40) {
-    hideContentShowError('Please enter a sequence of more than 40 amino acids for prediction.');
-    return Promise.resolve();
-  }
-
+function startPrediction(inputString) {
   $("#input_seq_error_cont").hide();
   gtag('event', 'input_sequence', {'event_category': 'infer'});
 
   makeECPrediction(inputString);
-
-  
 }
 
 
@@ -780,8 +774,14 @@ function customInputSeq() {
   if (isInMobileBrowser()) {
     hideContentShowError("Inference for custom sequences isn't supported in mobile browsers.")
   } else {
-    loadDemo(null, null, null, null).then(x=>hideContentShowLoaders())
-        .then(completed => startPrediction())
+    loadDemo(null, null, null, null)
+        .then(completed =>getInputStringAndRenderErrors())
+        .then(inputString => {
+          if (!(inputString instanceof Error)) {
+            hideContentShowLoaders()
+            startPrediction(inputString);
+          }
+        })
 
         // Wait until predictions are done to explain the PDB missing.
         // If it shows up before there are predictions, it looks pretty ugly.
