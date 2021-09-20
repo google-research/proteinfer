@@ -366,6 +366,7 @@
 \Affilfont\bfseries ACKNOWLEDGEMENTS\par\mdseries}
 \def\endacknowledgements{\vspace{0.3em}\par\normalsize}
 
+
 \def\contributions{\vspace{.3em}
 \Affilfont\bfseries AUTHOR CONTRIBUTIONS\par\mdseries}
 \def\endcontributions{\vspace{0.3em}\par\normalsize}
