@@ -217,7 +217,7 @@ function sanitizeInput(input) {
       // Sometimes an asterisk is used as the stop codon; remove that.
       .replace(/\*$/, '');
 
-  if (sanitized.match(/[^\w]|_/)) {
+  if (sanitized.match(/[^A-Z]/)) {
     // There is some punctuation: reject.
     return new Error("Only one sequence (and one header line) are allowed; check for punctuation.")
   }
@@ -602,8 +602,6 @@ async function makeECPrediction(sanitizedInput) {
   $("#go_content").show();
   $("#go_loader").show();
   setTimeout(x=>makeGOPrediction(sanitizedInput),1);
-  console.log("completed EC inference")
-
 }
 
 function hideLoaders() {
@@ -640,11 +638,29 @@ function waitTilDoneTypingThenMakePrediction(event) {
   if (event.keyCode>=9 && event.keyCode <= 45) {
     return; // Non-input keycodes or whitespace.
   }
-  hideContentShowLoaders();
   clearTimeout(waitDoneTypingTimeout);
   waitDoneTypingTimeout = setTimeout(function () {
     customInputSeq()
-  }, 500);
+  }, 200);
+}
+
+function getInputStringAndRenderErrors() {
+  inputSequence = document.getElementById('input_seq').value;
+  if (! inputSequence) {
+    hideLoaders();
+    hideContent();
+    return Error('No input string')
+  }
+  let inputString = sanitizeInput(inputSequence);
+
+  if (inputString instanceof Error) {
+    hideContentShowError(inputString.toString());
+  } else if (inputString.length <= 40) {
+    hideContentShowError('Please enter a sequence of more than 40 amino acids for prediction.');
+    return Error('Input string too short');
+  }
+
+  return inputString;
 }
 
 /**
@@ -652,38 +668,14 @@ function waitTilDoneTypingThenMakePrediction(event) {
  * switches to the appropriate View mode (e.g. stays in GO view mode if coming
  * from that mode).
  *
- * If the input_seq is invalid, updates DOM to indicate that error, and returns
- * a fulfilled Promise.
- *
+ * @param inputString {string} Contents of text area.
  * @return {Promise<void>}
  * */
-function startPrediction() {
-  console.log("start prediction called")
-
-  inputSequence = document.getElementById('input_seq').value;
-  if (! inputSequence) {
-    hideLoaders();
-    hideContent();
-    return Promise.resolve();
-  }
-  let inputString = sanitizeInput(inputSequence);
-
-  if (inputString instanceof Error) {
-    hideContentShowError(inputString.toString());
-    return Promise.resolve();
-  }
-
-  if (inputString.length <= 40) {
-    hideContentShowError('Please enter a sequence of more than 40 amino acids for prediction.');
-    return Promise.resolve();
-  }
-
+function startPrediction(inputString) {
   $("#input_seq_error_cont").hide();
   gtag('event', 'input_sequence', {'event_category': 'infer'});
 
   makeECPrediction(inputString);
-
-  
 }
 
 
@@ -782,8 +774,14 @@ function customInputSeq() {
   if (isInMobileBrowser()) {
     hideContentShowError("Inference for custom sequences isn't supported in mobile browsers.")
   } else {
-    loadDemo(null, null, null, null).then(x=>hideContentShowLoaders())
-        .then(completed => startPrediction())
+    loadDemo(null, null, null, null)
+        .then(completed =>getInputStringAndRenderErrors())
+        .then(inputString => {
+          if (!(inputString instanceof Error)) {
+            hideContentShowLoaders()
+            startPrediction(inputString);
+          }
+        })
 
         // Wait until predictions are done to explain the PDB missing.
         // If it shows up before there are predictions, it looks pretty ugly.
@@ -859,7 +857,7 @@ function loadDemo(inputSeqContents, proteinDescription, proteinMoreInfoLink,
     correspondingPDB = NO_PDB_STRUCTURE_SENTINEL;
   }
 
-  currentLoadingPromise = currentLoadingPromise.then(x=>switchToAppropriateViewMode());
+  currentLoadingPromise = currentLoadingPromise.then(x=>switchToSummaryView());
 
   return currentLoadingPromise;
 }
@@ -1003,20 +1001,12 @@ function generateGOOutput(
 
   // Compute parent nodes, and include them even if they're below the threshold.
   allLabels = [];
-  addToGraph = true;
 
   for (var i in topKFiltered) {
     let label = goVocab[indices[i]];
     allLabels.push(label)
   }
-  try{
   parentNodesToInclude = missingParentNodes(allLabels);
-  }
-  catch(err){
-    addToGraph = false;
-
-  }
-  if(addToGraph){
 
   for (var i in topkScores) {
     if (topkScores[i] > threshold || parentNodesToInclude.includes(
@@ -1025,7 +1015,6 @@ function generateGOOutput(
       let label = goVocab[indices[i]];
       itemsForGraph[label] = overallValue;
     }
-  }
 }
 
   drawTopPreds(itemsForGraph);
@@ -1062,10 +1051,6 @@ function drawTopPreds(itemsForGraph) {
 function missingParentNodes(listOfNodes) {
   toReturn = listOfNodes.slice();
   for (let i = 0; i < toReturn.length; i++) {
-    if (listOfNodes.length>200){
-      console.log("Too many GO predictions, unsafe input?")
-      throw Error("Error in GO rendering")
-    }
     node = toReturn[i];
     parents = goParenthood[node];
     for (p in parents) {
@@ -1372,7 +1357,7 @@ function enableInteractions() {
 }
 
 function toggleHelpButtonText(button) {
-  if (button.text() == "Learn more") {
+  if (button.text().match(/more/)) {
     button.text("Less");
   } else {
     button.text("Learn more");
@@ -1463,10 +1448,6 @@ function switchToPDBView() {
     return;
   }
 
-  $('#pdb_mag').hide();
-  $('#pdb_view').removeClass('pdb_small_viewer');
-  $('#pdb_view').addClass('pdb_large_viewer');
-
   $('#protvista').hide();
   $('#viewonPDB').hide();
   $('#go_container').hide();
@@ -1476,22 +1457,28 @@ function switchToPDBView() {
   $('#large_ec_instructions').show();
   $('.return_to_summary_mode_text').show();
   $("#ec_color_bar").show();
-  pdbView.handleResize();
+  $('#pdb_mag').hide();
 
+  if (!pdbViewIsLarge()) {
+    $('#pdb_view').removeClass('pdb_small_viewer');
+    $('#pdb_view').addClass('pdb_large_viewer');
 
-  enableInteractions();
-  enableNGLTooltip();
+    pdbView.handleResize();
 
-  loadPDB(correspondingPDB);
+    enableInteractions();
+    enableNGLTooltip();
 
-  $('.magnifying_glass_text').hide();
+    loadPDB(correspondingPDB);
 
-  // Don't switchToPDBView if you're already here and you click - this interferes with other
-  // interactions with ngl.
-  $("#pdb_view").off('click');
+    $('.magnifying_glass_text').hide();
 
-  // Do this last because we want everything already resized before rerendering.
-  rerenderPDBAndGO();
+    // Don't switchToPDBView if you're already here and you click - this interferes with other
+    // interactions with ngl.
+    $("#pdb_view").off('click');
+
+    // Do this last because we want everything already resized before rerendering.
+    rerenderPDBAndGO();
+  }
 }
 
 /**
