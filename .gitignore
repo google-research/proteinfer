@@ -8,3 +8,9 @@ latex/supplement.log
 latex/supplement.out
 latex/final_format.xwm
 latex/supplement.xwm
+.vscode/settings.json
+__pycache__/baseline_utils.cpython-37.pyc
+__pycache__/inference.cpython-37.pyc
+__pycache__/protein_dataset.cpython-37.pyc
+__pycache__/test_util.cpython-37.pyc
+__pycache__/utils.cpython-37.pyc
