@@ -38,6 +38,7 @@ var ecNames;
 
 let /** {tf.Model} TensorFlow goModel **/ goModel;
 let goParenthood = null;
+let transitiveGoParenthood = {"GO:0008150": new Set(["GO:0008150"]), "GO:0003674": new Set(["GO:0003674"]), "GO:0005575": new Set(["GO:0005575"])};
 let goNames = null;
 const /** {number} Threshold used to decide whether to make prediction **/GO_DECISION_THRESHOLD = 0.339991183677139;
 let /** {Array} Array of EC names keyed by EC numbers **/ vocabList = [];
@@ -1015,7 +1016,17 @@ function generateGOOutput(
       let label = goVocab[indices[i]];
       itemsForGraph[label] = overallValue;
     }
-}
+  }
+
+  for (var child in itemsForGraph) {
+    for (var par of transitiveGoParenthood[child]) {
+      if (par in itemsForGraph) {
+        itemsForGraph[par] = Math.max(itemsForGraph[child], itemsForGraph[par]);
+      } else {
+        itemsForGraph[par] = itemsForGraph[child];
+      }
+    }
+  }
 
   drawTopPreds(itemsForGraph);
 
@@ -1241,6 +1252,18 @@ async function makeGOPrediction(sanetizedInput) {
 function loadGOMetadata() {
   parenthoodPromise = $.getJSON('models/go/go_parenthood.json', function (data) {
     goParenthood = data;
+    for (var k in goParenthood) {
+        var curParents = [k]
+        transitiveGoParenthood[k] = new Set([k]);
+        while (curParents.length !== 0) {
+          curParent = curParents.pop();
+          transitiveGoParenthood[k].add(curParent);
+          if (curParent in goParenthood) {
+            toPush = goParenthood[curParent].filter(x => x != curParent);
+            curParents.push(...toPush);
+          }
+        }
+    }
   });
   namesPromise = $.getJSON('models/go/go_names.json', function (data) {
     goNames = data;
