@@ -357,7 +357,7 @@
     also available in a non-interactive format at bioRxiv.-->
   </p>
   <d-article>
-    <a class="marker" href="#section-1" id="section-1"><span>1</span></a>
+   <!--- <a class="marker" href="#section-1" id="section-1"><span>1</span></a>-->
 </p>
 
 <h2>Introduction</h2>
@@ -1257,6 +1257,8 @@
   </ul>
 </ul></p>
 
+<p>  </p>
+
 <p>Individual protein sequences can be annotated with zero (non-enzymatic proteins), one (enzymes with a single function) or many (multi-functional enzymes) leaf-level EC numbers. These are drawn from a total of 8,162 catalogued chemical reactions.</p>
 
 <p>Our best $\texttt{F}_{max}$ was achieved by a model containing 5 residual blocks with 1100 filters each (full details in <a href="./latex/supplement.pdf">supplement</a>). For the dev set, $\texttt{F}_{max}$ converged within 500,000 training steps. On the random split, the model achieves $\texttt{F}_{max}$ = 0.977 (0.976-0.978) on the held-out test data. At the corresponding confidence threshold, the model correctly predicts 96.7&percnt; of true labels, with a false positive rate of 1.4&percnt;. Results from the clustered test set are discussed below.</p>
@@ -1546,6 +1548,8 @@
   }
 </style>
 </p>
+
+<p>  </p>
 
 <h3>Deep models link sequence regions to function</h3>
 
@@ -2597,8 +2601,6 @@
 <p>Finally, despite the successes of deep learning in many application domains, a number of troublesome behaviours have also been identified. For example, probabilities output by deep models are often over-confident, rather than well-calibrated<d-cite key="guo"></d-cite>, and networks perform poorly on out-of-distribution data without being aware that they are outside their own range of expertise<d-cite key="amoidei"></d-cite>. Though these issues still need to be addressed and better understood by both the machine learning and bioinformatics communities, deep learning continues to make advances in a wide range of areas relating to the understanding protein function. We thus believe deep learning will have a central place in the future of this field.</p>
 
 <p>Our code, data, and notebooks reproducing the analyses shown in this work are available online at <a href="https://github.com/google-research/proteinfer" target="_blank">https://github.com/google-research/proteinfer</a> and <a href="https://console.cloud.google.com/storage/browser/brain-genomics-public/research/proteins/proteinfer/datasets/" target="_blank">https://console.cloud.google.com/storage/browser/brain-genomics-public/research/proteins/proteinfer/datasets/</a>.</p>
-
-<p>\include{supplement}</p>
 
 <p></d-article>
 
