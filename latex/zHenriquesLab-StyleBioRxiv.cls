@@ -368,7 +368,7 @@
 
 
 
-\def\funding{\vspace{.3em}
+\def\contributions{\vspace{.3em}
 \Affilfont\bfseries AUTHOR CONTRIBUTIONS\par\mdseries}
 \def\endcontributions{\vspace{0.3em}\par\normalsize}
 
