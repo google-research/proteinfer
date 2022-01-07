@@ -61,8 +61,8 @@ pip3 install -r requirements.txt
 ### Run our code on test sequences
 ```
 cd ~/proteinfer
-python3 install_models.py --install_ensemble
-python3 proteinfer.py -i testdata/test_hemoglobin.fasta -o ~/hemoglobin_predictions.tsv --num_ensemble_elements=5
+python3 install_models.py
+python3 proteinfer.py -i testdata/test_hemoglobin.fasta -o ~/hemoglobin_predictions.tsv
 
 # View your predictions.
 cat ~/hemoglobin_predictions.tsv
@@ -75,7 +75,7 @@ gcloud compute scp <YOUR_FASTA_FILE_HERE> proteinfer-gpu:~/
 # Then ssh back in again
 gcloud compute ssh proteinfer-gpu
 # Then run your inference
-python3 proteinfer.py -i ~/<YOUR_FASTA_FILE_HERE> -o ~/predictions.tsv --num_ensemble_elements=5
+python3 proteinfer.py -i ~/<YOUR_FASTA_FILE_HERE> -o ~/predictions.tsv
 ```
 
 ### Delete the instance when you're done to save money
