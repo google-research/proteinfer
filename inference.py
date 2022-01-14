@@ -278,8 +278,7 @@ class Inferrer(object):
     Returns:
       concatenated numpy array of activations with shape [num_of_seqs, ...]
     """
-    import pdb; pdb.set_trace()
-    np_seqs = np.array(list_of_seqs, dtype=np.str_)
+    np_seqs = np.array(list_of_seqs, dtype=np.object)
     if np_seqs.size == 0:
       return np.array([], dtype=float)
 
