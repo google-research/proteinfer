@@ -131,7 +131,7 @@ def memoized_inferrer(
     savedmodel_dir_path,
     activation_type=tf.saved_model.signature_constants
     .DEFAULT_SERVING_SIGNATURE_DEF_KEY,
-    batch_size=64,
+    batch_size=16,
     use_tqdm=False,
     session_config=None,
     memoize_inference_results=False,
@@ -157,7 +157,7 @@ class Inferrer(object):
       savedmodel_dir_path,
       activation_type=tf.saved_model.signature_constants
       .DEFAULT_SERVING_SIGNATURE_DEF_KEY,
-      batch_size=64,
+      batch_size=16,
       use_tqdm=False,
       session_config=None,
       memoize_inference_results=False,
