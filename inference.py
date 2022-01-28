@@ -35,6 +35,7 @@ import six
 import tensorflow.compat.v1 as tf
 import tensorflow_hub as hub
 import tqdm
+import scipy.sparse
 
 
 def call_module(module, one_hots, row_lengths, signature):
@@ -157,7 +158,7 @@ class Inferrer(object):
       savedmodel_dir_path,
       activation_type=tf.saved_model.signature_constants
       .DEFAULT_SERVING_SIGNATURE_DEF_KEY,
-      batch_size=16,
+      batch_size=64,
       use_tqdm=False,
       session_config=None,
       memoize_inference_results=False,
@@ -310,8 +311,9 @@ class Inferrer(object):
     for batch in batches:
       batch_activations = self._get_activations_for_batch(
           tuple(batch), custom_tensor_to_retrieve=custom_tensor_to_retrieve)
+      batch_activations_sparse = [scipy.sparse.coo_matrix(x) for x in batch_activations]
 
-      activation_list.append(batch_activations)
+      activation_list.append(batch_activations_sparse)
 
     activations = np.concatenate(activation_list, axis=0)[reverser]
 
@@ -506,7 +508,8 @@ def get_preds_at_or_above_threshold(input_df,
 
   output_dict = {'sequence_name': [], 'predicted_label': [], 'confidence': []}
 
-  for idx, protein in enumerate(predictions):
+  for idx, protein_sparse in enumerate(predictions):
+    protein = np.asarray(protein_sparse.todense())[0]
     proteins_above_threshold = protein >= threshold
     labels_predicted = cnn_label_vocab[proteins_above_threshold]
     for label, confidence in zip(labels_predicted,
