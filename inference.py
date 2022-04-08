@@ -277,7 +277,8 @@ class Inferrer(object):
         uses default for signature.
 
     Returns:
-      concatenated numpy array of activations with shape [num_of_seqs, ...]
+      np.array of scipy sparse coo matrices of shape [num_of_seqs_in_batch, ...]
+      where ... is the shape of the fetch tensor.
     """
     np_seqs = np.array(list_of_seqs, dtype=np.object)
     if np_seqs.size == 0:

@@ -27,6 +27,7 @@ from absl.testing import absltest
 from absl.testing import parameterized
 import numpy as np
 import pandas as pd
+import scipy.sparse
 import inference
 import test_util
 import utils
@@ -69,10 +70,12 @@ class _InferrerFixture(object):
 
     Returns:
       np.array of rank self._activation_rank, where the entries are the length
-      of each input seq.
+      of each input seq. See Inferrer.get_activations for more information 
+      about what this class is mocking.
     """
-    return np.reshape([len(s) for s in input_seqs],
+    dense = np.reshape([len(s) for s in input_seqs],
                       [-1] + [1] * (self._activation_rank - 1))
+    return np.array([scipy.sparse.coo_matrix(x) for x in dense])
 
 
 class InGraphInferrerTest(tf.test.TestCase, parameterized.TestCase):
@@ -113,8 +116,8 @@ class InferenceLibTest(parameterized.TestCase, tf.test.TestCase):
     # Sorting will move long sequence to the end.
     activations = inferrer.get_activations(input_seqs)
     # Make sure it gets moved back to the middle.
-    self.assertAllClose(activations[0], activations[2])
-    self.assertNotAllClose(activations[0], activations[1])
+    self.assertAllClose(activations[0].todense(), activations[2].todense())
+    self.assertNotAllClose(activations[0].todense(), activations[1].todense())
 
   def testStringInput(self):
     inferrer = inference.Inferrer(test_util.savedmodel_path())
