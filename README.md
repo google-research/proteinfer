@@ -3,6 +3,8 @@
 ProteInfer is an approach for predicting the functional properties of protein
 sequences using deep neural networks.
 
+#### 📝 Read about the method [on bioRxiv](https://www.biorxiv.org/content/10.1101/2021.09.20.461077) or in [our interactive preprint](https://google-research.github.io/proteinfer/).
+
 ## Usage instructions
 
 Go to https://google-research.github.io/proteinfer/ to use an interactive demo in your
