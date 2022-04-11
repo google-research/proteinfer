@@ -3,6 +3,8 @@
 ProteInfer is an approach for predicting the functional properties of protein
 sequences using deep neural networks.
 
+#### 📝 Read about the method [on bioRxiv](https://www.biorxiv.org/content/10.1101/2021.09.20.461077) or in [our interactive preprint](https://google-research.github.io/proteinfer/).
+
 ## Usage instructions
 
 Go to https://google-research.github.io/proteinfer/ to use an interactive demo in your
@@ -88,9 +90,3 @@ gcloud compute instances delete 'proteinfer-gpu'
 ```
 bash -c 'for f in *_test.py; do python3 $f || exit 1; done'
 ```
-
-## Status
-
-This repository is still a work in progress. Please check back for more
-documentation and a manuscript very soon. We are not able to accept pull 
-requests or contributions at this time.
