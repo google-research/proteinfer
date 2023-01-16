@@ -37,7 +37,7 @@ theo \at \;theo.io
 
 \begin{figure}[h!]
   \centering
-  \includegraphics[width=.4\columnwidth]{Figures/qr.pdf}
+  \includegraphics[width=.4\columnwidth]{qr.pdf}
 
  \small QR code for the interactive version of this preprint at  \url{https://google-research.github.io/proteinfer/}
 \end{figure}
@@ -49,7 +49,7 @@ Every day, more than a hundred thousand protein sequences are added to global se
 The community has a long history of using computational tools to infer protein function directly from amino acid sequence. Starting in the 1980s, methods such as BLAST \cite{blast} relied on pairwise sequence comparisons, where a query protein is assumed to have the same function as highly similar sequences that have already been annotated. Signature-based approaches were later introduced, with the PROSITE database \cite{bairoch1991prosite} cataloguing short amino acid ``motifs'' found in proteins that share a particular function. Subsequently, a crucial refinement of signature-based approaches was the development of profile hidden Markov models (HMMs) \cite{krogh1994hidden, eddyhmmreview}. These models collapse an alignment of related protein sequences into a model that provides likelihood scores for new sequences, that describe how well they fit the aligned set. Critically, profile HMMs allow for longer signatures and fuzzier matching and are currently used to update popular databases such as Interpro and Pfam \cite{pfamlatest, blum2021interpro}. Subsequent refinements have made these techniques more sensitive and computationally efficient \cite{altschul1997gapped, fasterhmmer, pfamlatest, soding2005protein, steinegger2019hh}, while their availability as web tools allows practitioners to easily incorporate them into workflows \cite{johnson2008ncbi, soding2005hhpred, potter2018hmmer, bernhofer2021predictprotein}.
 \begin{figure}[t]
 \centering
-  \includegraphics[width=\columnwidth]{Figures/new_the_task.pdf}%
+  \includegraphics[width=\columnwidth]{new_the_task.pdf}%
   \caption{\textbf{Three approaches for mapping from an amino acid sequence to inferred function:}   (1) finding similar sequences in a large database of sequences with known annotation (e.g., BLAST), (2) scoring against a large database of statistical models for each family of sequences with known function (e.g. InterProScan), and (3) applying a single deep neural network trained to predict multiple output categories (e.g., this work).\label{fig:task}}
 \end{figure}
 These computational modelling approaches have had great impact; however, one third of bacterial proteins still cannot be annotated (even computationally) with a function \cite{phenotypes}. It is therefore worthwhile to examine how new approaches might complement existing techniques. First, current approaches conduct entirely separate comparisons for each comparator sequence or model, and thus may not fully exploit the features shared across different functional classes. An ideal classification system, for example, might have a modular ATP-binding region detector used in detection of both kinases and ABC transporters \citep{pmid12468712}. Separately modelling these targets in each family, like standard HMM approaches, increases the computational cost and may also be less accurate. In addition, the process of creating many of these signatures is not fully automated and requires considerable curatorial efforts \citep{pfamprofilebuilding, pfamrepeats}, which at present are spread across an array of disparate but overlapping signature databases \citep{blum2021interpro}.
@@ -69,7 +69,7 @@ To address this challenge we employ deep dilated convolutional networks to learn
 
 \begin{figure}[h!]
 \centering
-  \includegraphics[width=\columnwidth]{Figures/figure.pdf}%
+  \includegraphics[width=\columnwidth]{figure.pdf}%
   \caption{\textbf{A deep dilated convolutional architecture for protein function prediction.} Amino acids are one-hot encoded, then pass through a series of convolutions implemented within residual blocks. Successive filters are increasingly dilated, allowing the top residual layer of the network to build up a representation of high-order protein features. The positional embeddings in this layer are collapsed by mean-pooling to a single embedding of the entire sequence, which is converted into probabilities of each functional classification through a fully connected layer with sigmoidal activations. }
   \label{architecture}
 \end{figure}
@@ -106,14 +106,14 @@ We initially trained a model to predict enzymatic catalytic activities from amin
 %stopleaveout
 \begin{figure}
 \centering
-  \includegraphics[width=\columnwidth]{Figures/fig3}%
+  \includegraphics[width=\columnwidth]{fig3}%
   \caption{\textbf{ProteInfer performance (A) for all 7 top-level enzyme groups from a single CNN model (B) compared between methods: a single ProteInfer CNN, an ensemble of Proteinfer CNNs, a BLAST-based baseline, and an ensemble of BLAST predictions combined with ProteInfer CNNs }}
   \label{fig:toplevel}
 \end{figure}
 
 \begin{figure*}[t]
   \centering
-    \includegraphics[width=\textwidth]{Figures/tetrahydrofolate_synthase.png}
+    \includegraphics[width=\textwidth]{tetrahydrofolate_synthase.png}
     % See https://docs.google.com/presentation/d/1PqP-Ux7far9NMYvroeZIQQ9iXi41xira7-awDC4w_ss/edit#slide=id.p for the provenance of this figure
     \caption{\textbf{Linking sequence regions to function with class activation mapping for C-1-tetrahydrofolate synthase (accession P11586).} A. Ground truth annotation of function on Uniprot \citep{uniprotlatest}. B. The three horizontal bars are the sequence region ProteInfer predicts are most involved in each corresponding reaction. This concurs with the known function localization. }
     \label{fig:cam}
@@ -121,7 +121,7 @@ We initially trained a model to predict enzymatic catalytic activities from amin
 
   \begin{figure*}
     \centering
-      \includegraphics[width=\textwidth]{Figures/umap3.pdf}%
+      \includegraphics[width=\textwidth]{umap3.pdf}%
       \caption{\textbf{Embedding reflects enzyme functional hierarchy}. UMAP projection of embeddings for the subset of test set sequences which have only one leaf-level EC classification. Points are colour-coded at successive levels of the EC hierarchy in each panel. (A) colours denote top level EC groups, (B) colours denote second level EC groups within EC2.*, (C) colours denote third level EC groups within EC:2.7.*, (D) colours depict terminal EC groups within EC:2.7.4.* }
       \label{fig:umap}
     \end{figure*}
@@ -174,7 +174,7 @@ To visualise this space, we selected proteins with a single leaf-level EC number
     \centering
     \begin{subfigure}[t]{0.3\textwidth}
     \vskip 0pt
-        \includegraphics[width=\textwidth]{Figures/nucleotidebinding}
+        \includegraphics[width=\textwidth]{nucleotidebinding}
         \caption{Nucleotide binding}
         \label{fig:gull}
     \end{subfigure}
@@ -182,7 +182,7 @@ To visualise this space, we selected proteins with a single leaf-level EC number
       %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[t]{0.3\textwidth}
     \vskip 0pt
-        \includegraphics[width=\textwidth]{Figures/ribosome}
+        \includegraphics[width=\textwidth]{ribosome}
         \caption{Structural constituent of ribosome}
         \label{fig:tiger}
     \end{subfigure}
@@ -190,7 +190,7 @@ To visualise this space, we selected proteins with a single leaf-level EC number
     %(or a blank line to force the subfigure onto a new line)
     \begin{subfigure}[t]{0.3\textwidth}
     \vskip 0pt
-        \includegraphics[width=\textwidth]{Figures/membrane}
+        \includegraphics[width=\textwidth]{membrane}
         \caption{Intrinsic component of membrane}
         \label{fig:mouse}
     \end{subfigure}
@@ -238,7 +238,7 @@ An attractive property of deep learning models is that they can be run efficient
 \subsection*{Comparison to experimental data}
 \begin{figure}[t]
 \centering
-  \includegraphics[width=\columnwidth]{Figures/price.png}%
+  \includegraphics[width=\columnwidth]{price.png}%
   \caption{\textbf{ProteInfer predictions for a set of genes recently experimentally reannotated by high-throughput phenotyping.} ProteInfer makes confident and largely accurate predictions at the earliest levels of the EC hierarchy. Accuracy falls at the finest levels of classification (for this set of challenging genes) but fortunately the network declines to make a prediction in most cases, with every label failing to meet the threshold for positive classification. \label{fig:levels}}
 \end{figure}
 
@@ -482,33 +482,33 @@ Because different protein functions have differing prevalence, we note the numbe
 \clearpage
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/ec_label_distribution.png}
+  \includegraphics[width=\textwidth]{ec_label_distribution.png}
   \caption{Histogram of number of labels per sequence, including hierarchical labels, on the random dataset.}
 \end{figure}
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/go_label_distribution.png}
+  \includegraphics[width=\textwidth]{go_label_distribution.png}
   \caption{Histogram of number of labels per sequence, including hierarchical labels, on the random dataset.}
 \end{figure}
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/sequences_per_label_ec_random.png}
+  \includegraphics[width=\textwidth]{sequences_per_label_ec_random.png}
   \caption{Number of sequences annotated with a given functional label. (EC class) in the random dataset.}
 \end{figure}
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/sequences_per_label_go_random.png}
+  \includegraphics[width=\textwidth]{sequences_per_label_go_random.png}
   \caption{Number of sequences annotated with a given functional label. (GO label) in the random dataset.}per p
 \end{figure}
 \pagebreak
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/sequences_per_label_ec_clustered.png}
+  \includegraphics[width=\textwidth]{sequences_per_label_ec_clustered.png}
   \caption{Number of sequences annotated with a given functional label. (EC class) in the clustered dataset.}
 \end{figure}
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/sequences_per_label_go_clustered.png}
+  \includegraphics[width=\textwidth]{sequences_per_label_go_clustered.png}
   \caption{Number of sequences annotated with a given functional label. (GO label) in the clustered dataset.}
 \end{figure}
 
@@ -561,27 +561,27 @@ When assigning examples to folds in our clustered dataset, we note that there ar
 \begin{figure}[ht] 
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
-    \includegraphics[width=1\linewidth]{Figures/random_truncated.pdf}
+    \includegraphics[width=1\linewidth]{random_truncated.pdf}
     \caption{EC number prediction: random split} 
     \label{fig:with_ensemble:a} 
     \vspace{4ex}
   \end{subfigure}%% 
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
-    \includegraphics[width=1\linewidth]{Figures/random_truncated_go.pdf}
+    \includegraphics[width=1\linewidth]{random_truncated_go.pdf}
     \caption{GO term prediction: random split} 
     \label{fig:with_ensemble:b} 
     \vspace{4ex}
   \end{subfigure} 
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
-    \includegraphics[width=1\linewidth]{Figures/clustered_truncated.pdf}
+    \includegraphics[width=1\linewidth]{clustered_truncated.pdf}
     \caption{EC number prediction: clustered split} 
     \label{fig:with_ensemble:c} 
   \end{subfigure}%%
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
-    \includegraphics[width=1\linewidth]{Figures/clustered_truncated_go.pdf}
+    \includegraphics[width=1\linewidth]{clustered_truncated_go.pdf}
     \caption{GO term prediction: clustered split} 
     \label{fig:with_ensemble:d} 
   \end{subfigure} 
@@ -594,27 +594,27 @@ When assigning examples to folds in our clustered dataset, we note that there ar
 \begin{figure}[ht] 
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
-    \includegraphics[width=0.9\linewidth]{Figures/prc_ec_random_unzoomed.png}
+    \includegraphics[width=0.9\linewidth]{prc_ec_random_unzoomed.png}
     \caption{EC number prediction: random split} 
     \label{fig:without_ensemble:a} 
     \vspace{4ex}
   \end{subfigure}%% 
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
-    \includegraphics[width=0.9\linewidth]{Figures/prc_go_random_unzoomed.png}
+    \includegraphics[width=0.9\linewidth]{prc_go_random_unzoomed.png}
     \caption{GO term prediction: random split} 
     \label{fig:without_ensemble:b} 
     \vspace{4ex}
   \end{subfigure} 
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
-    \includegraphics[width=0.9\linewidth]{Figures/prc_ec_clustered_unzoomed.png}
+    \includegraphics[width=0.9\linewidth]{prc_ec_clustered_unzoomed.png}
     \caption{EC number prediction: clustered split} 
     \label{fig:without_ensemble:c} 
   \end{subfigure}%%
   \begin{subfigure}[b]{0.5\linewidth}
     \centering
-    \includegraphics[width=0.9\linewidth]{Figures/prc_go_clustered_unzoomed.png}
+    \includegraphics[width=0.9\linewidth]{prc_go_clustered_unzoomed.png}
     \caption{GO term prediction: clustered split} 
     \label{fig:without_ensemble:d} 
   \end{subfigure} 
@@ -625,7 +625,7 @@ When assigning examples to folds in our clustered dataset, we note that there ar
 
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=0.6\textwidth]{Figures/random_untruncated.pdf}
+  \includegraphics[width=0.6\textwidth]{random_untruncated.pdf}
   \caption{EC random task with different methods compared against a naive baseline where the predictor is simply the frequency in the training set.}
   \label{sup:fig:naive}
 \end{figure}
@@ -636,7 +636,7 @@ When assigning examples to folds in our clustered dataset, we note that there ar
 \subsection{GO performance by ontology}
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=0.7\textwidth]{Figures/combined_split_go_random.pdf}
+  \includegraphics[width=0.7\textwidth]{combined_split_go_random.pdf}
   \caption{GO performance stratified by method and ontology type.}
   \label{sup:fig:go_ontologies}
 \end{figure}
@@ -645,7 +645,7 @@ When assigning examples to folds in our clustered dataset, we note that there ar
 \subsection{Stratified performance}
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/ec_f1_by_training_size.png}
+  \includegraphics[width=\textwidth]{ec_f1_by_training_size.png}
   \caption{Performance of EC model stratified by number of training examples available for each test example.}
   \label{sup:fig:ec_f1_by_training_size}
 \end{figure}
@@ -723,7 +723,7 @@ The ProteInfer algorithm is set up to allow any desired training vocabulary to b
 
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=0.7\textwidth]{Figures/pfam_random.png}
+  \includegraphics[width=0.7\textwidth]{pfam_random.png}
   \caption{Performance for Pfam prediction for random train/test split.}
   \label{sup:fig:ec_f1_by_training_size}
 \end{figure}
