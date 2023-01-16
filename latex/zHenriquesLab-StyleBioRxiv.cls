@@ -86,6 +86,7 @@
 \crefname{equation}{Eq. S}{equations}
 \crefname{figure}{Fig.}{figures}
 \crefname{section}{Sup. Note}{notes}
+\interfootnotelinepenalty=10000
 % \crefname{chapter}{Chapter}{Chapters}
 % \crefname{section}{Section}{Sections}
 % \crefname{subsection}{Section}{Sections}

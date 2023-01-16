@@ -1,5 +1,5 @@
 %%%TOPSTUFF%%%
-\title{ProteInfer: deep networks for protein functional inference}
+\title{ProteInfer, deep neural networks for protein functional inference}
 \shorttitle{ProteInfer}
 % Use letters for affiliations, numbers to show equal authorship (if applicable) and to indicate the corresponding author
 \author[*,1,\Letter]{Theo Sanderson}
@@ -21,7 +21,7 @@
 
 
 \begin{abstract}
-  Predicting the function of a protein from its amino acid sequence is a long-standing challenge in bioinformatics. Traditional approaches use sequence alignment to compare a query sequence either to thousands of models of protein families or to large databases of individual protein sequences. Here we instead employ deep convolutional neural networks to directly predict a variety of protein functions -- EC numbers and GO terms -- directly from an unaligned amino acid sequence. This approach provides precise predictions which complement alignment-based methods, and the computational efficiency of a single neural network permits novel and lightweight software interfaces, which we demonstrate with an in-browser graphical interface for protein function prediction in which all computation is performed on the user's personal computer with no data uploaded to remote servers. Moreover, these models place full-length amino acid sequences into a generalised functional space, facilitating downstream analysis and interpretation. To read the interactive version of this paper, please visit \url{https://google-research.github.io/proteinfer/}
+  Predicting the function of a protein from its amino acid sequence is a long-standing challenge in bioinformatics. Traditional approaches use sequence alignment to compare a query sequence either to thousands of models of protein families or to large databases of individual protein sequences. Here we introduce ProteInfer, which instead employs deep convolutional neural networks to directly predict a variety of protein functions -- EC numbers and GO terms -- directly from an unaligned amino acid sequence. This approach provides precise predictions which complement alignment-based methods, and the computational efficiency of a single neural network permits novel and lightweight software interfaces, which we demonstrate with an in-browser graphical interface for protein function prediction in which all computation is performed on the user's personal computer with no data uploaded to remote servers. Moreover, these models place full-length amino acid sequences into a generalised functional space, facilitating downstream analysis and interpretation. To read the interactive version of this paper, please visit \url{https://google-research.github.io/proteinfer/}.
 \end {abstract}
 
 %TC:break main
@@ -62,10 +62,11 @@ In response, recent work has contributed a number of deep neural network models 
 
 Beyond functional annotation, deep learning has enabled significant advances in protein structure prediction \cite{alquraishi2019end, senior2020improved, Yang1496, yang2020improved, du2020energy, rao2021msa}, predicting the functional effects of mutations \cite{riesselman2018deep,rives2019biological,rao2019evaluating,frazer2020large}, and protein design \cite{yang2019machine, mazurenko2019machine, biswas2020low, madani2020progen,elnaggar2020prottrans, anishchenko2020novo, bryant2021deep}. A key departure from traditional approaches is that researchers have started to incorporate vast amounts of raw, uncurated sequence data into model training, an approach which also shows promise for functional prediction \citep{Brandes2021}. 
 
-Of particular relevance to the present work is Bileschi et al. (2019) \citep{bileschi}, where it is shown that models with residual layers \citep{resnet} of dilated convolutions \citep{dilatedconvolutions} can precisely and efficiently categorise protein domains.  Dohan (2021) \cite{dohan2021kdd} provides additional accuracy improvements using uncurated data. However, these models cannot infer functional annotations for full-length protein sequences, since they are trained on pre-segmented domains and can only predict a single label. The full-sequence task is of primary importance to biological practitioners.
+Of particular relevance to the present work is Bileschi et al. (2022) \citep{bileschi}, where it is shown that models with residual layers \citep{resnet} of dilated convolutions \citep{dilatedconvolutions} can precisely and efficiently categorise protein domains.  Dohan (2021) \cite{dohan2021kdd} provides additional accuracy improvements using uncurated data. However, these models cannot infer functional annotations for full-length protein sequences, since they are trained on pre-segmented domains and can only predict a single label. The full-sequence task is of primary importance to biological practitioners.
 
 To address this challenge we employ deep dilated convolutional networks to learn the mapping between full-length protein sequences and functional annotations. The resulting ProteInfer models take amino acid sequences as input and are trained on the well-curated portion of the protein universe annotated by Swiss-Prot \cite{uniprotlatest}. We find that: 1) ProteInfer models reproduce curator decisions for a  variety of functional properties across sequences distant from the training data, 2) attribution analysis shows that the predictions are driven by relevant regions of each protein sequence, and 3) ProteInfer models create a generalised mapping between sequence space and the space of protein functions, which is useful for tasks other than those for which the models were trained. We provide trained ProteInfer networks that enable other researchers to reproduce the analysis presented and to explore embeddings of their proteins of interest, via both a command line tool\footnote{\url{https://github.com/google-research/proteinfer}}, and also via an in-browser JavaScript implementation that demonstrates the computational efficiency of deep-learning approaches.
-\section*{Methods}
+\section*{Results}
+
 \begin{figure}[h!]
 \centering
   \includegraphics[width=\columnwidth]{Figures/figure.pdf}%
@@ -75,7 +76,7 @@ To address this challenge we employ deep dilated convolutional networks to learn
 \subsection*{A neural-network for protein function prediction}
 %%%MODEL%%%
 In a ProteInfer neural network (\Cref{architecture}%htmlver:<a href="#fig3" target="_self">Figure 3</a>
-), a raw amino acid sequence is first represented numerically as a \textit{one-hot} matrix and then passed through a series of convolutional layers. Each layer takes the representation of the sequence in the previous layer and applies a number of \textit{filters}, which detect patterns of features. We use \textit{residual} layers, in which the output of each layer is added to its input to ease the training of deeper networks \cite{resnet}, and dilated convolutions \cite{dilatedconvolutions}, meaning that successive layers examine larger sub-sequences of the input sequence. After building up an embedding of each position in the sequence, the model collapses these down to a single $n$-dimensional embedding of the sequence using average pooling. Since natural protein sequences can vary in length by at least three orders of magnitude, this pooling is advantageous because it allows our model to accommodate sequences of arbitrary length without imposing restrictive modeling assumptions or computational burdens that scale with sequence length. Finally, a fully-connected layer maps these embeddings to logits for each potential label, which are the input to an element-wise sigmoid layer that outputs per-label probabilities. 
+), a raw amino acid sequence is first represented numerically as a \textit{one-hot} matrix and then passed through a series of convolutional layers. Each layer takes the representation of the sequence in the previous layer and applies a number of \textit{filters}, which detect patterns of features. We use \textit{residual} layers, in which the output of each layer is added to its input to ease the training of deeper networks \cite{resnet}, and dilated convolutions \cite{dilatedconvolutions}, meaning that successive layers examine larger sub-sequences of the input sequence. After building up an embedding of each position in the sequence, the model collapses these down to a single $n$-dimensional embedding of the sequence using average pooling. Since natural protein sequences can vary in length by at least three orders of magnitude, this pooling is advantageous because it allows our model to accommodate sequences of arbitrary length without imposing restrictive modeling assumptions or computational burdens that scale with sequence length. In contrast, many previous approaches operate on fixed sequence lengths: these techniques are unable to make predictions for proteins larger than this sequence length, and use unnecessary resources when employed on smaller proteins. Finally, a fully-connected layer maps these embeddings to logits for each potential label, which are the input to an element-wise sigmoid layer that outputs per-label probabilities. 
 We select all labels with predicted probability above a given confidence threshold, and varying this threshold yields a tradeoff between precision and recall. To summarize model performance as a single scalar, we compute the $\texttt{F}_{max}$ score, the maximum $\texttt{F}_{1}$ score (the geometric mean of precision and recall) across all thresholds \citep{radivojac2013large}.  
 
 Each model was trained for about 60 hours using the Adam optimizer \citep{kingma2014adam} on 8 NVIDIA P100 GPUs with data parallelism \cite{dean2012large, dataparalellism}.  We found that using more than one GPU for training improved training time by allowing an increased batch size, but did not have a substantial impact on accuracy compared to training for longer with a smaller learning rate and smaller batch size on one GPU. The models have a small set of hyperparameters, such as the number of layers and the number of filters in each layer, which were tuned using random sampling to maximize $\texttt{F}_{max}$ on the random train-test split. Hyperparameter values are available in the \textnormal{ Supplement}%htmlver:<a href="./latex/supplement.pdf">supplement</a>
@@ -86,8 +87,8 @@ Functional annotation is stored in UniProt largely through \textit{database cros
 
 We use two methods to split data into training and evaluation sets. First, a random split of the data allows us to answer the following question: suppose that curators had randomly annotated only 80\% of the sequences in Swiss-Prot. How accurately can ProteInfer annotate the remaining 20\%?  Second, we use UniRef50 \citep{suzek2015uniref} clustering to split the data, to model a challenging use-case in which an unseen sequence has low sequence similarity to anything that has been previously annotated. Note there are alternative methods for splitting \citep{Brandes2021,zhou2019cafa, gillis}, such as reserving the most recently-annotated proteins for evaluating models. This approach, which is used in CAFA and CASP \citep{zhou2019cafa, gillis}, helps ensure a fair competition because labels for the evaluation data are not available to participants, or the scientific community at large, until after the competition submissions are due. Such a split is not available for EC classification, which is the primary focus of our analyses below. Finally, note that all of the above approaches typically lack reliable annotation for true negatives \citep{warwick2020benchmarking}.
 
-To facilitate further development of machine learning methods, we provide TensorFlow \citep{abadi2016tensorflow} TFrecord files for Swiss-Prot \footnote{\url{https://console.cloud.google.com/storage/browser/brain-genomics-public/research/proteins/proteinfer/datasets/}}. Each example has three fields: the UniProt accession, the amino acid sequence, and a list of database cross-reference labels. UniProt annotations include only leaf nodes for hierarchical taxononomies such as EC and GO. To allow machine-learning algorithms to model this hierarchy, we added all parental annotations to each leaf node during dataset creation. 
-\section*{Results}
+To facilitate further development of machine learning methods, we provide TensorFlow \citep{abadi2016tensorflow} TFrecord files for Swiss-Prot.\footnote{\url{https://console.cloud.google.com/storage/browser/brain-genomics-public/research/proteins/proteinfer/datasets/}} Each example has three fields: the UniProt accession, the amino acid sequence, and a list of database cross-reference labels. UniProt annotations include only leaf nodes for hierarchical taxononomies such as EC and GO. To allow machine-learning algorithms to model this hierarchy, we added all parental annotations to each leaf node during dataset creation. 
+
 \subsection*{Prediction of catalysed reactions}
 We initially trained a model to predict enzymatic catalytic activities from amino acid sequence. This data is recorded as Enzyme Commission (EC) numbers, which describe a hierarchy of catalytic functions. For instance, \textbeta{} amylase enzymes have an EC number of EC:3.2.1.2, which represents the leaf node in the following hierarchy:
 %%%ECHIERARCHY%%%
@@ -105,8 +106,8 @@ We initially trained a model to predict enzymatic catalytic activities from amin
 %stopleaveout
 \begin{figure}
 \centering
-  \includegraphics[width=\columnwidth]{Figures/ec_performance_by_top_level_class.png}%
-  \caption{\textbf{ProteInfer performance for predictions within all 7 top-level enzyme groups.}}
+  \includegraphics[width=\columnwidth]{Figures/fig3}%
+  \caption{\textbf{ProteInfer performance (A) for all 7 top-level enzyme groups from a single CNN model (B) compared between methods: a single ProteInfer CNN, an ensemble of Proteinfer CNNs, a BLAST-based baseline, and an ensemble of BLAST predictions combined with ProteInfer CNNs }}
   \label{fig:toplevel}
 \end{figure}
 
@@ -120,7 +121,7 @@ We initially trained a model to predict enzymatic catalytic activities from amin
 
   \begin{figure*}
     \centering
-      \includegraphics[width=\textwidth]{Figures/umap2.pdf}%
+      \includegraphics[width=\textwidth]{Figures/umap3.pdf}%
       \caption{\textbf{Embedding reflects enzyme functional hierarchy}. UMAP projection of embeddings for the subset of test set sequences which have only one leaf-level EC classification. Points are colour-coded at successive levels of the EC hierarchy in each panel. (A) colours denote top level EC groups, (B) colours denote second level EC groups within EC2.*, (C) colours denote third level EC groups within EC:2.7.*, (D) colours depict terminal EC groups within EC:2.7.4.* }
       \label{fig:umap}
     \end{figure*}
@@ -128,24 +129,20 @@ We initially trained a model to predict enzymatic catalytic activities from amin
 Individual protein sequences can be annotated with zero (non-enzymatic proteins), one (enzymes with a single function) or many (multi-functional enzymes) leaf-level EC numbers. These are drawn from a total of 8,162 catalogued chemical reactions.
 Our best $\texttt{F}_{max}$ was achieved by a model containing 5 residual blocks with 1100 filters each (full details in \textnormal{ Supplement}%htmlver:<a href="./latex/supplement.pdf">supplement</a>
 ). For the dev set, $\texttt{F}_{max}$ converged within 500,000 training steps. On the random split, the model achieves $\texttt{F}_{max}$ = 0.977 (0.976-0.978) on the held-out test data. At the corresponding confidence threshold, the model correctly predicts 96.7\% of true labels, with a false positive rate of 1.4\%. Results from the clustered test set are discussed below.
-Performance was roughly similar across labels at the top of the EC hierarchy, with the highest $\texttt{F}_{max}$ score observed for ligases (0.993), and the lowest for oxidoreductases (0.963) (\Cref{fig:toplevel}A%htmlver: 
-). For all classes, the precision of the network was higher than the recall at the threshold maximising $\texttt{F}_{max}$. Precision and recall can be traded off against each other by adjusting the confidence threshold at which the network outputs a prediction, creating the curves shown in \Cref{fig:toplevel}B.%htmlver:the figure below
+Performance was roughly similar across labels at the top of the EC hierarchy, with the highest $\texttt{F}_{max}$ score observed for ligases (0.993), and the lowest for oxidoreductases (0.963). For all classes, the precision of the network was higher than the recall at the threshold maximising $\texttt{F}_{max}$. Precision and recall can be traded off against each other by adjusting the confidence threshold at which the network outputs a prediction, creating the curves shown in \Cref{fig:toplevel}B.%htmlver:the figure below
 %%%INITIALANALYSIS%%%
 
-BLASTp is arguably a practitioner's default choice for functional annotation, so we implemented an alignment-based baseline in which BLASTp is used to identify the closest sequence to a query sequence in the train set. Labels are then imputed for the query sequence by transferring those labels that apply to the annotated match from the train set.
 
-
-
-We produced a precision-recall curve by using the bit score of the closest sequence as a measure of confidence, varying the cutoff above which we retain the imputed labels \cite{zhou2019cafa, eddy2011accelerated}. We also considered an ensemble of neural networks \cite{bileschi}, where the average of the ensemble elements' predicted probabilities is used as a confidence score. %
+We implemented an alignment-based baseline in which BLASTp is used to identify the closest sequence to a query sequence in the train set. Labels are then imputed for the query sequence by transferring those labels that apply to the annotated match from the train set. We produced a precision-recall curve by using the bit score of the closest sequence as a measure of confidence, varying the cutoff above which we retain the imputed labels \cite{zhou2019cafa, eddy2011accelerated}. We also considered an ensemble of neural networks \cite{bileschi}, where the average of the ensemble elements' predicted probabilities is used as a confidence score, and a naive control where the number of proteins annotated with a specific term in the training set \citep{radivojac2013large}. %
 %startleaveout
-(See \Cref{fig:with_ensemble}, \Cref{fig:without_ensemble}.)
+(See \Cref{fig:toplevel}B, \Cref{fig:with_ensemble}, \Cref{fig:without_ensemble}.)
 %stopleaveout
 
 %%%METHOD%%%
-We found that BLASTp was able to achieve higher recall values than ProteInfer for lower precision values, while ProteInfer was able to provide greater precision than BLASTp at lower recall values. We wondered whether a combination of ProteInfer and BLASTp could synergize the best properties of both approaches. We found that even the simple ensembling strategy of rescaling the BLAST bit score by the averages of the ensembled CNNs' predicted probabilities gave a $\texttt{F}_{max}$ score (0.991, 95\% confidence interval [CI]: 0.990--0.992 ) that exceeded that of BLAST (0.984, 95\% CI: 0.983--0.985) or the ensembled CNN (0.981, 95\% CI: 0.980--0.982) alone. 
+We found that BLASTp was able to achieve higher recall values than ProteInfer for lower precision values, while ProteInfer was able to provide greater precision than BLASTp at lower recall values. The high recall of BLAST is likely to reflect the fact that it has access to the entirety of the training set, rather than having to compress it into a limited set of neural network weights. In contrast, the lack of precision in BLAST could relate to reshuffling of sequences during evolution, which would allow a given protein to show high similarity to a trainining sequence in a particular subregion, despite lacking the core region required for that training sequence's function.  We wondered whether a combination of ProteInfer and BLASTp could synergize the best properties of both approaches. We found that even the simple ensembling strategy of rescaling the BLAST bit score by the averages of the ensembled CNNs' predicted probabilities gave a $\texttt{F}_{max}$ score (0.991, 95\% confidence interval [CI]: 0.990--0.992 ) that exceeded that of BLAST (0.984, 95\% CI: 0.983--0.985) or the ensembled CNN (0.981, 95\% CI: 0.980--0.982) alone (see Supplement for more details on this method). 
 On the clustered train-test split based on UniRef50 (see \textit{clustered} in \Cref{fig:toplevel}B%htmlver:<a href="#fig5" target="_self">Fig. 5</a>
-), we see a performance drop in all methods: this is expected, as remote homology tasks are designed to challenge methods to generalize farther in sequence space. The $\texttt{F}_{max}$ score of a single neural network fell to 0.914 (95\% CI: 0.913--0.915, precision: 0.959 recall: 0.875), substantially lower than BLAST (0.950, 95\% CI: 0.950--0.951), though again an ensemble of both BLAST and ProteInfer outperformed both (0.979, 95\% CI: 0.979--0.980). We find that neural network methods learn different information about proteins than alignment-based methods, and a combination of the two further improves remote homology detection. 
-
+), we see a performance drop in all methods: this is expected, as remote homology tasks are designed to challenge methods to generalize farther in sequence space. The $\texttt{F}_{max}$ score of a single neural network fell to 0.914 (95\% CI: 0.913--0.915, precision: 0.959 recall: 0.875), substantially lower than BLAST (0.950, 95\% CI: 0.950--0.951), though again an ensemble of both BLAST and ProteInfer outperformed both (0.979, 95\% CI: 0.979--0.980). These patterns suggest that neural network methods learn different information about proteins to alignment-based methods, and so a combination of the two provides a synergistic result. All methods dramatically outperformed the naive frequency-based approach (\Cref{sup:fig:naive}%htmlver:see supplement
+).
 
 
 We also examined the relationship between the number of examples of a label in the training dataset and the performance of the model. In an image recognition task, this is an important consideration since one image of, say, a dog, can be utterly different to another. Large numbers of labels are therefore required to learn filters that are able to predict members of a class. In contrast, for sequence data we found that even for labels that occurred less than five times in the training set, 58\% of examples in the test set were correctly recalled, while achieving a precision of 88\%, for an F1 of 0.7 (\Cref{sup:fig:ec_f1_by_training_size}%htmlver:<a href="#fig6" target="_self">Fig. 6</a>
@@ -201,7 +198,7 @@ To visualise this space, we selected proteins with a single leaf-level EC number
 \end{figure*}
 The resulting representation captures the hierarchical nature of EC classification, with the largest clusters in embedding space corresponding to top level EC groupings (\Cref{fig:umap}A%htmlver:
 ). These clusters in turn are further divided into sub-regions on the basis of subsequent levels of the EC hierarchy (\Cref{fig:umap}B%%htmlver:
-). Exceptions to this rule generally recapitulate biological properties. For instance, Q8RUD6 is annotated as Arsenate reductase (glutaredoxin) (EC:1.20.4.1) \cite{pmid25464340} was not placed with other oxidoreductases (EC:1.-.-.-) but rather with Sulfurtransferases (EC:2.8.1.-). Q8RUD6 can however act as a sulfertransferase \cite{pmid17408957}. 
+). Exceptions to this rule generally recapitulate biological properties. For instance, \emph{Q8RUD6} is annotated as Arsenate reductase (glutaredoxin) (EC:1.20.4.1) \cite{pmid25464340} was not placed with other oxidoreductases (EC:1.-.-.-) but rather with Sulfurtransferases (EC:2.8.1.-). \emph{Q8RUD6} can however act as a sulfertransferase \cite{pmid17408957}. 
 
 
 Note that the model is directly trained with labels reflecting the EC hierarchy; the structure in \Cref{fig:umap} %htmlver:<a href="#fig8" target="_self">Fig. 8</a>
@@ -216,10 +213,11 @@ To quantitatively measure whether these embeddings capture the function of non-e
 \subsection*{Rapid client-side in-browser protein function prediction}
 Processing speed and ease-of-access are important considerations for the utility of biological software. An algorithm that takes hours or minutes is less useful than one that runs in seconds, both because of its increased computational cost, but also because it allows less immediate interactivity with a researcher. An ideal tool for protein function prediction would require minimal installation and would instantly answer a biologist's question about protein function, allowing them to immediately act on the basis of this knowledge. Moreover, there may be intellectual property concerns in sending sequence data to remote servers, so a tool that does annotation completely client-side may also be preferable.
 
-There is arguably room for improvement in this regard from classical approaches. For example, the online interface to InterProScan can take ~147 seconds to process a 1500 amino acid sequence\footnote{Protein Q77Z83.}\footnote{It should be noted that the individual databases that make up InterProScan may return matches faster, with the online interface to Pfam taking 14--20 seconds for a 1500 amino acid sequence.}, while running the tool may make the search faster, doing so requires downloading a 9 GB file, with an additional 14 GB for the full set of signatures, which when installed exceeds 51 GB. Meanwhile, conducting a BLAST search against Swiss-Prot takes 34 seconds for a 1500 amino acid sequence \footnote{A target database with decreased redundancy could be built to reduce this search time, and other optimizations of BLAST have been developed.}.
+There is arguably room for improvement in this regard from classical approaches. For example, the online interface to InterProScan can take ~147 seconds to process a 1500 amino acid sequence\footnote{Protein used was Q77Z83. It should be noted that the individual databases that make up InterProScan may return matches faster, with the online interface to Pfam taking 14--20 seconds for a 1500 amino acid sequence.}, while running the tool may make the search faster, doing so requires downloading a 9 GB file, with an additional 14 GB for the full set of signatures, which when installed exceeds 51 GB. Meanwhile, conducting a BLAST search against Swiss-Prot takes 34 seconds for a 1500 amino acid sequence \footnote{A target database with decreased redundancy could be built to reduce this search time, and other optimizations of BLAST have been developed.}.
 
-An attractive property of deep learning models is that they can be run efficiently, using consumer graphics cards for acceleration. Indeed, recently, a framework has been developed to allow models developed in TensorFlow to be run locally using simply a user's browser \citep{tfjs}, but to our knowledge this has never been deployed to investigate biological sequence data. We therefore built a tool to allow near-instantaneous prediction of protein functional properties in the browser. When the user loads the tool, lightweight EC (5MB) and GO model (7MB) prediction models are downloaded and all predictions are then performed locally, with query sequences never leaving the user's computer. Inference in the browser for a 1500 amino-acid sequence takes < 1.5 seconds for both models (\Cref{sup:js_timing}%htmlver:see <a href="./latex/supplement.pdf">supplement</a>
-).
+An attractive property of deep learning models is that they can be run efficiently, using consumer graphics cards for acceleration. Indeed, recently, a framework has been developed to allow models developed in TensorFlow to be run locally using simply a user's browser \citep{tfjs}, but to our knowledge this has never been deployed to investigate biological sequence data. We therefore built a tool to allow near-instantaneous prediction of protein functional properties in the browser. When the user loads the tool, lightweight EC (5MB) and GO model (7MB) prediction models are downloaded and all predictions are then performed locally, with query sequences never leaving the user's computer.  We selected the hyperparameters for these lightweight models by performing a tuning study in which we filtered results by the size of the model's parameters and then selected the best performing models. This approach uses a single neural network, rather than an ensemble. Inference in the browser for a 1500 amino-acid sequence takes < 1.5 seconds for both models (see supplement).
+
+
 % \begin{table*}[b]
 % \centering
 % \caption{Bla}
@@ -244,7 +242,8 @@ An attractive property of deep learning models is that they can be run efficient
   \caption{\textbf{ProteInfer predictions for a set of genes recently experimentally reannotated by high-throughput phenotyping.} ProteInfer makes confident and largely accurate predictions at the earliest levels of the EC hierarchy. Accuracy falls at the finest levels of classification (for this set of challenging genes) but fortunately the network declines to make a prediction in most cases, with every label failing to meet the threshold for positive classification. \label{fig:levels}}
 \end{figure}
 
-To assess our model's performance using an additional experimentally-validated source of ground truth, we focused our attention on a large set of bacterial genes for which functions have recently been identified in a high-throughput experimental genetic study \citep{phenotypes}. In particular, this study listed newly identified EC numbers for 171 proteins, representing cases when there was previously either misannotation or inconsistent annotation in the SEED or KEGG databases. Therefore, this set of genes may be enriched for proteins whose functions are difficult to assess computationally.
+
+Despite its curated nature, SwissProt contains many proteins annotated only on the basis of electronic tools. To assess our model's performance using an experimentally-validated source of ground truth, we focused our attention on a large set of bacterial genes for which functions have recently been identified in a high-throughput experimental genetic study \citep{phenotypes}. In particular, this study listed newly identified EC numbers for 171 proteins, representing cases when there was previously either misannotation or inconsistent annotation in the SEED or KEGG databases. Therefore, this set of genes may be enriched for proteins whose functions are difficult to assess computationally.
 We examined how well our network was able to make predictions for this experimental dataset at each level of the EC hierarchy (\Cref{fig:levels}%htmlver:<a href="#fig10" target="_self">Fig. 11</a>
 ), using as a decision threshold the value that optimised F1 identified during tuning. The network had high accuracy for identification of broad enzyme class, with 90\% accuracy at the top level of the EC hierarchy. To compute accuracy, we examined the subset of these 171 proteins for which there was a single enzymatic annotation from \cite{phenotypes}, giving us predictions for 119 enzymes. At the second level of the hierarchy, accuracy was 90\% and the network declined to make a prediction for 12\% of classes. Even at the third level, accuracy was 86\% with the network making a prediction in 77\% of cases. At the finest level of classification, the proportion of examples for which a prediction was made fell to 28\%, with 42\% of these predictions correct.
 
@@ -255,19 +254,29 @@ As an  example, the \textit{Sinorhizobium meliloti} protein Q92SI0 is annotated 
 It was notable that for many of these proteins, the network declined to make a prediction at the finest level of the EC hierarchy. This suggests that by training on this hierarchical data, the network is able to appropriately make broad or narrow classification decisions. This is similar to the procedure employed with manual annotation: when annotators are confident of the general class of reaction that an enzyme catalyses but not its specific substrate, they may leave the third or fourth position of the EC number blank (e.g. EC:1.1.-.-). Due to training on hierarchical data, our network is able to reproduce these effects by being more confident (with higher accuracy) at earlier levels of classification.
 
 \subsection*{A model predicting the entire gene ontology}
-Given the high accuracy that our deep learning model was able to achieve on the more than five thousand enzymatic labels in Swiss-Prot, we asked whether our networks could learn to predict protein properties using an even larger vocabulary of labels, using a similar test-train setup. Gene Ontology \citep{ashburner2000gene, gene2019gene, carbon2009amigo} (GO) terms describe important protein functional properties, with 28,079 such terms in Swiss-Prot that cover the molecular functions of proteins (e.g. DNA-binding, amylase activity), the biological processes they are involved in (e.g. DNA replication, meiosis), and the cellular components to which they localise (e.g. mitochondrion, cytosol). These terms are arranged in a complex directed acyclic graph, with some nodes having as many as 12 ancestral nodes.
+Given the high accuracy that our deep learning model was able to achieve on the more than five thousand enzymatic labels in Swiss-Prot, we asked whether our networks could learn to predict protein properties using an even larger vocabulary of labels, using a similar test-train setup. Gene Ontology \citep{ashburner2000gene, gene2019gene, carbon2009amigo} (GO) terms describe important protein functional properties, with 32,109 (\Cref{sup:table:vocab_sizes}%htmlver:see supplement
+) such terms in Swiss-Prot that cover the molecular functions of proteins (e.g. DNA-binding, amylase activity), the biological processes they are involved in (e.g. DNA replication, meiosis), and the cellular components to which they localise (e.g. mitochondrion, cytosol). These terms are arranged in a complex directed acyclic graph, with some nodes having as many as 12 ancestral nodes.
+
 
 We note that there has been extensive work in GO label prediction evaluated on a temporally-split dataset (constructing a test set with the most recently experimentally annotated proteins), e.g., \citep{zhou2019cafa}, and stress that our comparison is based on the random and clustered splits of Swiss-Prot described above.  This approach to splitting the data into train and test has advantages and disadvantages as compared to a temporal split, which depend on the desired application for the method being evaluated.
 
 %%%GO_METHOD%%%
 
-We trained a single model to predict presence or absence for each of these terms and found that our network was able to achieve a precision of 0.918 and a recall of 0.854 for an F1 score of 0.885 (95\% CI: 0.882--0.887).
+We trained a single model to predict presence or absence for each of these terms and found that our network was able to achieve a precision of 0.918 and a recall of 0.854 for an F1 score of 0.885 (95\% CI: 0.882--0.887). 
 
-An ensemble of multiple CNN elements was again able to achieve a slightly better result with an F1 score of 0.899 (95\% CI: 0.897--0.901), which was exceeded by a simple transfer of the BLAST top pick at 0.902 (95\% CI: 0.900--0.904), with an ensemble of both producing the best result of 0.908 (95\% CI: 0.906--0.911). 
+An ensemble of multiple CNN elements was again able to achieve a slightly better result with an F1 score of 0.899 (95\% CI: 0.897--0.901), which was exceeded by a simple transfer of the BLAST top pick at 0.902 (95\% CI: 0.900--0.904), with an ensemble of both producing the best result of 0.908 (95\% CI: 0.906--0.911).
+
+The same trends for the relative performance of different approaches were seen for each of the direct-acyclic graphs that make up the GO ontology (biological process, cellular component and molecular function), but there were substantial differences in absolute performance (\Cref{sup:fig:go_ontologies}%htmlver:(see <a href="./latex/supplement.pdf">supplement</a>)
+). Performance was highest for molecular function (max F1: 0.94), followed by biological process (max F1:0.86) and then cellular component (max F1:0.84).
+
 
 To benchmark against a common signature-based methodology, we used InterProScan to assign protein family signatures to each test sequence. We chose InterProScan for its coverage of labels as well as its use of multiple profile-based annotation methods, including HMMER and PROSITE, mentioned above. We note that while InterProScan predicts GO labels directly, it does not do so for EC labels, which is why we did not use InterProScan to benchmark our work on predicting EC labels. We found that InterProScan gave good precision, but within this UniProt data had lower recall, giving it a precision of 0.937 and recall of 0.543 for an F1 score of 0.688. ProteInfer's recall at a precision of .937 is substantially higher (0.835) than InterProScan at assigning GO labels.  
 
 There are multiple caveats to these comparisons. One challenge is that the completeness of Swiss-Prot's GO term annotations varies \cite{jiang2014impact}. As an extreme example, \textit{Pan paniscus} (Pygmy Chimpanzee) and \textit{Pan troglodytes} (Chimpanzee) have an identical Apolipoprotein A-II protein,\footnote{Accessions P0DM95 and Q8MIQ5.}, where the first protein has 24 GO annotations, while the latter has 143 GO annotations.\footnote{This count is done using not only the set of all labels that appear in Swiss-Prot, but also any parents of those labels.} One way this is reflected in the performance of the models is that some BLAST matches that have extremely large bit-scores are not annotated identically, and thus reduce the precision of the BLAST model. It is also important to note that our model has the advantage of being specifically trained on the UniProt labelling schema upon which it is being evaluated. InterPro works quite differently, with GO terms being assigned to families, and so inconsistencies in terms of how these are assigned can explain reduced performance -- for instance InterPro families simply do not feature all of the GO terms found in UniProt. Thus these results should be seen as specific to the task of reproducing the curated results in UniProt.
+
+
+We also tested how well our trained model was able to recall the subset of GO term annotations which are not associated with the "inferred from electronic annotation" (IEA) evidence code, indicating either experimental work or more intensely-curated evidence. We found that at the threshold that maximised F1 score for overall prediction, 75\% of molecular function annotations could be successfully recalled, 61\% of cellular component annotations, and 60\% of biological process annotations.
+
 
 \section*{Discussion}
 
@@ -285,12 +294,129 @@ Our code, data, and notebooks reproducing the analyses shown in this work are av
 
 %startleaveout
 
+
+  \section*{Materials and methods}
+  \begin{table*}[htbp]
+    \centering
+    \def\arraystretch{1.1}
+    \begin{tabular}{|c|c|c|c|c|}
+    \hline
+                               & \\
+                               & CNN \\
+    \Xhline{1pt}
+    concurrent batches(data parallelism) & 8 \\
+    \hline
+    batch size                 & \shortstack{40 (per each GPU) \\ Dynamic based on sequence length} \\
+    \hline
+    dilation rate              & 3 \\
+    \hline
+    filters                    & 1100  \\
+    \hline
+    first dilated layer        & 2 \\
+    % zero-indexed so added one to the values shown in the hparams_registry for clarity.
+    \hline
+    gradient clip              & 1 \\
+    \hline
+    kernel size                & 9 \\
+    \hline
+    learning rate              & 1.5E-3 \\
+    \hline
+    learning rate decay rate   & 0.997 \\
+    \hline
+    learning rate decay steps  & 1000 \\
+    \hline
+    learning rate warmup steps & 3000 \\
+    \hline
+    Adam $\beta_1$              & .9 \\
+    \hline
+    Adam $\beta_2$              & .999 \\
+    \hline
+    Adam $\epsilon$             & 1E-8 \\
+    \hline
+    number of ResNet layers     & 5 \\
+    \hline
+    pooling                     & mean \\
+    \hline
+    ResNet bottleneck factor    & 0.5 \\
+    \hline
+    train steps                 & 500000 \\
+    \hline
+    \end{tabular}
+    \caption{Hyperparameters used in convolutional neural networks. We note that hyperparameters for single-GPU training are available in \url{github.com/google-research/proteinfer/blob/master/hparams_sets.py}.}
+    \label{tab:nn_hparams}
+    \end{table*} 
+ 
+
+\subsection*{Implementation details}
+
+
+\subsubsection*{Label inheritance}
+Our data processing pipeline takes as input UniProt XML entries, and outputs training data for the neural network. Some types of annotations, such as GO terms and EC numbers, exist within directed acyclic graphs (which take the form of simple trees for EC numbers). Typically in such cases the annotation provided on UniProt is the most-specific that is known. For example if a protein is known to exhibit \textit{sequence specific DNA binding} (GO:0043565). It will not separately be annotated with the ancestral term \textit{DNA binding} (GO:0003677), this is simply assumed from the ontology. Using such an annotations directly, however, is likely to be problematic in a deep learning setting. Failing to annotate an example with the parental term demands that the model predict that the example is negative for this term, which is not the effect we want.
+To address this our datasets include labels for all ancestors of applied labels for EC, GO and InterPro datasets. In the case of GO we restrict these to \textit{is\_a} relationships.
+
+\subsubsection*{Class activation mapping}
+Many proteins have multiple functional properties. For example we analyse the case of the bifunctional dhfr/ts of \textit{T. gondii}. Such bifunctional enzymes are often not unique -- it is functionally advantageous for these enzymes to be fused, which facilitates channeling of substrate between their active sites. Since there are a number of such examples within Swiss-Prot, the mere existence of a TS domain in a protein is (mild) evidence for possible DHFR function. To increase the interpretability of the network we normalise the results of class-activation mapping for proteins with multiple predicted functions. We initially calculate first-pass localisations for each predicted function using class-activation mapping. Then we make the localisation of each function more specific by taking the score for each residue, and subtracting the scores at the same residues for all other functions. In the case of DHFR-TS, the TS activations in the TS domain are much greater than the DHFR activations in the TS domain and so this subtraction prevents the TS domain from being associated with DHFR function, increasing interpretability.
+
+
+\subsection*{Model architecture}
+To create an architecture capable of receiving a wide range of input sequences, with computational requirements determined for each inference by the length of the individual input sequence, we employed a dilated convolutional approach \citep{dilatedconvolutions}. Computation for both training and prediction in such a model can be parallelized across the length of the sequence. By training on full length proteins, in a multi-label training setting, we aimed to build networks that could  extract functional information from raw amino acid sequences. One helpful feature of this architecture is its flexibility with regards to sequence length. Natural protein sequences can vary in length by at least three orders of magnitude, but some architectures have computational requirements that scale with the maximum sequence they are capable of receiving as input, rather than the sequence being currently examined. These fixed-length approaches reduce efficiency as well as place a hard limit on the length of sequences that can be examined. 
+
+\subsection*{Hyperparameters}
+We tuned over batch size, dilation rate, filters, first dilated layer, kernel size, learning rate, number of layers, mean vs max pooling, and Adam $\beta_1$, $\beta_2$ and $\epsilon$~\citep{kingma2014adam} over a number of studies to determine the set of parameters that optimized $\texttt{F}_{max}$. We found, as in~\cite{bileschi}, that the network was relatively unresponsive to slight changes in hyperparameters, and found that many of the hyperparameters that performed well in~\cite{bileschi} also performed well for this task. We chose to keep identical hyperparameters for the EC and GO tasks across both the random and clustered splits for simplicity, and we note that parameters with good performance on the random task performed respectively well on the clustered split. 
+
+
+\subsection*{Predicting coarse-grained functional localization with CAM}
+The goal of this experimental methodology is to measure whether or not we correctly order the localization of function in bifunctional enzymes. As such, first we have to identify a set of candidates for experimentation.
+
+\subsubsection*{Candidate set construction}
+We note that no functional localization information was available to our models during training, so we can consider not just the dev and test sets, but instead the entirety of Swiss-Prot for our experimentation. As such, we take all examples from Swiss-Prot that have an EC label, and convert these labels to Pfam labels using a set of 1515 EC-Pfam manually curated label correlations from InterPro~\cite{mitchell2015interpro}, omitting unmapped labels. We then take the set of 3046 proteins where exactly two of their ground-truth labels map to corresponding Pfam labels. In our Swiss-Prot random test-train split test set, on bifunctional enzymes, we get $0.995$ precision and $0.948$ recall at a threshold of $0.5$, so we believe this set is a reasonable test set for ordering analysis.
+
+We then predict EC labels for these proteins with one of our trained convolutional neural network classifier, considering only the most specific labels in the hierarchy. Then, we map these predicted EC labels to Pfam labels using the InterPro mapping again, and retain only the proteins on which we predict exactly two labels above a threshold of $0.5$, and are left with 2679 proteins. In 2669 out of 2679 proteins, our predictions are identical to the Pfam-mapped ground truth labels. 
+
+We take these 2669 that have two true and predicted \textit{Pfam} labels, and look at their current Pfam labels annotated in Swiss-Prot. Of these 2669 proteins, 304 of them contain both of the mapped labels. We note that this difference between 2669 and 304 is likely due in part to Pfam being conservative in calling family members, potential agreements at the Pfam clan vs family level, as well as database version skew issues.
+
+\subsubsection*{Computation of domain ordering}
+On these 304 proteins we have the same predicted-EC-to-Pfam labels and the same true-Pfam labels. For each of these proteins, we can get an ordering of their two enzymatic domains from Pfam, giving us a \textit{true} ordering. It is now our task to produce a predicted ordering.
+
+We use class activation mapping (CAM) to compute a confidence for each class at each residue for every protein in this set of 304. We then filter this large matrix of values and only consider the families for which our classifier predicted membership, giving us a matrix of shape sequence-length by predicted-classes (which is two in this case). For each class, we take the CAM output and compute a center of mass. Then we order the two classes based on where their center of mass lies.
+
+
+\subsection*{Timing ProteInfer browser models}
+In the javascript console, we run the following:
+\begin{tiny}
+\begin{verbatim}
+var seq = "" +
+"MEPAKPSGNNMGSNDERMQDYRPDPMMEESIKEILEESLMCDTSFDDLIIPGLESFGLIIPESSNNIESNNVEEGSDGE" +
+"LKTLAEQKCKQGNDNDVIQSAMKLSGLYCDADITHTQPLSDNTHQDPIYSQESRIFTKTIQDPRIVAQTHRQCTSSASNL" + 
+"QSNESGSTQVRFASELPNQLLQPMYTSHNQNANLQNNFTSLPYQPYHDPYRDIESSYRESRNTNRGYDYNFRHHPYRPRG" + 
+"GNGKYNYYNPNSKYQQPYKRCFTRTYNRRGRGHRSYDCSDRSADLPYEHYTYPNYEQQNPDPRMNNYKDFTQLTNKFNFE" + 
+"SYDYSMAFSTDSTHVQSDNYNHPTKAQTIPETTKTKKHEATKDNETSTENQVLTPDVISLSYRPSSYKMDIIKKIYDTDV" + 
+"IPLPKEALTANGSNRDVDIQKYKKAHIRCRSVQKKKERSSQTNKHDENHASSRSDLKERKSNENEDKAVTKARDFSKLNP" + 
+"LLSPLPLTPEPAIDFADHTDKFYSTPEFNQIQQNLHRSKTSLQDTVPISKHTPRAPTKDNSYKKHHDSKDNYPKMKHSPG" + 
+"RTTSKKNTTNSNGHQNFKEVSVKNVSGKATSTSPKSKTHHYSSSSDEEGQYKSPVKTIIQSPSPYCKLKNPSIMDKNSAK" + 
+"NHTASADKNLTDNSPIRSNLNPTAFNKSNSNKSITDSTSNSDECTDRKPNCNSTKNESKDPNRTCGKNSDKHLSKSCTMA" + 
+"SKRAPSRASSRASSRDSSRASSRASSRASSRDSSRASSRASSRDSSRASSRASSRASSKASSRASSRASSRASSRDSSRA" + 
+"SSKASSRASSRDSSRASSRASSRASSKASSRASSRASSRASSRDSSRASSKASSRASSRDSSRASSRDSSRDSSRASSRA" + 
+"SSRDSSRASSKASRKASSRASSRASSRASSKASGKASSEASSRASSRNSSRASSRASSRASSRDSSRASSRASSRDSSRA" + 
+"SSKASRKASSRASSRASSRELRQIYCDSNKRQTPPHDTSINTKFEISEIKFRCGEDLNFYKNTAARLQCFNHNDQFYNPR" + 
+"FRPHIRTNRKKSESTNDTDSESSMSRCKSHCRNSPDSLTVVRRKKHKSGSSSISSSIEENCRSNSHIVTGKEKFTPFYYQ" + 
+"SSRTRSSSSSSSSSASLSCSKSTLKTCRKTQYKDNKQIKSKSDSKHKTTNMSSDYESNRHADVFKNSPEAGEKFPLHNSS" + 
+"PFNTHEQSNHSENAIDEEQKKAPNITTSHLQGKQNVRLHNTKKCKKKRPRDDDSDSSIKNFCKKRISGAQKTESEVSEPD" + 
+"DLCYRDYVRLKERKVSEKFKIHRGRVATKDFQKLFRNTMRAFEYKQIPKKPCNEKNLKEAVYDICCNGLSNNAAIIMYFT" + 
+"RSKKVAQIIKIMQKELMIRPNITVSEAFKMNHAPPKYYDKDEIKRFIQLQKQGPQELWDKFENNTTHDLFTRHSDVKTMI" + 
+"IYAATPIDFVGAVKTCNKYAKDNPKEIVLRVCSIIDGDNPISIYNPISKEFKSKFSTLSKC"
+var t0 = performance.now()
+await Promise.all([performECInference(seq), performGOInference(seq)])
+var t1 = performance.now()
+console.log("Call took " + (t1 - t0) + " milliseconds.")
+    
+\end{verbatim}
+\end{tiny}
+
 \begin{acknowledgements}
-  We would like to thank Babak Alipanahi, Jamie Smith, Eli Bixby, Drew Bryant, Shanqing Cai, Cory McLean and Abhinay Ramparasad. The static version of this manuscript uses a template made by Ricardo Henriques.
+  We would like to thank Babak Alipanahi, Jamie Smith, Eli Bixby, Drew Bryant, Shanqing Cai, Cory McLean and Abhinay Ramaprasad. The static version of this manuscript uses a template made by Ricardo Henriques.
 
   TS receives funding from the Wellcome Trust through a Sir Henry Wellcome Postdoctoral Fellowship (210918/Z/18/Z). This work was also supported by the Francis Crick Institute which receives its core funding from Cancer Research UK (FC001043), the UK Medical Research Council (FC001043), and the Wellcome Trust (FC001043). This research was funded in whole, or in part, by the Wellcome Trust [FC001043]. For the purpose of Open Access, the authors have applied a CC BY public copyright licence to any Author Accepted Manuscript version arising from this submission.
-
-
 
 \end{acknowledgements}
 
@@ -306,63 +432,54 @@ Our code, data, and notebooks reproducing the analyses shown in this work are av
 
 \onecolumn
 \newpage
-%stopleaveout
 
-%startleaveout
 \section*{Supplement}
 \beginsupplement
 
-\subsection{Implementation details}
-
-\subsubsection*{Label inheritance}
-Some annotations, such as GO terms and EC numbers, are structured as directed acyclic graphics (which take the form of simple trees for EC numbers). Typically in such cases the annotation provided on UniProt is the most-specific that is known. For example if a protein is known to exhibit \textit{sequence specific DNA binding} (GO:0043565). It will not separately be annotated with the ancestral term \textit{DNA binding} (GO:0003677), this is simply assumed from the ontology. Using such an annotations directly, however, is likely to be problematic in a deep learning setting. Failing to annotate an example with the parental term demands that the model predict that the example is negative for this term, which is not the effect we want.
-To address this our datasets include labels for all ancestors of applied labels for EC, GO and InterPro datasets. In the case of GO we restrict these to \textit{is\_a} relationships.
-
-\subsubsection*{Class activation mapping}
-Many proteins have multiple functional properties. For example we analyse the case of the bifunctional dhfr/ts of \textit{T. gondii}. Such bifunctional enzymes are often not unique -- it is functionally advantageous for these enzymes to be fused, which facilitates channeling of substrate between their active sites. Since there are a number of such examples within Swiss-Prot, the mere existence of a TS domain in a protein is (mild) evidence for possible DHFR function. To increase the interpretability of the network we subtract the activations for other predicted classes from those of the class of interest during class activation mapping. 
-
-
-\subsection*{Model architecture}
-To create an architecture capable of receiving a wide range of input sequences, with computational requirements determined for each inference by the length of the individual input sequence, we employed a dilated convolutional approach \citep{dilatedconvolutions}. Computation for both training and prediction in such a model can be parallelized across the length of the sequence. By training on full length proteins, in a multi-label training setting, we aimed to build networks that could  extract functional information from raw amino acid sequences. One helpful feature of this architecture is its flexibility with regards to sequence length. Natural protein sequences can vary in length by at least three orders of magnitude, but some architectures have computational requirements that scale with the maximum sequence they are capable of receiving as input, rather than the sequence being currently examined. These fixed-length approaches reduce efficiency as well as place a hard limit on the length of sequences that can be examined. 
 
 \subsection{Input data statistics}
 
 We use Swiss-Prot version 2019\_01 in our analysis, which gives us 559077 proteins, or 548264 after filtering for only 20 standard amino acids and filtering fragments.
-\begin{table}[htbp]
-\centering
-\begin{tabular}{|l|r|}
-\hline
-         Fold &  Number of sequences \\
-\Xhline{2pt}
-        train &               438522 \\
-\hline
-          dev &               55453 \\
-\hline
-         test &               54289 \\
-\hline
- all together &               548264 \\
-\hline
-\end{tabular}
-\caption{In our random split of the training data, we allocate about 80\% to the training fold, 10\% to the development fold, and 10\% to the test fold.}
-\end{table}
-\begin{table}[htbp]
-\centering
-\begin{tabular}{|l|r|}
-\hline
-         Fold &  Number of sequences \\
-\Xhline{2pt}
-        train &               182965 \\
-\hline
-          dev &               180309 \\
-\hline
-         test &               183475 \\
-\hline
- all together &               546749 \\
-\hline
-\end{tabular}
-\caption{In our clustered split of the training data, we use UniRef50, and allocate approximately equal numbers of sequences to each fold.}
-\end{table}
+
 Because different protein functions have differing prevalence, we note the number of proteins that have a given function for Pfam, EC, and GO labels, as well as noting the number of labels per protein.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{|l|r|}
+  \hline
+           Fold &  Number of sequences \\
+  \Xhline{2pt}
+          train &               438522 \\
+  \hline
+            dev &               55453 \\
+  \hline
+           test &               54289 \\
+  \hline
+   all together &               548264 \\
+  \hline
+  \end{tabular}
+  \caption{In our random split of the training data, we allocate about 80\% to the training fold, 10\% to the development fold, and 10\% to the test fold.}
+  \end{table}
+  \begin{table}[htbp]
+  \centering
+  \begin{tabular}{|l|r|}
+  \hline
+           Fold &  Number of sequences \\
+  \Xhline{2pt}
+          train &               182965 \\
+  \hline
+            dev &               180309 \\
+  \hline
+           test &               183475 \\
+  \hline
+   all together &               546749 \\
+  \hline
+  \end{tabular}
+  \caption{In our clustered split of the training data, we use UniRef50, and allocate approximately equal numbers of sequences to each fold.}
+  
+  \end{table}
+
+\clearpage
 \begin{figure}[htbp]
 \centering
   \includegraphics[width=\textwidth]{Figures/ec_label_distribution.png}
@@ -381,7 +498,7 @@ Because different protein functions have differing prevalence, we note the numbe
 \begin{figure}[htbp]
 \centering
   \includegraphics[width=\textwidth]{Figures/sequences_per_label_go_random.png}
-  \caption{Number of sequences annotated with a given functional label. (GO label) in the random dataset.}
+  \caption{Number of sequences annotated with a given functional label. (GO label) in the random dataset.}per p
 \end{figure}
 \pagebreak
 \begin{figure}[htbp]
@@ -394,7 +511,7 @@ Because different protein functions have differing prevalence, we note the numbe
   \includegraphics[width=\textwidth]{Figures/sequences_per_label_go_clustered.png}
   \caption{Number of sequences annotated with a given functional label. (GO label) in the clustered dataset.}
 \end{figure}
-\pagebreak
+
 When assigning examples to folds in our clustered dataset, we note that there are test examples that have labels that are never seen in the training data. We report these cases below as ``Impossible'' test example-label pairs.
 \begin{table}[htbp]
 \centering
@@ -438,7 +555,7 @@ When assigning examples to folds in our clustered dataset, we note that there ar
 \end{tabular}
 \caption{Clustered dataset statistics for GO labels.}
 \end{table}
-\pagebreak
+\clearpage
 \subsection{Precision/Recall curves}
 
 \begin{figure}[ht] 
@@ -506,10 +623,25 @@ When assigning examples to folds in our clustered dataset, we note that there ar
 \end{figure}
 
 
+\begin{figure}[htbp]
+\centering
+  \includegraphics[width=0.6\textwidth]{Figures/random_untruncated.pdf}
+  \caption{EC random task with different methods compared against a naive baseline where the predictor is simply the frequency in the training set.}
+  \label{sup:fig:naive}
+\end{figure}
 
 \clearpage
 
 
+\subsection{GO performance by ontology}
+\begin{figure}[htbp]
+\centering
+  \includegraphics[width=0.7\textwidth]{Figures/combined_split_go_random.pdf}
+  \caption{GO performance stratified by method and ontology type.}
+  \label{sup:fig:go_ontologies}
+\end{figure}
+
+\clearpage
 \subsection{Stratified performance}
 \begin{figure}[htbp]
 \centering
@@ -518,146 +650,90 @@ When assigning examples to folds in our clustered dataset, we note that there ar
   \label{sup:fig:ec_f1_by_training_size}
 \end{figure}
 
-\clearpage
 
-\subsection{Hyperparameters}
-We tuned over batch size, dilation rate, filters, first dilated layer, kernel size, learning rate, number of layers, mean vs max pooling, and Adam $\beta_1$, $\beta_2$ and $\epsilon$~\citep{kingma2014adam} over a number of studies to determine the set of parameters that optimized $\texttt{F}_{max}$. We found, as in~\cite{bileschi}, that the network was relatively unresponsive to slight changes in hyperparameters, and found that many of the hyperparameters that performed well in~\cite{bileschi} also performed well for this task. We chose to keep identical hyperparameters for the EC and GO tasks across both the random and clustered splits for simplicity, and we note that parameters with good performance on the random task performed respectively well on the clustered split. 
+\subsection*{Domain architecture diversity in bifunctional enzymes}
 \begin{table}[htbp]
+  \begin{tabular}{|l|l|r|r|r|}
+  \hline
+  First domain & Second Domain & Number ordered correctly & Number times seen & Percent Correct \\
+  \hline
+  EC:2.7.7.60  & EC:4.6.1.12   & 94                                           & 94                                       & 100                                 \\
+  \hline
+  EC:4.1.99.12 & EC:3.5.4.25   & 83                                           & 83                                       & 100                                 \\
+  \hline
+  EC:3.5.4.19  & EC:3.6.1.31   & 59                                           & 59                                       & 100                                 \\
+  \hline
+  EC:1.8.4.11  & EC:1.8.4.12   & 20                                           & 20                                       & 100                                 \\
+  \hline
+  EC:4.1.1.48  & EC:5.3.1.24   & 18                                           & 18                                       & 100                                 \\
+  \hline
+  EC:5.4.99.5  & EC:4.2.1.51   & 12                                           & 12                                       & 100                                 \\
+  \hline
+  EC:5.4.99.5  & EC:1.3.1.12   & 4                                            & 4                                        & 100                                 \\
+  \hline
+  EC:4.2.1.10  & EC:1.1.1.25   & 3                                            & 3                                        & 100                                 \\
+  \hline
+  EC:2.7.7.61  & EC:2.4.2.52   & 0                                            & 3                                        & 0                                   \\
+  \hline
+  EC:2.7.1.71  & EC:4.2.3.4    & 0                                            & 2                                        & 0                                   \\
+  \hline
+  EC:1.1.1.25  & EC:4.2.1.10   & 0                                            & 1                                        & 0                                   \\
+  \hline
+  EC:2.7.2.3   & EC:5.3.1.1    & 1                                            & 1                                        & 100                                 \\
+  \hline
+  EC:4.1.1.97  & EC:1.7.3.3    & 1                                            & 1                                        & 100                                 \\
+  \hline
+  EC:4.1.3.1   & EC:2.3.3.9    & 1                                            & 1                                        & 100                                 \\
+  \hline
+  EC:5.1.99.6  & EC:1.4.3.5    & 0                                            & 1                                        & 0                                  \\
+  \hline
+  EC:1.8.4.12  & EC:1.8.4.11   & 0                                            & 1                                        & 0                                   \\
+  \hline
+  \end{tabular}
+  \caption{Domain architecture diversity in bifunctional enzymes. In Swiss-Prot, there are 16 candidate domain architectures available for our EC functional localization experiment. Among these all domain architectures with more than 3 instances in Swiss-Prot (7 of them) are 100\% correctly ordered by our CAM method.}
+  \end{table}
+
+  \clearpage
+
+  \subsection{Vocabulary sizes}
+  \begin{table}[htbp]
+    \centering
+  \begin{tabular}{|l|r|}
+  \hline
+  Vocabulary & Number of terms \\
+  \hline
+  EC & 5,134 \\
+  \hline
+  GO & 32,109 \\
+  \hline
+  \end{tabular}
+  \caption{Vocabulary sizes in models trained for EC and GO.}
+  \label{sup:table:vocab_sizes}
+  \end{table}
+
+
+
+\subsection{Combining CNN and BLAST}
+We noticed a clear difference between the performance of CNN models and BLAST models. The CNN models were able make predictions with higher precision than BLAST for a given recall value, but achieved lower overall recall, while BLAST gave high recall at the expense of precision. This suggested that combining the two methods would be beneficial. A CNN, or an ensemble of CNNs produces a metric that is notionally a probability (though often imperfectly calibrated), while BLAST bit-score produces a bit-score metric indicating the significance of the match. We reasoned that one approach to combining the two would simply be to multiply the values together - improving the precision of BLAST predictions by reducing bit-scores in cases where the CNN model lacked confidence in a prediction. This approach performed well, and was the best that we evaluated. To implement this method, all labels associated with the top hit from BLAST with a sequence are initially assigned identical scores, determined by the bit-score of the top match, but these are then rescaled according to the output of the ProteInfer command-line interface.
+
+Whether this approach is worth the additional infrastructure required to maintain two different methods of prediction will depend on the scale of analysis being conducted. Further sophistication in how the CNN and BLAST are combined, perhaps with a learnt model, might further improve performance.
+
+\subsection{Pfam implementation}
+The ProteInfer algorithm is set up to allow any desired training vocabulary to be used. We demonstrated this by additionally training a model for predicting Pfam families from full-length protein sequences, which is available through our CLI-tool, and performs as shown below.
+
+\begin{figure}[htbp]
 \centering
-\def\arraystretch{1.1}
-\begin{tabular}{|c|c|c|c|c|}
-\hline
-                           & \\
-                           & CNN \\
-\Xhline{1pt}
-concurrent batches (data parallelism) & 8 \\
-\hline
-batch size                 & \shortstack{40 (per each GPU) \\ Dynamic based on sequence length} \\
-\hline
-dilation rate              & 3 \\
-\hline
-filters                    & 1100  \\
-\hline
-first dilated layer        & 2 \\
-% zero-indexed so added one to the values shown in the hparams_registry for clarity.
-\hline
-gradient clip              & 1 \\
-\hline
-kernel size                & 9 \\
-\hline
-learning rate              & 1.5E-3 \\
-\hline
-learning rate decay rate   & 0.997 \\
-\hline
-learning rate decay steps  & 1000 \\
-\hline
-learning rate warmup steps & 3000 \\
-\hline
-Adam $\beta_1$              & .9 \\
-\hline
-Adam $\beta_2$              & .999 \\
-\hline
-Adam $\epsilon$             & 1E-8 \\
-\hline
-number of ResNet layers     & 5 \\
-\hline
-pooling                     & mean \\
-\hline
-ResNet bottleneck factor    & 0.5 \\
-\hline
-train steps                 & 500000 \\
-\hline
-\end{tabular}
-\caption{Hyperparameters used in convolutional neural networks. We note that hyperparameters for single-GPU training are available in \url{github.com/google-research/proteinfer/blob/master/hparams_sets.py}.}
-\label{tab:nn_hparams}
-\end{table} 
-\pagebreak
-\subsection{Predicting coarse-grained functional localization with CAM}
-The goal of this experimental methodology is to measure whether or not we correctly order the localization of function in bifunctional enzymes. As such, first we have to identify a set of candidates for experimentation.
+  \includegraphics[width=0.7\textwidth]{Figures/pfam_random.png}
+  \caption{Performance for Pfam prediction for random train/test split.}
+  \label{sup:fig:ec_f1_by_training_size}
+\end{figure}
 
-\subsubsection{Candidate set construction}
-We note that no functional localization information was available to our models during training, so we can consider not just the dev and test sets, but instead the entirety of Swiss-Prot for our experimentation. As such, we take all examples from Swiss-Prot that have an EC label, and convert these labels to Pfam labels using a set of 1515 EC-Pfam manually curated label correlations from InterPro~\cite{mitchell2015interpro}, omitting unmapped labels. We then take the set of 3046 proteins where exactly two of their ground-truth labels map to corresponding Pfam labels. In our Swiss-Prot random test-train split test set, on bifunctional enzymes, we get $0.995$ precision and $0.948$ recall at a threshold of $0.5$, so we believe this set is a reasonable test set for ordering analysis.
 
-We then predict EC labels for these proteins with one of our trained convolutional neural network classifier, considering only the most specific labels in the hierarchy. Then, we map these predicted EC labels to Pfam labels using the InterPro mapping again, and retain only the proteins on which we predict exactly two labels above a threshold of $0.5$, and are left with 2679 proteins. In 2669 out of 2679 proteins, our predictions are identical to the Pfam-mapped ground truth labels. 
 
-We take these 2669 that have two true and predicted \textit{Pfam} labels, and look at their current Pfam labels annotated in Swiss-Prot. Of these 2669 proteins, 304 of them contain both of the mapped labels. We note that this difference between 2669 and 304 is likely due in part to Pfam being conservative in calling family members, potential agreements at the Pfam clan vs family level, as well as database version skew issues.
+%stopleaveout
 
-\subsubsection{Computation of domain ordering}
-On these 304 proteins we have the same predicted-EC-to-Pfam labels and the same true-Pfam labels. For each of these proteins, we can get an ordering of their two enzymatic domains from Pfam, giving us a \textit{true} ordering. It is now our task to produce a predicted ordering.
+%startleaveout
 
-We use class activation mapping (CAM) to compute a confidence for each class at each residue for every protein in this set of 304. We then filter this large matrix of values and only consider the families for which our classifier predicted membership, giving us a matrix of shape sequence-length by predicted-classes (which is two in this case). For each class, we take the CAM output and compute a center of mass. Then we order the two classes based on where their center of mass lies.
-
-\begin{table}[htbp]
-\begin{tabular}{|l|l|r|r|r|}
-\hline
-First domain & Second Domain & Number ordered correctly & Number times seen & Percent Correct \\
-\hline
-EC:2.7.7.60  & EC:4.6.1.12   & 94                                           & 94                                       & 100                                 \\
-\hline
-EC:4.1.99.12 & EC:3.5.4.25   & 83                                           & 83                                       & 100                                 \\
-\hline
-EC:3.5.4.19  & EC:3.6.1.31   & 59                                           & 59                                       & 100                                 \\
-\hline
-EC:1.8.4.11  & EC:1.8.4.12   & 20                                           & 20                                       & 100                                 \\
-\hline
-EC:4.1.1.48  & EC:5.3.1.24   & 18                                           & 18                                       & 100                                 \\
-\hline
-EC:5.4.99.5  & EC:4.2.1.51   & 12                                           & 12                                       & 100                                 \\
-\hline
-EC:5.4.99.5  & EC:1.3.1.12   & 4                                            & 4                                        & 100                                 \\
-\hline
-EC:4.2.1.10  & EC:1.1.1.25   & 3                                            & 3                                        & 100                                 \\
-\hline
-EC:2.7.7.61  & EC:2.4.2.52   & 0                                            & 3                                        & 0                                   \\
-\hline
-EC:2.7.1.71  & EC:4.2.3.4    & 0                                            & 2                                        & 0                                   \\
-\hline
-EC:1.1.1.25  & EC:4.2.1.10   & 0                                            & 1                                        & 0                                   \\
-\hline
-EC:2.7.2.3   & EC:5.3.1.1    & 1                                            & 1                                        & 100                                 \\
-\hline
-EC:4.1.1.97  & EC:1.7.3.3    & 1                                            & 1                                        & 100                                 \\
-\hline
-EC:4.1.3.1   & EC:2.3.3.9    & 1                                            & 1                                        & 100                                 \\
-\hline
-EC:5.1.99.6  & EC:1.4.3.5    & 0                                            & 1                                        & 0                                  \\
-\hline
-EC:1.8.4.12  & EC:1.8.4.11   & 0                                            & 1                                        & 0                                   \\
-\hline
-\end{tabular}
-\caption{Domain architecture diversity in bifunctional enzymes. In Swiss-Prot, there are 16 candidate domain architectures available for our EC functional localization experiment. Among these all domain architectures with more than 3 instances in Swiss-Prot (7 of them) are 100\% correctly ordered by our CAM method.}
-\end{table}
-
-\pagebreak
-\subsection{Timing ProteInfer browser models}
-\label{sup:js_timing}
-In the javascript console, we run the following:
-\begin{verbatim}
-var seq = "MEPAKPSGNNMGSNDERMQDYRPDPMMEESIKEILEESLMCDTSFDDLIIPGLESFGLIIPESSNNIESNNVEEGSDGE" +
-"LKTLAEQKCKQGNDNDVIQSAMKLSGLYCDADITHTQPLSDNTHQDPIYSQESRIFTKTIQDPRIVAQTHRQCTSSASNL" + 
-"QSNESGSTQVRFASELPNQLLQPMYTSHNQNANLQNNFTSLPYQPYHDPYRDIESSYRESRNTNRGYDYNFRHHPYRPRG" + 
-"GNGKYNYYNPNSKYQQPYKRCFTRTYNRRGRGHRSYDCSDRSADLPYEHYTYPNYEQQNPDPRMNNYKDFTQLTNKFNFE" + 
-"SYDYSMAFSTDSTHVQSDNYNHPTKAQTIPETTKTKKHEATKDNETSTENQVLTPDVISLSYRPSSYKMDIIKKIYDTDV" + 
-"IPLPKEALTANGSNRDVDIQKYKKAHIRCRSVQKKKERSSQTNKHDENHASSRSDLKERKSNENEDKAVTKARDFSKLNP" + 
-"LLSPLPLTPEPAIDFADHTDKFYSTPEFNQIQQNLHRSKTSLQDTVPISKHTPRAPTKDNSYKKHHDSKDNYPKMKHSPG" + 
-"RTTSKKNTTNSNGHQNFKEVSVKNVSGKATSTSPKSKTHHYSSSSDEEGQYKSPVKTIIQSPSPYCKLKNPSIMDKNSAK" + 
-"NHTASADKNLTDNSPIRSNLNPTAFNKSNSNKSITDSTSNSDECTDRKPNCNSTKNESKDPNRTCGKNSDKHLSKSCTMA" + 
-"SKRAPSRASSRASSRDSSRASSRASSRASSRDSSRASSRASSRDSSRASSRASSRASSKASSRASSRASSRASSRDSSRA" + 
-"SSKASSRASSRDSSRASSRASSRASSKASSRASSRASSRASSRDSSRASSKASSRASSRDSSRASSRDSSRDSSRASSRA" + 
-"SSRDSSRASSKASRKASSRASSRASSRASSKASGKASSEASSRASSRNSSRASSRASSRASSRDSSRASSRASSRDSSRA" + 
-"SSKASRKASSRASSRASSRELRQIYCDSNKRQTPPHDTSINTKFEISEIKFRCGEDLNFYKNTAARLQCFNHNDQFYNPR" + 
-"FRPHIRTNRKKSESTNDTDSESSMSRCKSHCRNSPDSLTVVRRKKHKSGSSSISSSIEENCRSNSHIVTGKEKFTPFYYQ" + 
-"SSRTRSSSSSSSSSASLSCSKSTLKTCRKTQYKDNKQIKSKSDSKHKTTNMSSDYESNRHADVFKNSPEAGEKFPLHNSS" + 
-"PFNTHEQSNHSENAIDEEQKKAPNITTSHLQGKQNVRLHNTKKCKKKRPRDDDSDSSIKNFCKKRISGAQKTESEVSEPD" + 
-"DLCYRDYVRLKERKVSEKFKIHRGRVATKDFQKLFRNTMRAFEYKQIPKKPCNEKNLKEAVYDICCNGLSNNAAIIMYFT" + 
-"RSKKVAQIIKIMQKELMIRPNITVSEAFKMNHAPPKYYDKDEIKRFIQLQKQGPQELWDKFENNTTHDLFTRHSDVKTMI" + 
-"IYAATPIDFVGAVKTCNKYAKDNPKEIVLRVCSIIDGDNPISIYNPISKEFKSKFSTLSKC"
-var t0 = performance.now()
-await Promise.all([performECInference(seq), performGOInference(seq)])
-var t1 = performance.now()
-console.log("Call took " + (t1 - t0) + " milliseconds.")
-    
-\end{verbatim}
 
 %\bibliography{../bibliography}
 % Extra text
