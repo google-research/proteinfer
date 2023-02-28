@@ -27,16 +27,11 @@
 }
 
 @Article {Brandes2021,
-	author = {Brandes, Nadav and Ofer, Dan and Peleg, Yam and Rappoport, Nadav and Linial, Michal},
-	title = {ProteinBERT: A universal deep-learning model of protein sequence and function},
-	elocation-id = {2021.05.24.445464},
-	year = {2021},
-	doi = {10.1101/2021.05.24.445464},
-	publisher = {Cold Spring Harbor Laboratory},
-	abstract = {Self-supervised deep language modeling has shown unprecedented success across natural language tasks, and has recently been repurposed to biological sequences. However, existing models and pretraining methods are designed and optimized for text analysis. We introduce ProteinBERT, a deep language model specifically designed for proteins. Our pretraining scheme consists of masked language modeling combined with a novel task of Gene Ontology (GO) annotation prediction. We introduce novel architectural elements that make the model highly efficient and flexible to very large sequence lengths. The architecture of ProteinBERT consists of both local and global representations, allowing end-to-end processing of these types of inputs and outputs. ProteinBERT obtains state-of-the-art performance on multiple benchmarks covering diverse protein properties (including protein structure, post translational modifications and biophysical attributes), despite using a far smaller model than competing deep-learning methods. Overall, ProteinBERT provides an efficient framework for rapidly training protein predictors, even with limited labeled data. Code and pretrained model weights are available at https://github.com/nadavbra/protein_bert.Competing Interest StatementThe authors have declared no competing interest.},
-	URL = {https://www.biorxiv.org/content/early/2021/05/25/2021.05.24.445464},
-	eprint = {https://www.biorxiv.org/content/early/2021/05/25/2021.05.24.445464.full.pdf},
-	journal = {bioRxiv}
+Author="Brandes, N.  and Ofer, D.  and Peleg, Y.  and Rappoport, N.  and Linial, M. ",
+Title="{{P}rotein{B}{E}{R}{T}: {A} universal deep-learning model of protein sequence and function}",
+Journal="Bioinformatics",
+Year="2022",
+Month="Jan"
 }
 
 
@@ -852,17 +847,16 @@ month={Nov},}
    Pages="S17"
 }
 
-@article {bileschi,
-	author = {Bileschi, Maxwell L and Belanger, David and Bryant, Drew H and Sanderson, Theo and Carter, Brandon and Sculley, D. and DePristo, Mark L and Colwell, Lucy J},
-	title = {Using Deep Learning to Annotate the Protein Universe},
-	elocation-id = {626507},
-	year = {2019},
-	doi = {10.1101/626507},
-	publisher = {Cold Spring Harbor Laboratory},
-	abstract = {Understanding the relationship between amino acid sequence and protein function is a long-standing problem in molecular biology with far-reaching scientific implications. Despite six decades of progress, state-of-the-art techniques cannot annotate 1/3 of microbial protein sequences, hampering our ability to exploit sequences collected from diverse organisms. To address this, we report a deep learning model that learns the relationship between unaligned amino acid sequences and their functional classification across all 17929 families of the Pfam database. Using the Pfam seed sequences we establish a rigorous benchmark assessment and find a dilated convolutional model that reduces the error of both BLASTp and pHMMs by a factor of nine. Using 80\% of the full Pfam database we train a protein family predictor that is more accurate and over 200 times faster than BLASTp, while learning sequence features it was not trained on such as structural disorder and transmembrane helices. Our model co-locates sequences from unseen families in embedding space, allowing sequences from novel families to be accurately annotated. These results suggest deep learning models will be a core component of future protein function prediction tools.},
-	URL = {https://www.biorxiv.org/content/early/2019/05/03/626507},
-	eprint = {https://www.biorxiv.org/content/early/2019/05/03/626507.full.pdf},
-	journal = {bioRxiv}
+% 35190689 
+@Article{bileschi,
+   Author="Bileschi, M. L.  and Belanger, D.  and Bryant, D. H.  and Sanderson, T.  and Carter, B.  and Sculley, D.  and Bateman, A.  and DePristo, M. A.  and Colwell, L. J. ",
+   Title="{{U}sing deep learning to annotate the protein universe}",
+   Journal="Nat Biotechnol",
+   Year="2022",
+   Volume="40",
+   Number="6",
+   Pages="932--937",
+   Month="06"
 }
 
 @article{guo,
@@ -1244,19 +1238,32 @@ Eprint = {arXiv:1712.03346},
 
 
 @article{frazer2020large,
-  title={Large-scale clinical interpretation of genetic variants using evolutionary data and deep learning},
-  author={Frazer, Jonathan and Notin, Pascal and Dias, Mafalda and Gomez, Aidan and Brock, Kelly and Gal, Yarin and Marks, Debora},
-  journal={bioRxiv},
-  year={2020},
-  publisher={Cold Spring Harbor Laboratory}
+Author="Frazer, J.  and Notin, P.  and Dias, M.  and Gomez, A.  and Min, J. K.  and Brock, K.  and Gal, Y.  and Marks, D. S. ",
+Title="{{D}isease variant prediction with deep generative models of evolutionary data}",
+Journal="Nature",
+Year="2021",
+Volume="599",
+Number="7883",
+Pages="91--95",
+Month="11"
 }
 
 @article{rao2021msa,
-  title={MSA Transformer},
-  author={Rao, Roshan and Liu, Jason and Verkuil, Robert and Meier, Joshua and Canny, John F and Abbeel, Pieter and Sercu, Tom and Rives, Alexander},
-  journal={bioRxiv},
-  year={2021},
-  publisher={Cold Spring Harbor Laboratory}
+
+  title = 	 {MSA Transformer},
+  author =       {Rao, Roshan M and Liu, Jason and Verkuil, Robert and Meier, Joshua and Canny, John and Abbeel, Pieter and Sercu, Tom and Rives, Alexander},
+  booktitle = 	 {Proceedings of the 38th International Conference on Machine Learning},
+  pages = 	 {8844--8856},
+  year = 	 {2021},
+  editor = 	 {Meila, Marina and Zhang, Tong},
+  volume = 	 {139},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {18--24 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {http://proceedings.mlr.press/v139/rao21a/rao21a.pdf},
+  url = 	 {https://proceedings.mlr.press/v139/rao21a.html},
+  abstract = 	 {Unsupervised protein language models trained across millions of diverse sequences learn structure and function of proteins. Protein language models studied to date have been trained to perform inference from individual sequences. The longstanding approach in computational biology has been to make inferences from a family of evolutionarily related sequences by fitting a model to each family independently. In this work we combine the two paradigms. We introduce a protein language model which takes as input a set of sequences in the form of a multiple sequence alignment. The model interleaves row and column attention across the input sequences and is trained with a variant of the masked language modeling objective across many protein families. The performance of the model surpasses current state-of-the-art unsupervised structure learning methods by a wide margin, with far greater parameter efficiency than prior state-of-the-art protein language models.}
+
 }
 
 @article{rives2019biological,
@@ -1303,11 +1310,14 @@ Eprint = {arXiv:1712.03346},
 }
 
 @article{anishchenko2020novo,
-  title={De novo protein design by deep network hallucination},
-  author={Anishchenko, Ivan and Chidyausiku, Tamuka Martin and Ovchinnikov, Sergey and Pellock, Samuel J and Baker, David},
-  journal={bioRxiv},
-  year={2020},
-  publisher={Cold Spring Harbor Laboratory}
+Author="Anishchenko, I.  and Pellock, S. J.  and Chidyausiku, T. M.  and Ramelot, T. A.  and Ovchinnikov, S.  and Hao, J.  and Bafna, K.  and Norn, C.  and Kang, A.  and Bera, A. K.  and DiMaio, F.  and Carter, L.  and Chow, C. M.  and Montelione, G. T.  and Baker, D. ",
+Title="{{D}e novo protein design by deep network hallucination}",
+Journal="Nature",
+Year="2021",
+Volume="600",
+Number="7889",
+Pages="547--552",
+Month="12"
 }
 
 @article{bryant2021deep,
@@ -1319,13 +1329,20 @@ Eprint = {arXiv:1712.03346},
   publisher={Nature Publishing Group}
 }
 
-@article{biswas2020low,
-  title={Low-N protein engineering with data-efficient deep learning},
-  author={Biswas, Surojit and Khimulya, Grigory and Alley, Ethan C and Esvelt, Kevin M and Church, George M},
-  journal={BioRxiv},
-  year={2020},
-  publisher={Cold Spring Harbor Laboratory}
+
+
+% 33828272 
+@Article{biswas2020low,
+   Author="Biswas, S.  and Khimulya, G.  and Alley, E. C.  and Esvelt, K. M.  and Church, G. M. ",
+   Title="{{L}ow-{N} protein engineering with data-efficient deep learning}",
+   Journal="Nat Methods",
+   Year="2021",
+   Volume="18",
+   Number="4",
+   Pages="389--396",
+   Month="04"
 }
+
 @article{bairoch1991prosite,
   title={PROSITE: a dictionary of sites and patterns in proteins},
   author={Bairoch, Amos},
@@ -1441,11 +1458,14 @@ Eprint = {arXiv:1712.03346},
 }
 
 @article{bernhofer2021predictprotein,
-  title={PredictProtein-Predicting Protein Structure and Function for 29 Years},
-  author={Bernhofer, Michael and Dallago, Christian and Karl, Tim and Satagopam, Venkata and Heinzinger, Michael and Littmann, Maria and Olenyi, Tobias and Qiu, Jiajun and Schuetze, Konstantin and Yachdav, Guy and others},
-  journal={bioRxiv},
-  year={2021},
-  publisher={Cold Spring Harbor Laboratory}
+Author="Bernhofer, M.  and Dallago, C.  and Karl, T.  and Satagopam, V.  and Heinzinger, M.  and Littmann, M.  and Olenyi, T.  and Qiu, J.  and Schütze, K.  and Yachdav, G.  and Ashkenazy, H.  and Ben-Tal, N.  and Bromberg, Y.  and Goldberg, T.  and Kajan, L.  and O'Donoghue, S.  and Sander, C.  and Schafferhans, A.  and Schlessinger, A.  and Vriend, G.  and Mirdita, M.  and Gawron, P.  and Gu, W.  and Jarosz, Y.  and Trefois, C.  and Steinegger, M.  and Schneider, R.  and Rost, B. ",
+Title="{{P}redict{P}rotein - {P}redicting {P}rotein {S}tructure and {F}unction for 29 {Y}ears}",
+Journal="Nucleic Acids Res",
+Year="2021",
+Volume="49",
+Number="W1",
+Pages="W535-W540",
+Month="07"
 }
 @article{mitchell2015interpro,
   title={The InterPro protein families database: the classification resource after 15 years},
