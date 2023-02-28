@@ -1,11 +1,11 @@
 [![GitHub license](https://img.shields.io/badge/license-Apache2-blue.svg)](https://github.com/google-research/nisaba/blob/main/LICENSE)
-[![Paper](https://img.shields.io/badge/paper-eLife-blue.svg)](https://elifesciences.org/articles/82392)
+[![Paper](https://img.shields.io/badge/paper-eLife-blue.svg)](https://elifesciences.org/articles/80942)
 # ProteInfer
 
 ProteInfer is an approach for predicting the functional properties of protein
 sequences using deep neural networks.
 
-#### 📝 Read about the method in [our interactive paper](https://google-research.github.io/proteinfer/) (or [in the static version](https://elifesciences.org/articles/82392), published in eLife).
+#### 📝 Read about the method in [our interactive paper](https://google-research.github.io/proteinfer/) (or [in the static version](https://elifesciences.org/articles/80942), published in eLife).
 
 ## Usage instructions
 
