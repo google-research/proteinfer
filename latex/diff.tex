@@ -37,7 +37,10 @@ theo \at \;theo.io
 
 \begin{figure}[h!]
   \centering
-  \includegraphics[width=.4\columnwidth]{Figures/qr.pdf}
+  \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=.4\columnwidth]{Figures/qr.pdf}
+%DIFDELCMD < %%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=.4\columnwidth]{qr.pdf}
+\DIFaddendFL 
 
  \small QR code for the interactive version of this preprint at  \url{https://google-research.github.io/proteinfer/}
 \end{figure}
@@ -49,7 +52,8 @@ Every day, more than a hundred thousand protein sequences are added to global se
 The community has a long history of using computational tools to infer protein function directly from amino acid sequence. Starting in the 1980s, methods such as BLAST \cite{blast} relied on pairwise sequence comparisons, where a query protein is assumed to have the same function as highly similar sequences that have already been annotated. Signature-based approaches were later introduced, with the PROSITE database \cite{bairoch1991prosite} cataloguing short amino acid ``motifs'' found in proteins that share a particular function. Subsequently, a crucial refinement of signature-based approaches was the development of profile hidden Markov models (HMMs) \cite{krogh1994hidden, eddyhmmreview}. These models collapse an alignment of related protein sequences into a model that provides likelihood scores for new sequences, that describe how well they fit the aligned set. Critically, profile HMMs allow for longer signatures and fuzzier matching and are currently used to update popular databases such as Interpro and Pfam \cite{pfamlatest, blum2021interpro}. Subsequent refinements have made these techniques more sensitive and computationally efficient \cite{altschul1997gapped, fasterhmmer, pfamlatest, soding2005protein, steinegger2019hh}, while their availability as web tools allows practitioners to easily incorporate them into workflows \cite{johnson2008ncbi, soding2005hhpred, potter2018hmmer, bernhofer2021predictprotein}.
 \begin{figure}[t]
 \centering
-  \includegraphics[width=\columnwidth]{Figures/new_the_task.pdf}%
+  \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\columnwidth]{Figures/new_the_task.pdf}%%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\columnwidth]{new_the_task.pdf}\DIFaddendFL %
   \caption{\textbf{Three approaches for mapping from an amino acid sequence to inferred function:}   (1) finding similar sequences in a large database of sequences with known annotation (e.g., BLAST), (2) scoring against a large database of statistical models for each family of sequences with known function (e.g. InterProScan), and (3) applying a single deep neural network trained to predict multiple output categories (e.g., this work).\label{fig:task}}
 \end{figure}
 These computational modelling approaches have had great impact; however, one third of bacterial proteins still cannot be annotated (even computationally) with a function \cite{phenotypes}. It is therefore worthwhile to examine how new approaches might complement existing techniques. First, current approaches conduct entirely separate comparisons for each comparator sequence or model, and thus may not fully exploit the features shared across different functional classes. An ideal classification system, for example, might have a modular ATP-binding region detector used in detection of both kinases and ABC transporters \citep{pmid12468712}. Separately modelling these targets in each family, like standard HMM approaches, increases the computational cost and may also be less accurate. In addition, the process of creating many of these signatures is not fully automated and requires considerable curatorial efforts \citep{pfamprofilebuilding, pfamrepeats}, which at present are spread across an array of disparate but overlapping signature databases \citep{blum2021interpro}.
@@ -70,7 +74,8 @@ To address this challenge we employ deep dilated convolutional networks to learn
 
 \DIFaddend \begin{figure}[h!]
 \centering
-  \includegraphics[width=\columnwidth]{Figures/figure.pdf}%
+  \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\columnwidth]{Figures/figure.pdf}%%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\columnwidth]{figure.pdf}\DIFaddendFL %
   \caption{\textbf{A deep dilated convolutional architecture for protein function prediction.} Amino acids are one-hot encoded, then pass through a series of convolutions implemented within residual blocks. Successive filters are increasingly dilated, allowing the top residual layer of the network to build up a representation of high-order protein features. The positional embeddings in this layer are collapsed by mean-pooling to a single embedding of the entire sequence, which is converted into probabilities of each functional classification through a fully connected layer with sigmoidal activations. }
   \label{architecture}
 \end{figure}
@@ -114,7 +119,7 @@ We initially trained a model to predict enzymatic catalytic activities from amin
 \begin{figure}
 \centering
   \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\columnwidth]{Figures/ec_performance_by_top_level_class.png}%%%
-\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\columnwidth]{Figures/fig3}\DIFaddendFL %
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\columnwidth]{fig3}\DIFaddendFL %
   \caption{\DIFdelbeginFL \textbf{\DIFdelFL{ProteInfer performance for predictions within all 7 top-level enzyme groups.}}%DIFAUXCMD
 \DIFdelendFL \DIFaddbeginFL \textbf{\DIFaddFL{ProteInfer performance (A) for all 7 top-level enzyme groups from a single CNN model (B) compared between methods: a single ProteInfer CNN, an ensemble of Proteinfer CNNs, a BLAST-based baseline, and an ensemble of BLAST predictions combined with ProteInfer CNNs }}\DIFaddendFL }
   \label{fig:toplevel}
@@ -122,8 +127,10 @@ We initially trained a model to predict enzymatic catalytic activities from amin
 
 \begin{figure*}[t]
   \centering
-    \includegraphics[width=\textwidth]{Figures/tetrahydrofolate_synthase.png}
-    % See https://docs.google.com/presentation/d/1PqP-Ux7far9NMYvroeZIQQ9iXi41xira7-awDC4w_ss/edit#slide=id.p for the provenance of this figure
+    \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\textwidth]{Figures/tetrahydrofolate_synthase.png}
+%DIFDELCMD <     %%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\textwidth]{tetrahydrofolate_synthase.png}
+    \DIFaddendFL % See https://docs.google.com/presentation/d/1PqP-Ux7far9NMYvroeZIQQ9iXi41xira7-awDC4w_ss/edit#slide=id.p for the provenance of this figure
     \caption{\textbf{Linking sequence regions to function with class activation mapping for C-1-tetrahydrofolate synthase (accession P11586).} A. Ground truth annotation of function on Uniprot \citep{uniprotlatest}. B. The three horizontal bars are the sequence region ProteInfer predicts are most involved in each corresponding reaction. This concurs with the known function localization. }
     \label{fig:cam}
   \end{figure*}
@@ -131,7 +138,7 @@ We initially trained a model to predict enzymatic catalytic activities from amin
   \begin{figure*}
     \centering
       \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\textwidth]{Figures/umap2.pdf}%%%
-\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\textwidth]{Figures/umap3.pdf}\DIFaddendFL %
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\textwidth]{umap3.pdf}\DIFaddendFL %
       \caption{\textbf{Embedding reflects enzyme functional hierarchy}. UMAP projection of embeddings for the subset of test set sequences which have only one leaf-level EC classification. Points are colour-coded at successive levels of the EC hierarchy in each panel. (A) colours denote top level EC groups, (B) colours denote second level EC groups within EC2.*, (C) colours denote third level EC groups within EC:2.7.*, (D) colours depict terminal EC groups within EC:2.7.4.* }
       \label{fig:umap}
     \end{figure*}
@@ -158,7 +165,8 @@ Performance was roughly similar across labels at the top of the EC hierarchy, wi
 %%%METHOD%%%
 We found that BLASTp was able to achieve higher recall values than ProteInfer for lower precision values, while ProteInfer was able to provide greater precision than BLASTp at lower recall values. \DIFaddbegin \DIFadd{The high recall of BLAST is likely to reflect the fact that it has access to the entirety of the training set, rather than having to compress it into a limited set of neural network weights. In contrast, the lack of precision in BLAST could relate to reshuffling of sequences during evolution, which would allow a given protein to show high similarity to a trainining sequence in a particular subregion, despite lacking the core region required for that training sequence's function.  }\DIFaddend We wondered whether a combination of ProteInfer and BLASTp could synergize the best properties of both approaches. We found that even the simple ensembling strategy of rescaling the BLAST bit score by the averages of the ensembled CNNs' predicted probabilities gave a $\texttt{F}_{max}$ score (0.991, 95\% confidence interval [CI]: 0.990--0.992 ) that exceeded that of BLAST (0.984, 95\% CI: 0.983--0.985) or the ensembled CNN (0.981, 95\% CI: 0.980--0.982) alone \DIFaddbegin \DIFadd{(see Supplement for more details on this method)}\DIFaddend . 
 On the clustered train-test split based on UniRef50 (see \textit{clustered} in \Cref{fig:toplevel}B%htmlver:<a href="#fig5" target="_self">Fig. 5</a>
-), we see a performance drop in all methods: this is expected, as remote homology tasks are designed to challenge methods to generalize farther in sequence space. The $\texttt{F}_{max}$ score of a single neural network fell to 0.914 (95\% CI: 0.913--0.915, precision: 0.959 recall: 0.875), substantially lower than BLAST (0.950, 95\% CI: 0.950--0.951), though again an ensemble of both BLAST and ProteInfer outperformed both (0.979, 95\% CI: 0.979--0.980). \DIFdelbegin \DIFdel{We find }\DIFdelend \DIFaddbegin \DIFadd{These patterns suggest }\DIFaddend that neural network methods learn different information about proteins \DIFdelbegin \DIFdel{than }\DIFdelend \DIFaddbegin \DIFadd{to }\DIFaddend alignment-based methods, and \DIFaddbegin \DIFadd{so }\DIFaddend a combination of the two \DIFdelbegin \DIFdel{further improves remote homology detection. }\DIFdelend \DIFaddbegin \DIFadd{provides a synergistic result. All methods dramatically outperformed the naive frequency-based approach (}\Cref{sup:fig:naive}\DIFadd{). 
+), we see a performance drop in all methods: this is expected, as remote homology tasks are designed to challenge methods to generalize farther in sequence space. The $\texttt{F}_{max}$ score of a single neural network fell to 0.914 (95\% CI: 0.913--0.915, precision: 0.959 recall: 0.875), substantially lower than BLAST (0.950, 95\% CI: 0.950--0.951), though again an ensemble of both BLAST and ProteInfer outperformed both (0.979, 95\% CI: 0.979--0.980). \DIFdelbegin \DIFdel{We find }\DIFdelend \DIFaddbegin \DIFadd{These patterns suggest }\DIFaddend that neural network methods learn different information about proteins \DIFdelbegin \DIFdel{than }\DIFdelend \DIFaddbegin \DIFadd{to }\DIFaddend alignment-based methods, and \DIFaddbegin \DIFadd{so }\DIFaddend a combination of the two \DIFdelbegin \DIFdel{further improves remote homology detection. }\DIFdelend \DIFaddbegin \DIFadd{provides a synergistic result. All methods dramatically outperformed the naive frequency-based approach (}\Cref{sup:fig:naive}%DIF > htmlver:see supplement
+\DIFadd{).
 }\DIFaddend 
 
 
@@ -189,29 +197,48 @@ To visualise this space, we selected proteins with a single leaf-level EC number
 %%%embedding_explorer%%%
 \begin{figure*}[t!]
     \centering
-    \begin{subfigure}[t]{0.3\textwidth}
-    \vskip 0pt
-        \includegraphics[width=\textwidth]{Figures/nucleotidebinding}
-        \caption{Nucleotide binding}
-        \label{fig:gull}
-    \end{subfigure}
-    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
-      %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[t]{0.3\textwidth}
-    \vskip 0pt
-        \includegraphics[width=\textwidth]{Figures/ribosome}
-        \caption{Structural constituent of ribosome}
-        \label{fig:tiger}
-    \end{subfigure}
-    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
-    %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[t]{0.3\textwidth}
-    \vskip 0pt
-        \includegraphics[width=\textwidth]{Figures/membrane}
-        \caption{Intrinsic component of membrane}
-        \label{fig:mouse}
-    \end{subfigure}
-    \caption{\textbf{A neural network trained on enzyme function learns general protein properties, beyond enzymatic activity.} This figure shows EC-trained ProteInfer embeddings for all non-enzymatic sequences in the test set, projected using UMAP. To illustrate the structure contained in these embeddings we highlight genes based on GO labels (on which this network was never trained).}\label{fig:unsupervised_embedding}
+    \DIFdelbeginFL %DIFDELCMD < \begin{subfigure}[t]{0.3\textwidth}
+%DIFDELCMD <     \vskip %%%
+\DIFdelFL{0pt
+        }%DIFDELCMD < \includegraphics[width=\textwidth]{Figures/nucleotidebinding}
+%DIFDELCMD <         %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{Nucleotide binding}}
+        %DIFAUXCMD
+%DIFDELCMD < \label{fig:gull}
+%DIFDELCMD <     \end{subfigure}
+%DIFDELCMD <     %%%
+\DIFdelFL{~ %DIF < add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
+      %DIF < (or a blank line to force the subfigure onto a new line)
+    }%DIFDELCMD < \begin{subfigure}[t]{0.3\textwidth}
+%DIFDELCMD <     \vskip %%%
+\DIFdelFL{0pt
+        }%DIFDELCMD < \includegraphics[width=\textwidth]{Figures/ribosome}
+%DIFDELCMD <         %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{Structural constituent of ribosome}}
+        %DIFAUXCMD
+%DIFDELCMD < \label{fig:tiger}
+%DIFDELCMD <     \end{subfigure}
+%DIFDELCMD <     %%%
+\DIFdelFL{~ %DIF < add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
+    %DIF < (or a blank line to force the subfigure onto a new line)
+    }%DIFDELCMD < \begin{subfigure}[t]{0.3\textwidth}
+%DIFDELCMD <     \vskip %%%
+\DIFdelFL{0pt
+        }%DIFDELCMD < \includegraphics[width=\textwidth]{Figures/membrane}
+%DIFDELCMD <         %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{Intrinsic component of membrane}}
+        %DIFAUXCMD
+%DIFDELCMD < \label{fig:mouse}
+%DIFDELCMD <     \end{subfigure}
+%DIFDELCMD <     %%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=0.9\textwidth]{combined_subfigs_a.pdf}
+    \DIFaddendFL \caption{\textbf{A neural network trained on enzyme function learns general protein properties, beyond enzymatic activity.} This figure shows EC-trained ProteInfer embeddings for all non-enzymatic sequences in the test set, projected using UMAP. To illustrate the structure contained in these embeddings we highlight genes based on GO labels (on which this network was never trained).}\label{fig:unsupervised_embedding}
 \end{figure*}
 The resulting representation captures the hierarchical nature of EC classification, with the largest clusters in embedding space corresponding to top level EC groupings (\Cref{fig:umap}A%htmlver:
 ). These clusters in turn are further divided into sub-regions on the basis of subsequent levels of the EC hierarchy (\Cref{fig:umap}B%%htmlver:
@@ -259,7 +286,8 @@ An attractive property of deep learning models is that they can be run efficient
 \subsection*{Comparison to experimental data}
 \begin{figure}[t]
 \centering
-  \includegraphics[width=\columnwidth]{Figures/price.png}%
+  \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\columnwidth]{Figures/price.png}%%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\columnwidth]{price.png}\DIFaddendFL %
   \caption{\textbf{ProteInfer predictions for a set of genes recently experimentally reannotated by high-throughput phenotyping.} ProteInfer makes confident and largely accurate predictions at the earliest levels of the EC hierarchy. Accuracy falls at the finest levels of classification (for this set of challenging genes) but fortunately the network declines to make a prediction in most cases, with every label failing to meet the threshold for positive classification. \label{fig:levels}}
 \end{figure}
 
@@ -275,7 +303,8 @@ As an  example, the \textit{Sinorhizobium meliloti} protein Q92SI0 is annotated 
 It was notable that for many of these proteins, the network declined to make a prediction at the finest level of the EC hierarchy. This suggests that by training on this hierarchical data, the network is able to appropriately make broad or narrow classification decisions. This is similar to the procedure employed with manual annotation: when annotators are confident of the general class of reaction that an enzyme catalyses but not its specific substrate, they may leave the third or fourth position of the EC number blank (e.g. EC:1.1.-.-). Due to training on hierarchical data, our network is able to reproduce these effects by being more confident (with higher accuracy) at earlier levels of classification.
 
 \subsection*{A model predicting the entire gene ontology}
-Given the high accuracy that our deep learning model was able to achieve on the more than five thousand enzymatic labels in Swiss-Prot, we asked whether our networks could learn to predict protein properties using an even larger vocabulary of labels, using a similar test-train setup. Gene Ontology \citep{ashburner2000gene, gene2019gene, carbon2009amigo} (GO) terms describe important protein functional properties, with \DIFdelbegin \DIFdel{28,079 }\DIFdelend \DIFaddbegin \DIFadd{32,109 (}\Cref{sup:table:vocab_sizes}\DIFadd{) }\DIFaddend such terms in Swiss-Prot that cover the molecular functions of proteins (e.g. DNA-binding, amylase activity), the biological processes they are involved in (e.g. DNA replication, meiosis), and the cellular components to which they localise (e.g. mitochondrion, cytosol). These terms are arranged in a complex directed acyclic graph, with some nodes having as many as 12 ancestral nodes.
+Given the high accuracy that our deep learning model was able to achieve on the more than five thousand enzymatic labels in Swiss-Prot, we asked whether our networks could learn to predict protein properties using an even larger vocabulary of labels, using a similar test-train setup. Gene Ontology \citep{ashburner2000gene, gene2019gene, carbon2009amigo} (GO) terms describe important protein functional properties, with \DIFdelbegin \DIFdel{28,079 }\DIFdelend \DIFaddbegin \DIFadd{32,109 (}\Cref{sup:table:vocab_sizes}%DIF > htmlver:see supplement
+\DIFadd{) }\DIFaddend such terms in Swiss-Prot that cover the molecular functions of proteins (e.g. DNA-binding, amylase activity), the biological processes they are involved in (e.g. DNA replication, meiosis), and the cellular components to which they localise (e.g. mitochondrion, cytosol). These terms are arranged in a complex directed acyclic graph, with some nodes having as many as 12 ancestral nodes.
 
 
 We note that there has been extensive work in GO label prediction evaluated on a temporally-split dataset (constructing a test set with the most recently experimentally annotated proteins), e.g., \citep{zhou2019cafa}, and stress that our comparison is based on the random and clustered splits of Swiss-Prot described above.  This approach to splitting the data into train and test has advantages and disadvantages as compared to a temporal split, which depend on the desired application for the method being evaluated.
@@ -485,13 +514,17 @@ console.log("Call took " + (t1 - t0) + " milliseconds.")
 
   
   \section*{Bibliography}
-\bibliography{../bibliography}
+\DIFdelbegin %DIFDELCMD < \bibliography{../bibliography}
+%DIFDELCMD < %%%
+\DIFdelend \DIFaddbegin \bibliography{mybib.bib}
+\DIFaddend 
 
 \onecolumn
 \newpage
 %DIF < stopleaveout
 
 %DIF < startleaveout
+%DIF > \begin{comment}
 \section*{Supplement}
 \beginsupplement
 
@@ -546,34 +579,46 @@ We use Swiss-Prot version 2019\_01 in our analysis, which gives us 559077 protei
 \clearpage
 \DIFaddend \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/ec_label_distribution.png}
-  \caption{Histogram of number of labels per sequence, including hierarchical labels, on the random dataset.}
+  \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\textwidth]{Figures/ec_label_distribution.png}
+%DIFDELCMD <   %%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\textwidth]{ec_label_distribution.png}
+  \DIFaddendFL \caption{Histogram of number of labels per sequence, including hierarchical labels, on the random dataset.}
 \end{figure}
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/go_label_distribution.png}
-  \caption{Histogram of number of labels per sequence, including hierarchical labels, on the random dataset.}
+  \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\textwidth]{Figures/go_label_distribution.png}
+%DIFDELCMD <   %%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\textwidth]{go_label_distribution.png}
+  \DIFaddendFL \caption{Histogram of number of labels per sequence, including hierarchical labels, on the random dataset.}
 \end{figure}
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/sequences_per_label_ec_random.png}
-  \caption{Number of sequences annotated with a given functional label. (EC class) in the random dataset.}
+  \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\textwidth]{Figures/sequences_per_label_ec_random.png}
+%DIFDELCMD <   %%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\textwidth]{sequences_per_label_ec_random.png}
+  \DIFaddendFL \caption{Number of sequences annotated with a given functional label. (EC class) in the random dataset.}
 \end{figure}
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/sequences_per_label_go_random.png}
-  \caption{Number of sequences annotated with a given functional label. (GO label) in the random dataset.}\DIFaddbeginFL \DIFaddFL{per p
+  \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\textwidth]{Figures/sequences_per_label_go_random.png}
+%DIFDELCMD <   %%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\textwidth]{sequences_per_label_go_random.png}
+  \DIFaddendFL \caption{Number of sequences annotated with a given functional label. (GO label) in the random dataset.}\DIFaddbeginFL \DIFaddFL{per p
 }\DIFaddendFL \end{figure}
 \pagebreak
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/sequences_per_label_ec_clustered.png}
-  \caption{Number of sequences annotated with a given functional label. (EC class) in the clustered dataset.}
+  \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\textwidth]{Figures/sequences_per_label_ec_clustered.png}
+%DIFDELCMD <   %%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\textwidth]{sequences_per_label_ec_clustered.png}
+  \DIFaddendFL \caption{Number of sequences annotated with a given functional label. (EC class) in the clustered dataset.}
 \end{figure}
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/sequences_per_label_go_clustered.png}
-  \caption{Number of sequences annotated with a given functional label. (GO label) in the clustered dataset.}
+  \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\textwidth]{Figures/sequences_per_label_go_clustered.png}
+%DIFDELCMD <   %%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\textwidth]{sequences_per_label_go_clustered.png}
+  \DIFaddendFL \caption{Number of sequences annotated with a given functional label. (GO label) in the clustered dataset.}
 \end{figure}
 \DIFdelbegin %DIFDELCMD < \pagebreak
 %DIFDELCMD < %%%
@@ -628,73 +673,113 @@ We use Swiss-Prot version 2019\_01 in our analysis, which gives us 559077 protei
 \DIFaddend \subsection{Precision/Recall curves}
 
 \begin{figure}[ht] 
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=1\linewidth]{Figures/random_truncated.pdf}
-    \caption{EC number prediction: random split} 
-    \label{fig:with_ensemble:a} 
-    \vspace{4ex}
-  \end{subfigure}%% 
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=1\linewidth]{Figures/random_truncated_go.pdf}
-    \caption{GO term prediction: random split} 
-    \label{fig:with_ensemble:b} 
-    \vspace{4ex}
-  \end{subfigure} 
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=1\linewidth]{Figures/clustered_truncated.pdf}
-    \caption{EC number prediction: clustered split} 
-    \label{fig:with_ensemble:c} 
-  \end{subfigure}%%
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=1\linewidth]{Figures/clustered_truncated_go.pdf}
-    \caption{GO term prediction: clustered split} 
-    \label{fig:with_ensemble:d} 
-  \end{subfigure} 
-  \caption{Bootstrapped precision-recall curves for EC number prediction and gene ontology term prediction for random and clustered splits for four methods: BLAST top pick, single ProteInfer CNN, ensembled ProteInfer CNNs, and ensembled ProteInfer CNNs scaled by BLAST score. }
+  \DIFdelbeginFL %DIFDELCMD < \begin{subfigure}[b]{0.5\linewidth}
+%DIFDELCMD <     \centering
+%DIFDELCMD <     \includegraphics[width=1\linewidth]{Figures/random_truncated.pdf}
+%DIFDELCMD <     %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{EC number prediction: random split}} 
+    %DIFAUXCMD
+%DIFDELCMD < \label{fig:with_ensemble:a} 
+%DIFDELCMD <     \vspace{4ex}
+%DIFDELCMD <   \end{subfigure}%%%
+%DIF < % 
+  %DIFDELCMD < \begin{subfigure}[b]{0.5\linewidth}
+%DIFDELCMD <     \centering
+%DIFDELCMD <     \includegraphics[width=1\linewidth]{Figures/random_truncated_go.pdf}
+%DIFDELCMD <     %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{GO term prediction: random split}} 
+    %DIFAUXCMD
+%DIFDELCMD < \label{fig:with_ensemble:b} 
+%DIFDELCMD <     \vspace{4ex}
+%DIFDELCMD <   \end{subfigure} 
+%DIFDELCMD <   \begin{subfigure}[b]{0.5\linewidth}
+%DIFDELCMD <     \centering
+%DIFDELCMD <     \includegraphics[width=1\linewidth]{Figures/clustered_truncated.pdf}
+%DIFDELCMD <     %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{EC number prediction: clustered split}} 
+    %DIFAUXCMD
+%DIFDELCMD < \label{fig:with_ensemble:c} 
+%DIFDELCMD <   \end{subfigure}%%%
+%DIF < %
+  %DIFDELCMD < \begin{subfigure}[b]{0.5\linewidth}
+%DIFDELCMD <     \centering
+%DIFDELCMD <     \includegraphics[width=1\linewidth]{Figures/clustered_truncated_go.pdf}
+%DIFDELCMD <     %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{GO term prediction: clustered split}} 
+    %DIFAUXCMD
+%DIFDELCMD < \label{fig:with_ensemble:d} 
+%DIFDELCMD <   \end{subfigure} 
+%DIFDELCMD <   %%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=0.9\textwidth]{combined_subfigs_b.pdf}
+  \DIFaddendFL \caption{Bootstrapped precision-recall curves for EC number prediction and gene ontology term prediction for random and clustered splits for four methods: BLAST top pick, single ProteInfer CNN, ensembled ProteInfer CNNs, and ensembled ProteInfer CNNs scaled by BLAST score. }
   \label{fig:with_ensemble} 
 \end{figure}
 
 
 
 \begin{figure}[ht] 
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=0.9\linewidth]{Figures/prc_ec_random_unzoomed.png}
-    \caption{EC number prediction: random split} 
-    \label{fig:without_ensemble:a} 
-    \vspace{4ex}
-  \end{subfigure}%% 
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=0.9\linewidth]{Figures/prc_go_random_unzoomed.png}
-    \caption{GO term prediction: random split} 
-    \label{fig:without_ensemble:b} 
-    \vspace{4ex}
-  \end{subfigure} 
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=0.9\linewidth]{Figures/prc_ec_clustered_unzoomed.png}
-    \caption{EC number prediction: clustered split} 
-    \label{fig:without_ensemble:c} 
-  \end{subfigure}%%
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=0.9\linewidth]{Figures/prc_go_clustered_unzoomed.png}
-    \caption{GO term prediction: clustered split} 
-    \label{fig:without_ensemble:d} 
-  \end{subfigure} 
-  \caption{Full precision-recall curves for EC number prediction and gene ontology term prediction for random and clustered splits for four methods: BLAST top pick, single ProteInfer CNN, ensembled ProteInfer CNNs }
+  \DIFdelbeginFL %DIFDELCMD < \begin{subfigure}[b]{0.5\linewidth}
+%DIFDELCMD <     \centering
+%DIFDELCMD <     \includegraphics[width=0.9\linewidth]{Figures/prc_ec_random_unzoomed.png}
+%DIFDELCMD <     %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{EC number prediction: random split}} 
+    %DIFAUXCMD
+%DIFDELCMD < \label{fig:without_ensemble:a} 
+%DIFDELCMD <     \vspace{4ex}
+%DIFDELCMD <   \end{subfigure}%%%
+%DIF < % 
+  %DIFDELCMD < \begin{subfigure}[b]{0.5\linewidth}
+%DIFDELCMD <     \centering
+%DIFDELCMD <     \includegraphics[width=0.9\linewidth]{Figures/prc_go_random_unzoomed.png}
+%DIFDELCMD <     %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{GO term prediction: random split}} 
+    %DIFAUXCMD
+%DIFDELCMD < \label{fig:without_ensemble:b} 
+%DIFDELCMD <     \vspace{4ex}
+%DIFDELCMD <   \end{subfigure} 
+%DIFDELCMD <   \begin{subfigure}[b]{0.5\linewidth}
+%DIFDELCMD <     \centering
+%DIFDELCMD <     \includegraphics[width=0.9\linewidth]{Figures/prc_ec_clustered_unzoomed.png}
+%DIFDELCMD <     %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{EC number prediction: clustered split}} 
+    %DIFAUXCMD
+%DIFDELCMD < \label{fig:without_ensemble:c} 
+%DIFDELCMD <   \end{subfigure}%%%
+%DIF < %
+  %DIFDELCMD < \begin{subfigure}[b]{0.5\linewidth}
+%DIFDELCMD <     \centering
+%DIFDELCMD <     \includegraphics[width=0.9\linewidth]{Figures/prc_go_clustered_unzoomed.png}
+%DIFDELCMD <     %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{GO term prediction: clustered split}} 
+    %DIFAUXCMD
+%DIFDELCMD < \label{fig:without_ensemble:d} 
+%DIFDELCMD <   \end{subfigure} 
+%DIFDELCMD <   %%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=0.9\textwidth]{combined_subfigs_c.pdf}
+  \DIFaddendFL \caption{Full precision-recall curves for EC number prediction and gene ontology term prediction for random and clustered splits for four methods: BLAST top pick, single ProteInfer CNN, ensembled ProteInfer CNNs }
   \label{fig:without_ensemble} 
 \end{figure}
 
 
 \DIFaddbegin \begin{figure}[htbp]
 \centering
-  \includegraphics[width=0.6\textwidth]{Figures/random_untruncated.pdf}
+  \includegraphics[width=0.6\textwidth]{random_untruncated.pdf}
   \caption{\DIFaddFL{EC random task with different methods compared against a naive baseline where the predictor is simply the frequency in the training set.}}
   \label{sup:fig:naive}
 \end{figure}
@@ -705,7 +790,7 @@ We use Swiss-Prot version 2019\_01 in our analysis, which gives us 559077 protei
 \DIFaddbegin \subsection{\DIFadd{GO performance by ontology}}
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=0.7\textwidth]{Figures/combined_split_go_random.pdf}
+  \includegraphics[width=0.7\textwidth]{combined_split_go_random.pdf}
   \caption{\DIFaddFL{GO performance stratified by method and ontology type.}}
   \label{sup:fig:go_ontologies}
 \end{figure}
@@ -714,8 +799,10 @@ We use Swiss-Prot version 2019\_01 in our analysis, which gives us 559077 protei
 \DIFaddend \subsection{Stratified performance}
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=\textwidth]{Figures/ec_f1_by_training_size.png}
-  \caption{Performance of EC model stratified by number of training examples available for each test example.}
+  \DIFdelbeginFL %DIFDELCMD < \includegraphics[width=\textwidth]{Figures/ec_f1_by_training_size.png}
+%DIFDELCMD <   %%%
+\DIFdelendFL \DIFaddbeginFL \includegraphics[width=\textwidth]{ec_f1_by_training_size.png}
+  \DIFaddendFL \caption{Performance of EC model stratified by number of training examples available for each test example.}
   \label{sup:fig:ec_f1_by_training_size}
 \end{figure}
 
@@ -804,7 +891,7 @@ We use Swiss-Prot version 2019\_01 in our analysis, which gives us 559077 protei
 
 \begin{figure}[htbp]
 \centering
-  \includegraphics[width=0.7\textwidth]{Figures/pfam_random.png}
+  \includegraphics[width=0.7\textwidth]{pfam_random.png}
   \caption{\DIFaddFL{Performance for Pfam prediction for random train/test split.}}
   \label{sup:fig:ec_f1_by_training_size}
 \end{figure}
@@ -814,8 +901,8 @@ We use Swiss-Prot version 2019\_01 in our analysis, which gives us 559077 protei
 %DIF > stopleaveout
 
 %DIF > startleaveout
+%DIF > \end{comment}
 \DIFaddend 
-
 
 %\bibliography{../bibliography}
 % Extra text

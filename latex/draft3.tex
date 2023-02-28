@@ -35,12 +35,6 @@ neural networks | protein | prediction | classification | embedding
 theo \at \;theo.io
 \end{corrauthor}
 
-\begin{figure}[h!]
-  \centering
-  \includegraphics[width=.4\columnwidth]{qr.pdf}
-
- \small QR code for the interactive version of this preprint at  \url{https://google-research.github.io/proteinfer/}
-\end{figure}
 
 
 \section*{Introduction}
@@ -65,7 +59,7 @@ Beyond functional annotation, deep learning has enabled significant advances in 
 Of particular relevance to the present work is Bileschi et al. (2022) \citep{bileschi}, where it is shown that models with residual layers \citep{resnet} of dilated convolutions \citep{dilatedconvolutions} can precisely and efficiently categorise protein domains.  Dohan (2021) \cite{dohan2021kdd} provides additional accuracy improvements using uncurated data. However, these models cannot infer functional annotations for full-length protein sequences, since they are trained on pre-segmented domains and can only predict a single label. The full-sequence task is of primary importance to biological practitioners.
 
 To address this challenge we employ deep dilated convolutional networks to learn the mapping between full-length protein sequences and functional annotations. The resulting ProteInfer models take amino acid sequences as input and are trained on the well-curated portion of the protein universe annotated by Swiss-Prot \cite{uniprotlatest}. We find that: 1) ProteInfer models reproduce curator decisions for a  variety of functional properties across sequences distant from the training data, 2) attribution analysis shows that the predictions are driven by relevant regions of each protein sequence, and 3) ProteInfer models create a generalised mapping between sequence space and the space of protein functions, which is useful for tasks other than those for which the models were trained. We provide trained ProteInfer networks that enable other researchers to reproduce the analysis presented and to explore embeddings of their proteins of interest, via both a command line tool\footnote{\url{https://github.com/google-research/proteinfer}}, and also via an in-browser JavaScript implementation that demonstrates the computational efficiency of deep-learning approaches.
-\section*{Results}
+\section*{Methods}
 
 \begin{figure}[h!]
 \centering
@@ -74,13 +68,22 @@ To address this challenge we employ deep dilated convolutional networks to learn
   \label{architecture}
 \end{figure}
 \subsection*{A neural-network for protein function prediction}
-%%%MODEL%%%
+
 In a ProteInfer neural network (\Cref{architecture}%htmlver:<a href="#fig3" target="_self">Figure 3</a>
 ), a raw amino acid sequence is first represented numerically as a \textit{one-hot} matrix and then passed through a series of convolutional layers. Each layer takes the representation of the sequence in the previous layer and applies a number of \textit{filters}, which detect patterns of features. We use \textit{residual} layers, in which the output of each layer is added to its input to ease the training of deeper networks \cite{resnet}, and dilated convolutions \cite{dilatedconvolutions}, meaning that successive layers examine larger sub-sequences of the input sequence. After building up an embedding of each position in the sequence, the model collapses these down to a single $n$-dimensional embedding of the sequence using average pooling. Since natural protein sequences can vary in length by at least three orders of magnitude, this pooling is advantageous because it allows our model to accommodate sequences of arbitrary length without imposing restrictive modeling assumptions or computational burdens that scale with sequence length. In contrast, many previous approaches operate on fixed sequence lengths: these techniques are unable to make predictions for proteins larger than this sequence length, and use unnecessary resources when employed on smaller proteins. Finally, a fully-connected layer maps these embeddings to logits for each potential label, which are the input to an element-wise sigmoid layer that outputs per-label probabilities. 
+
+%%%MODEL%%%
+
 We select all labels with predicted probability above a given confidence threshold, and varying this threshold yields a tradeoff between precision and recall. To summarize model performance as a single scalar, we compute the $\texttt{F}_{max}$ score, the maximum $\texttt{F}_{1}$ score (the geometric mean of precision and recall) across all thresholds \citep{radivojac2013large}.  
+
+
+
+
 
 Each model was trained for about 60 hours using the Adam optimizer \citep{kingma2014adam} on 8 NVIDIA P100 GPUs with data parallelism \cite{dean2012large, dataparalellism}.  We found that using more than one GPU for training improved training time by allowing an increased batch size, but did not have a substantial impact on accuracy compared to training for longer with a smaller learning rate and smaller batch size on one GPU. The models have a small set of hyperparameters, such as the number of layers and the number of filters in each layer, which were tuned using random sampling to maximize $\texttt{F}_{max}$ on the random train-test split. Hyperparameter values are available in the \textnormal{ Supplement}%htmlver:<a href="./latex/supplement.pdf">supplement</a>
 .
+
+
 \subsection*{A machine-learning compatible dataset for protein function prediction}
 The UniProt database is the central global repository for information about proteins. The manually curated portion, Swiss-Prot, is constructed by assessing $~$60,000 papers each year to harvest $\gt$ 35\% of the theoretically curatable information in the literature \cite{uniprotlatest}. We focus on Swiss-Prot to ensure that our models learn from human-curated labels, rather than labels generated by a computational annotation pipeline. Each protein in Swiss-Prot goes through a 6-stage process of sequence curation, sequence analysis, literature curation, family-based curation, evidence attribution, and quality assurance.
 Functional annotation is stored in UniProt largely through \textit{database cross-references}, which link a specific protein with a label from a particular ontology. These cross-references include: Enzyme Commission (EC) numbers, representing the function of an enzyme; Gene Ontology (GO) terms relating to the protein's molecular function, biological process, or subcellular localisation; protein family information contained in the Pfam \citep{pfamlatest}, SUPFAM\citep{supfamlatest}, PRINTS \citep{prints}, TIGR \citep{tigr}, PANTHR \citep{panther} databases, or the umbrella database InterPro \citep{interpro}; as well as other information including ortholog databases and references on PubMed. Here, we focus on EC and GO labels, though our model training framework can immediately extend to other label sets.
@@ -88,6 +91,9 @@ Functional annotation is stored in UniProt largely through \textit{database cros
 We use two methods to split data into training and evaluation sets. First, a random split of the data allows us to answer the following question: suppose that curators had randomly annotated only 80\% of the sequences in Swiss-Prot. How accurately can ProteInfer annotate the remaining 20\%?  Second, we use UniRef50 \citep{suzek2015uniref} clustering to split the data, to model a challenging use-case in which an unseen sequence has low sequence similarity to anything that has been previously annotated. Note there are alternative methods for splitting \citep{Brandes2021,zhou2019cafa, gillis}, such as reserving the most recently-annotated proteins for evaluating models. This approach, which is used in CAFA and CASP \citep{zhou2019cafa, gillis}, helps ensure a fair competition because labels for the evaluation data are not available to participants, or the scientific community at large, until after the competition submissions are due. Such a split is not available for EC classification, which is the primary focus of our analyses below. Finally, note that all of the above approaches typically lack reliable annotation for true negatives \citep{warwick2020benchmarking}.
 
 To facilitate further development of machine learning methods, we provide TensorFlow \citep{abadi2016tensorflow} TFrecord files for Swiss-Prot.\footnote{\url{https://console.cloud.google.com/storage/browser/brain-genomics-public/research/proteins/proteinfer/datasets/}} Each example has three fields: the UniProt accession, the amino acid sequence, and a list of database cross-reference labels. UniProt annotations include only leaf nodes for hierarchical taxononomies such as EC and GO. To allow machine-learning algorithms to model this hierarchy, we added all parental annotations to each leaf node during dataset creation. 
+
+
+\section*{Results}
 
 \subsection*{Prediction of catalysed reactions}
 We initially trained a model to predict enzymatic catalytic activities from amino acid sequence. This data is recorded as Enzyme Commission (EC) numbers, which describe a hierarchy of catalytic functions. For instance, \textbeta{} amylase enzymes have an EC number of EC:3.2.1.2, which represents the leaf node in the following hierarchy:
@@ -127,7 +133,7 @@ We initially trained a model to predict enzymatic catalytic activities from amin
     \end{figure*}
 
 Individual protein sequences can be annotated with zero (non-enzymatic proteins), one (enzymes with a single function) or many (multi-functional enzymes) leaf-level EC numbers. These are drawn from a total of 8,162 catalogued chemical reactions.
-Our best $\texttt{F}_{max}$ was achieved by a model containing 5 residual blocks with 1100 filters each (full details in \textnormal{ Supplement}%htmlver:<a href="./latex/supplement.pdf">supplement</a>
+Our best $\texttt{F}_{max}$ was achieved by a model containing 5 residual blocks with 1100 filters each (full details in \textnormal{ methods}%htmlver:<a href="./latex/supplement.pdf">supplement</a>
 ). For the dev set, $\texttt{F}_{max}$ converged within 500,000 training steps. On the random split, the model achieves $\texttt{F}_{max}$ = 0.977 (0.976-0.978) on the held-out test data. At the corresponding confidence threshold, the model correctly predicts 96.7\% of true labels, with a false positive rate of 1.4\%. Results from the clustered test set are discussed below.
 Performance was roughly similar across labels at the top of the EC hierarchy, with the highest $\texttt{F}_{max}$ score observed for ligases (0.993), and the lowest for oxidoreductases (0.963). For all classes, the precision of the network was higher than the recall at the threshold maximising $\texttt{F}_{max}$. Precision and recall can be traded off against each other by adjusting the confidence threshold at which the network outputs a prediction, creating the curves shown in \Cref{fig:toplevel}B.%htmlver:the figure below
 %%%INITIALANALYSIS%%%
@@ -135,11 +141,11 @@ Performance was roughly similar across labels at the top of the EC hierarchy, wi
 
 We implemented an alignment-based baseline in which BLASTp is used to identify the closest sequence to a query sequence in the train set. Labels are then imputed for the query sequence by transferring those labels that apply to the annotated match from the train set. We produced a precision-recall curve by using the bit score of the closest sequence as a measure of confidence, varying the cutoff above which we retain the imputed labels \cite{zhou2019cafa, eddy2011accelerated}. We also considered an ensemble of neural networks \cite{bileschi}, where the average of the ensemble elements' predicted probabilities is used as a confidence score, and a naive control where the number of proteins annotated with a specific term in the training set \citep{radivojac2013large}. %
 %startleaveout
-(See \Cref{fig:toplevel}B, \Cref{fig:with_ensemble}, \Cref{fig:without_ensemble}.)
+(See \Cref{fig:toplevel}B, \Cref{sup:fig:with_ensemble}, \Cref{sup:fig:without_ensemble}.)
 %stopleaveout
 
 %%%METHOD%%%
-We found that BLASTp was able to achieve higher recall values than ProteInfer for lower precision values, while ProteInfer was able to provide greater precision than BLASTp at lower recall values. The high recall of BLAST is likely to reflect the fact that it has access to the entirety of the training set, rather than having to compress it into a limited set of neural network weights. In contrast, the lack of precision in BLAST could relate to reshuffling of sequences during evolution, which would allow a given protein to show high similarity to a trainining sequence in a particular subregion, despite lacking the core region required for that training sequence's function.  We wondered whether a combination of ProteInfer and BLASTp could synergize the best properties of both approaches. We found that even the simple ensembling strategy of rescaling the BLAST bit score by the averages of the ensembled CNNs' predicted probabilities gave a $\texttt{F}_{max}$ score (0.991, 95\% confidence interval [CI]: 0.990--0.992 ) that exceeded that of BLAST (0.984, 95\% CI: 0.983--0.985) or the ensembled CNN (0.981, 95\% CI: 0.980--0.982) alone (see Supplement for more details on this method). 
+We found that BLASTp was able to achieve higher recall values than ProteInfer for lower precision values, while ProteInfer was able to provide greater precision than BLASTp at lower recall values. The high recall of BLAST is likely to reflect the fact that it has access to the entirety of the training set, rather than having to compress it into a limited set of neural network weights. In contrast, the lack of precision in BLAST could relate to reshuffling of sequences during evolution, which would allow a given protein to show high similarity to a trainining sequence in a particular subregion, despite lacking the core region required for that training sequence's function.  We wondered whether a combination of ProteInfer and BLASTp could synergize the best properties of both approaches. We found that even the simple ensembling strategy of rescaling the BLAST bit score by the averages of the ensembled CNNs' predicted probabilities gave a $\texttt{F}_{max}$ score (0.991, 95\% confidence interval [CI]: 0.990--0.992 ) that exceeded that of BLAST (0.984, 95\% CI: 0.983--0.985) or the ensembled CNN (0.981, 95\% CI: 0.980--0.982) alone (see Methods for more details on this method). 
 On the clustered train-test split based on UniRef50 (see \textit{clustered} in \Cref{fig:toplevel}B%htmlver:<a href="#fig5" target="_self">Fig. 5</a>
 ), we see a performance drop in all methods: this is expected, as remote homology tasks are designed to challenge methods to generalize farther in sequence space. The $\texttt{F}_{max}$ score of a single neural network fell to 0.914 (95\% CI: 0.913--0.915, precision: 0.959 recall: 0.875), substantially lower than BLAST (0.950, 95\% CI: 0.950--0.951), though again an ensemble of both BLAST and ProteInfer outperformed both (0.979, 95\% CI: 0.979--0.980). These patterns suggest that neural network methods learn different information about proteins to alignment-based methods, and so a combination of the two provides a synergistic result. All methods dramatically outperformed the naive frequency-based approach (\Cref{sup:fig:naive}%htmlver:see supplement
 ).
@@ -160,8 +166,8 @@ To investigate what sequence regions the neural network is using to make its fun
 
 %%%3FUNCTIONB%%%
 
-We then assessed the ability of this method to more generally localize function within a sequence, even though the model was not trained with any explicit localization information. We selected all enzymes from Swiss-Prot that had two separate leaf-node EC labels for which our model predicted known EC labels, and these labels were mappable to corresponding Pfam labels. For each of these proteins, we obtained coarse-grained functional localization by using CAM to predict the order of the domains in the sequence and compared to the ground truth Pfam domain ordering\textnormal{(see supplement for details of the method)}%htmlver:(see <a href="./latex/supplement.pdf">supplement</a> for details of the method)
-. We found that in 296 of 304 (97\%) of the cases, we correctly predicted the ordering, though we note that the set of bifunctional enzymes for which this analysis is applicable is limited in its functional diversity \textnormal{(see supplement)}%htmlver:(see <a href="./latex/supplement.pdf">supplement</a>)
+We then assessed the ability of this method to more generally localize function within a sequence, even though the model was not trained with any explicit localization information. We selected all enzymes from Swiss-Prot that had two separate leaf-node EC labels for which our model predicted known EC labels, and these labels were mappable to corresponding Pfam labels. For each of these proteins, we obtained coarse-grained functional localization by using CAM to predict the order of the domains in the sequence and compared to the ground truth Pfam domain ordering\textnormal{(see supplement for details of the method)} %htmlver:(see <a href="./latex/supplement.pdf">supplement</a> for details of the method)
+. We found that in 296 of 304 (97\%) of the cases, we correctly predicted the ordering, though we note that the set of bifunctional enzymes for which this analysis is applicable is limited in its functional diversity \textnormal{(see methods)}%htmlver:(see <a href="./latex/supplement.pdf">supplement</a>)
 . Although we did not find that fine-grained, per-residue functional localization arose from our application of CAM, we found that it reliably provided coarse-grained annotation of domains' order, as supported by Pfam. This experiment suggests that this is a promising future area for research.
 \subsection*{Neural networks learn a general-purpose embedding space for protein function}
 Whereas InterProScan compares each sequence against more than 50,000 %from summing integrated signatures at https://www.ebi.ac.uk/interpro/release_notes.html
@@ -172,28 +178,7 @@ To visualise this space, we selected proteins with a single leaf-level EC number
 %%%embedding_explorer%%%
 \begin{figure*}[t!]
     \centering
-    \begin{subfigure}[t]{0.3\textwidth}
-    \vskip 0pt
-        \includegraphics[width=\textwidth]{nucleotidebinding}
-        \caption{Nucleotide binding}
-        \label{fig:gull}
-    \end{subfigure}
-    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
-      %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[t]{0.3\textwidth}
-    \vskip 0pt
-        \includegraphics[width=\textwidth]{ribosome}
-        \caption{Structural constituent of ribosome}
-        \label{fig:tiger}
-    \end{subfigure}
-    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
-    %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[t]{0.3\textwidth}
-    \vskip 0pt
-        \includegraphics[width=\textwidth]{membrane}
-        \caption{Intrinsic component of membrane}
-        \label{fig:mouse}
-    \end{subfigure}
+    \includegraphics[width=0.9\textwidth]{combined_subfigs_a.pdf}
     \caption{\textbf{A neural network trained on enzyme function learns general protein properties, beyond enzymatic activity.} This figure shows EC-trained ProteInfer embeddings for all non-enzymatic sequences in the test set, projected using UMAP. To illustrate the structure contained in these embeddings we highlight genes based on GO labels (on which this network was never trained).}\label{fig:unsupervised_embedding}
 \end{figure*}
 The resulting representation captures the hierarchical nature of EC classification, with the largest clusters in embedding space corresponding to top level EC groupings (\Cref{fig:umap}A%htmlver:
@@ -266,7 +251,7 @@ We trained a single model to predict presence or absence for each of these terms
 
 An ensemble of multiple CNN elements was again able to achieve a slightly better result with an F1 score of 0.899 (95\% CI: 0.897--0.901), which was exceeded by a simple transfer of the BLAST top pick at 0.902 (95\% CI: 0.900--0.904), with an ensemble of both producing the best result of 0.908 (95\% CI: 0.906--0.911).
 
-The same trends for the relative performance of different approaches were seen for each of the direct-acyclic graphs that make up the GO ontology (biological process, cellular component and molecular function), but there were substantial differences in absolute performance (\Cref{sup:fig:go_ontologies}%htmlver:(see <a href="./latex/supplement.pdf">supplement</a>)
+The same trends for the relative performance of different approaches were seen for each of the direct-acyclic graphs that make up the GO ontology (biological process, cellular component and molecular function), but there were substantial differences in absolute performance (\Cref{sup:fig:go_ontologies}%htmlver: (see <a href="./latex/supplement.pdf">supplement</a>)
 ). Performance was highest for molecular function (max F1: 0.94), followed by biological process (max F1:0.86) and then cellular component (max F1:0.84).
 
 
@@ -381,63 +366,8 @@ On these 304 proteins we have the same predicted-EC-to-Pfam labels and the same 
 We use class activation mapping (CAM) to compute a confidence for each class at each residue for every protein in this set of 304. We then filter this large matrix of values and only consider the families for which our classifier predicted membership, giving us a matrix of shape sequence-length by predicted-classes (which is two in this case). For each class, we take the CAM output and compute a center of mass. Then we order the two classes based on where their center of mass lies.
 
 
-\subsection*{Timing ProteInfer browser models}
-In the javascript console, we run the following:
-\begin{tiny}
-\begin{verbatim}
-var seq = "" +
-"MEPAKPSGNNMGSNDERMQDYRPDPMMEESIKEILEESLMCDTSFDDLIIPGLESFGLIIPESSNNIESNNVEEGSDGE" +
-"LKTLAEQKCKQGNDNDVIQSAMKLSGLYCDADITHTQPLSDNTHQDPIYSQESRIFTKTIQDPRIVAQTHRQCTSSASNL" + 
-"QSNESGSTQVRFASELPNQLLQPMYTSHNQNANLQNNFTSLPYQPYHDPYRDIESSYRESRNTNRGYDYNFRHHPYRPRG" + 
-"GNGKYNYYNPNSKYQQPYKRCFTRTYNRRGRGHRSYDCSDRSADLPYEHYTYPNYEQQNPDPRMNNYKDFTQLTNKFNFE" + 
-"SYDYSMAFSTDSTHVQSDNYNHPTKAQTIPETTKTKKHEATKDNETSTENQVLTPDVISLSYRPSSYKMDIIKKIYDTDV" + 
-"IPLPKEALTANGSNRDVDIQKYKKAHIRCRSVQKKKERSSQTNKHDENHASSRSDLKERKSNENEDKAVTKARDFSKLNP" + 
-"LLSPLPLTPEPAIDFADHTDKFYSTPEFNQIQQNLHRSKTSLQDTVPISKHTPRAPTKDNSYKKHHDSKDNYPKMKHSPG" + 
-"RTTSKKNTTNSNGHQNFKEVSVKNVSGKATSTSPKSKTHHYSSSSDEEGQYKSPVKTIIQSPSPYCKLKNPSIMDKNSAK" + 
-"NHTASADKNLTDNSPIRSNLNPTAFNKSNSNKSITDSTSNSDECTDRKPNCNSTKNESKDPNRTCGKNSDKHLSKSCTMA" + 
-"SKRAPSRASSRASSRDSSRASSRASSRASSRDSSRASSRASSRDSSRASSRASSRASSKASSRASSRASSRASSRDSSRA" + 
-"SSKASSRASSRDSSRASSRASSRASSKASSRASSRASSRASSRDSSRASSKASSRASSRDSSRASSRDSSRDSSRASSRA" + 
-"SSRDSSRASSKASRKASSRASSRASSRASSKASGKASSEASSRASSRNSSRASSRASSRASSRDSSRASSRASSRDSSRA" + 
-"SSKASRKASSRASSRASSRELRQIYCDSNKRQTPPHDTSINTKFEISEIKFRCGEDLNFYKNTAARLQCFNHNDQFYNPR" + 
-"FRPHIRTNRKKSESTNDTDSESSMSRCKSHCRNSPDSLTVVRRKKHKSGSSSISSSIEENCRSNSHIVTGKEKFTPFYYQ" + 
-"SSRTRSSSSSSSSSASLSCSKSTLKTCRKTQYKDNKQIKSKSDSKHKTTNMSSDYESNRHADVFKNSPEAGEKFPLHNSS" + 
-"PFNTHEQSNHSENAIDEEQKKAPNITTSHLQGKQNVRLHNTKKCKKKRPRDDDSDSSIKNFCKKRISGAQKTESEVSEPD" + 
-"DLCYRDYVRLKERKVSEKFKIHRGRVATKDFQKLFRNTMRAFEYKQIPKKPCNEKNLKEAVYDICCNGLSNNAAIIMYFT" + 
-"RSKKVAQIIKIMQKELMIRPNITVSEAFKMNHAPPKYYDKDEIKRFIQLQKQGPQELWDKFENNTTHDLFTRHSDVKTMI" + 
-"IYAATPIDFVGAVKTCNKYAKDNPKEIVLRVCSIIDGDNPISIYNPISKEFKSKFSTLSKC"
-var t0 = performance.now()
-await Promise.all([performECInference(seq), performGOInference(seq)])
-var t1 = performance.now()
-console.log("Call took " + (t1 - t0) + " milliseconds.")
-    
-\end{verbatim}
-\end{tiny}
 
-\begin{acknowledgements}
-  We would like to thank Babak Alipanahi, Jamie Smith, Eli Bixby, Drew Bryant, Shanqing Cai, Cory McLean and Abhinay Ramaprasad. The static version of this manuscript uses a template made by Ricardo Henriques.
-
-  TS receives funding from the Wellcome Trust through a Sir Henry Wellcome Postdoctoral Fellowship (210918/Z/18/Z). This work was also supported by the Francis Crick Institute which receives its core funding from Cancer Research UK (FC001043), the UK Medical Research Council (FC001043), and the Wellcome Trust (FC001043). This research was funded in whole, or in part, by the Wellcome Trust [FC001043]. For the purpose of Open Access, the authors have applied a CC BY public copyright licence to any Author Accepted Manuscript version arising from this submission.
-
-\end{acknowledgements}
-
-\begin{contributions}
-  TS was responsible for conception, data ingestion, code, analysis, visualisation, UI, paper writing. MLB was
-  responsible for visualization, analysis, code, CLI, open sourcing, testing, paper writing. DB was responsible for
-  paper writing, analysis of results, code reviews. LJC was responsible for problem conception and framing, analysis of results, paper writing.
-\end{contributions}
-
-  
-  \section*{Bibliography}
-\bibliography{../bibliography}
-
-\onecolumn
-\newpage
-
-\section*{Supplement}
-\beginsupplement
-
-
-\subsection{Input data statistics}
+\subsection*{Input data statistics}
 
 We use Swiss-Prot version 2019\_01 in our analysis, which gives us 559077 proteins, or 548264 after filtering for only 20 standard amino acids and filtering fragments.
 
@@ -479,38 +409,99 @@ Because different protein functions have differing prevalence, we note the numbe
   
   \end{table}
 
-\clearpage
-\begin{figure}[htbp]
-\centering
-  \includegraphics[width=\textwidth]{ec_label_distribution.png}
-  \caption{Histogram of number of labels per sequence, including hierarchical labels, on the random dataset.}
-\end{figure}
-\begin{figure}[htbp]
-\centering
-  \includegraphics[width=\textwidth]{go_label_distribution.png}
-  \caption{Histogram of number of labels per sequence, including hierarchical labels, on the random dataset.}
-\end{figure}
-\begin{figure}[htbp]
-\centering
-  \includegraphics[width=\textwidth]{sequences_per_label_ec_random.png}
-  \caption{Number of sequences annotated with a given functional label. (EC class) in the random dataset.}
-\end{figure}
-\begin{figure}[htbp]
-\centering
-  \includegraphics[width=\textwidth]{sequences_per_label_go_random.png}
-  \caption{Number of sequences annotated with a given functional label. (GO label) in the random dataset.}per p
-\end{figure}
-\pagebreak
-\begin{figure}[htbp]
-\centering
-  \includegraphics[width=\textwidth]{sequences_per_label_ec_clustered.png}
-  \caption{Number of sequences annotated with a given functional label. (EC class) in the clustered dataset.}
-\end{figure}
-\begin{figure}[htbp]
-\centering
-  \includegraphics[width=\textwidth]{sequences_per_label_go_clustered.png}
-  \caption{Number of sequences annotated with a given functional label. (GO label) in the clustered dataset.}
-\end{figure}
+  \begin{table}[htbp]
+    \centering
+    \begin{tabular}{|l|r|}
+    \hline
+                                    Type &  Number \\
+    \Xhline{2pt}
+                            Train labels &    3411 \\
+    \hline
+                             Test labels &    3414 \\
+    \hline
+                  Impossible test labels &    1043 \\
+    \hline
+               Train example-label pairs &  348105 \\
+    \hline
+                Test example-label pairs &  348755 \\
+    \hline
+     Impossible test example-label pairs &    3415 \\
+    \hline
+    \end{tabular}
+    \caption{Clustered dataset statistics for EC labels.}
+    \end{table}
+  \begin{table}[htbp]
+  \centering
+  \begin{tabular}{|l|r|}
+  \hline
+                                  Type &   Number \\
+  \Xhline{2pt}
+                          Train labels &    26538 \\
+  \hline
+                           Test labels &    26666 \\
+  \hline
+                Impossible test labels &     3739 \\
+  \hline
+             Train example-label pairs &  8338584 \\
+  \hline
+              Test example-label pairs &  8424299 \\
+  \hline
+   Impossible test example-label pairs &    11137 \\
+  \hline
+  \end{tabular}
+  \caption{Clustered dataset statistics for GO labels.}
+  \end{table}
+
+
+  \begin{table}[htbp]
+    \centering
+  \begin{tabular}{|l|r|}
+  \hline
+  Vocabulary & Number of terms \\
+  \hline
+  EC & 5,134 \\
+  \hline
+  GO & 32,109 \\
+  \hline
+  \end{tabular}
+  \caption{Vocabulary sizes in models trained for EC and GO.}
+  \label{sup:table:vocab_sizes}
+  \end{table}
+
+  
+
+\subsection*{Timing ProteInfer browser models}
+In the javascript console, we run the following:
+\begin{tiny}
+\begin{verbatim}
+var seq = "" +
+"MEPAKPSGNNMGSNDERMQDYRPDPMMEESIKEILEESLMCDTSFDDLIIPGLESFGLIIPESSNNIESNNVEEGSDGE" +
+"LKTLAEQKCKQGNDNDVIQSAMKLSGLYCDADITHTQPLSDNTHQDPIYSQESRIFTKTIQDPRIVAQTHRQCTSSASNL" + 
+"QSNESGSTQVRFASELPNQLLQPMYTSHNQNANLQNNFTSLPYQPYHDPYRDIESSYRESRNTNRGYDYNFRHHPYRPRG" + 
+"GNGKYNYYNPNSKYQQPYKRCFTRTYNRRGRGHRSYDCSDRSADLPYEHYTYPNYEQQNPDPRMNNYKDFTQLTNKFNFE" + 
+"SYDYSMAFSTDSTHVQSDNYNHPTKAQTIPETTKTKKHEATKDNETSTENQVLTPDVISLSYRPSSYKMDIIKKIYDTDV" + 
+"IPLPKEALTANGSNRDVDIQKYKKAHIRCRSVQKKKERSSQTNKHDENHASSRSDLKERKSNENEDKAVTKARDFSKLNP" + 
+"LLSPLPLTPEPAIDFADHTDKFYSTPEFNQIQQNLHRSKTSLQDTVPISKHTPRAPTKDNSYKKHHDSKDNYPKMKHSPG" + 
+"RTTSKKNTTNSNGHQNFKEVSVKNVSGKATSTSPKSKTHHYSSSSDEEGQYKSPVKTIIQSPSPYCKLKNPSIMDKNSAK" + 
+"NHTASADKNLTDNSPIRSNLNPTAFNKSNSNKSITDSTSNSDECTDRKPNCNSTKNESKDPNRTCGKNSDKHLSKSCTMA" + 
+"SKRAPSRASSRASSRDSSRASSRASSRASSRDSSRASSRASSRDSSRASSRASSRASSKASSRASSRASSRASSRDSSRA" + 
+"SSKASSRASSRDSSRASSRASSRASSKASSRASSRASSRASSRDSSRASSKASSRASSRDSSRASSRDSSRDSSRASSRA" + 
+"SSRDSSRASSKASRKASSRASSRASSRASSKASGKASSEASSRASSRNSSRASSRASSRASSRDSSRASSRASSRDSSRA" + 
+"SSKASRKASSRASSRASSRELRQIYCDSNKRQTPPHDTSINTKFEISEIKFRCGEDLNFYKNTAARLQCFNHNDQFYNPR" + 
+"FRPHIRTNRKKSESTNDTDSESSMSRCKSHCRNSPDSLTVVRRKKHKSGSSSISSSIEENCRSNSHIVTGKEKFTPFYYQ" + 
+"SSRTRSSSSSSSSSASLSCSKSTLKTCRKTQYKDNKQIKSKSDSKHKTTNMSSDYESNRHADVFKNSPEAGEKFPLHNSS" + 
+"PFNTHEQSNHSENAIDEEQKKAPNITTSHLQGKQNVRLHNTKKCKKKRPRDDDSDSSIKNFCKKRISGAQKTESEVSEPD" + 
+"DLCYRDYVRLKERKVSEKFKIHRGRVATKDFQKLFRNTMRAFEYKQIPKKPCNEKNLKEAVYDICCNGLSNNAAIIMYFT" + 
+"RSKKVAQIIKIMQKELMIRPNITVSEAFKMNHAPPKYYDKDEIKRFIQLQKQGPQELWDKFENNTTHDLFTRHSDVKTMI" + 
+"IYAATPIDFVGAVKTCNKYAKDNPKEIVLRVCSIIDGDNPISIYNPISKEFKSKFSTLSKC"
+var t0 = performance.now()
+await Promise.all([performECInference(seq), performGOInference(seq)])
+var t1 = performance.now()
+console.log("Call took " + (t1 - t0) + " milliseconds.")
+    
+\end{verbatim}
+\end{tiny}
+
 
 When assigning examples to folds in our clustered dataset, we note that there are test examples that have labels that are never seen in the training data. We report these cases below as ``Impossible'' test example-label pairs.
 \begin{table}[htbp]
@@ -532,128 +523,12 @@ When assigning examples to folds in our clustered dataset, we note that there ar
  Impossible test example-label pairs &    3415 \\
 \hline
 \end{tabular}
-\caption{Clustered dataset statistics for EC labels.}
 \end{table}
-\begin{table}[htbp]
-\centering
-\begin{tabular}{|l|r|}
-\hline
-                                Type &   Number \\
-\Xhline{2pt}
-                        Train labels &    26538 \\
-\hline
-                         Test labels &    26666 \\
-\hline
-              Impossible test labels &     3739 \\
-\hline
-           Train example-label pairs &  8338584 \\
-\hline
-            Test example-label pairs &  8424299 \\
-\hline
- Impossible test example-label pairs &    11137 \\
-\hline
-\end{tabular}
-\caption{Clustered dataset statistics for GO labels.}
-\end{table}
-\clearpage
-\subsection{Precision/Recall curves}
-
-\begin{figure}[ht] 
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=1\linewidth]{random_truncated.pdf}
-    \caption{EC number prediction: random split} 
-    \label{fig:with_ensemble:a} 
-    \vspace{4ex}
-  \end{subfigure}%% 
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=1\linewidth]{random_truncated_go.pdf}
-    \caption{GO term prediction: random split} 
-    \label{fig:with_ensemble:b} 
-    \vspace{4ex}
-  \end{subfigure} 
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=1\linewidth]{clustered_truncated.pdf}
-    \caption{EC number prediction: clustered split} 
-    \label{fig:with_ensemble:c} 
-  \end{subfigure}%%
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=1\linewidth]{clustered_truncated_go.pdf}
-    \caption{GO term prediction: clustered split} 
-    \label{fig:with_ensemble:d} 
-  \end{subfigure} 
-  \caption{Bootstrapped precision-recall curves for EC number prediction and gene ontology term prediction for random and clustered splits for four methods: BLAST top pick, single ProteInfer CNN, ensembled ProteInfer CNNs, and ensembled ProteInfer CNNs scaled by BLAST score. }
-  \label{fig:with_ensemble} 
-\end{figure}
-
-
-
-\begin{figure}[ht] 
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=0.9\linewidth]{prc_ec_random_unzoomed.png}
-    \caption{EC number prediction: random split} 
-    \label{fig:without_ensemble:a} 
-    \vspace{4ex}
-  \end{subfigure}%% 
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=0.9\linewidth]{prc_go_random_unzoomed.png}
-    \caption{GO term prediction: random split} 
-    \label{fig:without_ensemble:b} 
-    \vspace{4ex}
-  \end{subfigure} 
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=0.9\linewidth]{prc_ec_clustered_unzoomed.png}
-    \caption{EC number prediction: clustered split} 
-    \label{fig:without_ensemble:c} 
-  \end{subfigure}%%
-  \begin{subfigure}[b]{0.5\linewidth}
-    \centering
-    \includegraphics[width=0.9\linewidth]{prc_go_clustered_unzoomed.png}
-    \caption{GO term prediction: clustered split} 
-    \label{fig:without_ensemble:d} 
-  \end{subfigure} 
-  \caption{Full precision-recall curves for EC number prediction and gene ontology term prediction for random and clustered splits for four methods: BLAST top pick, single ProteInfer CNN, ensembled ProteInfer CNNs }
-  \label{fig:without_ensemble} 
-\end{figure}
-
-
-\begin{figure}[htbp]
-\centering
-  \includegraphics[width=0.6\textwidth]{random_untruncated.pdf}
-  \caption{EC random task with different methods compared against a naive baseline where the predictor is simply the frequency in the training set.}
-  \label{sup:fig:naive}
-\end{figure}
-
-\clearpage
-
-
-\subsection{GO performance by ontology}
-\begin{figure}[htbp]
-\centering
-  \includegraphics[width=0.7\textwidth]{combined_split_go_random.pdf}
-  \caption{GO performance stratified by method and ontology type.}
-  \label{sup:fig:go_ontologies}
-\end{figure}
-
-\clearpage
-\subsection{Stratified performance}
-\begin{figure}[htbp]
-\centering
-  \includegraphics[width=\textwidth]{ec_f1_by_training_size.png}
-  \caption{Performance of EC model stratified by number of training examples available for each test example.}
-  \label{sup:fig:ec_f1_by_training_size}
-\end{figure}
 
 
 \subsection*{Domain architecture diversity in bifunctional enzymes}
 \begin{table}[htbp]
-  \begin{tabular}{|l|l|r|r|r|}
+  \begin{tabular}{|p{0.2\linewidth}|p{0.2\linewidth}|p{0.12\linewidth}|p{0.12\linewidth}|p{0.12\linewidth}|}
   \hline
   First domain & Second Domain & Number ordered correctly & Number times seen & Percent Correct \\
   \hline
@@ -693,38 +568,114 @@ When assigning examples to folds in our clustered dataset, we note that there ar
   \caption{Domain architecture diversity in bifunctional enzymes. In Swiss-Prot, there are 16 candidate domain architectures available for our EC functional localization experiment. Among these all domain architectures with more than 3 instances in Swiss-Prot (7 of them) are 100\% correctly ordered by our CAM method.}
   \end{table}
 
-  \clearpage
-
-  \subsection{Vocabulary sizes}
-  \begin{table}[htbp]
-    \centering
-  \begin{tabular}{|l|r|}
-  \hline
-  Vocabulary & Number of terms \\
-  \hline
-  EC & 5,134 \\
-  \hline
-  GO & 32,109 \\
-  \hline
-  \end{tabular}
-  \caption{Vocabulary sizes in models trained for EC and GO.}
-  \label{sup:table:vocab_sizes}
-  \end{table}
 
 
-
-\subsection{Combining CNN and BLAST}
+\subsection*{Combining CNN and BLAST}
 We noticed a clear difference between the performance of CNN models and BLAST models. The CNN models were able make predictions with higher precision than BLAST for a given recall value, but achieved lower overall recall, while BLAST gave high recall at the expense of precision. This suggested that combining the two methods would be beneficial. A CNN, or an ensemble of CNNs produces a metric that is notionally a probability (though often imperfectly calibrated), while BLAST bit-score produces a bit-score metric indicating the significance of the match. We reasoned that one approach to combining the two would simply be to multiply the values together - improving the precision of BLAST predictions by reducing bit-scores in cases where the CNN model lacked confidence in a prediction. This approach performed well, and was the best that we evaluated. To implement this method, all labels associated with the top hit from BLAST with a sequence are initially assigned identical scores, determined by the bit-score of the top match, but these are then rescaled according to the output of the ProteInfer command-line interface.
 
 Whether this approach is worth the additional infrastructure required to maintain two different methods of prediction will depend on the scale of analysis being conducted. Further sophistication in how the CNN and BLAST are combined, perhaps with a learnt model, might further improve performance.
 
-\subsection{Pfam implementation}
-The ProteInfer algorithm is set up to allow any desired training vocabulary to be used. We demonstrated this by additionally training a model for predicting Pfam families from full-length protein sequences, which is available through our CLI-tool, and performs as shown below.
+
+\begin{acknowledgements}
+  We would like to thank Babak Alipanahi, Jamie Smith, Eli Bixby, Drew Bryant, Shanqing Cai, Cory McLean and Abhinay Ramaprasad. The static version of this manuscript uses a template made by Ricardo Henriques.
+
+  TS receives funding from the Wellcome Trust through a Sir Henry Wellcome Postdoctoral Fellowship (210918/Z/18/Z). This work was also supported by the Francis Crick Institute which receives its core funding from Cancer Research UK (FC001043), the UK Medical Research Council (FC001043), and the Wellcome Trust (FC001043). This research was funded in whole, or in part, by the Wellcome Trust [FC001043]. For the purpose of Open Access, the authors have applied a CC BY public copyright licence to any Author Accepted Manuscript version arising from this submission.
+
+\end{acknowledgements}
+
+\section*{Bibliography}
+\bibliography{./mybib.bib}
+  
+\newpage
+\onecolumn
+
+%\begin{comment}
+
+\beginsupplement
+\section{Figure supplements}
+
+
+\begin{figure}[htbp]
+ 
+\centering
+  \includegraphics[width=\textwidth]{ec_label_distribution.png}
+  \caption{[Figure 3 - Figure supplement 1] Histogram of number of labels per sequence, including hierarchical labels, on the random dataset.}
+\end{figure}
+\begin{figure}[htbp]
+  
+\centering
+  \includegraphics[width=\textwidth]{go_label_distribution.png}
+  \caption{[Figure 3 - figure supplement 2] Histogram of number of labels per sequence, including hierarchical labels, on the random dataset.}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+  \includegraphics[width=\textwidth]{sequences_per_label_ec_random.png}
+  \caption{[Figure 3 - figure supplement 3] Number of sequences annotated with a given functional label (EC class) in the random dataset.}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+  \includegraphics[width=\textwidth]{sequences_per_label_go_random.png}
+  \caption{ [Figure 3 - figure supplement 4] Number of sequences annotated with a given functional label (GO label) in the random dataset.}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+  \includegraphics[width=\textwidth]{sequences_per_label_ec_clustered.png}
+  \caption{ [Figure 3 - figure supplement 5] Number of sequences annotated with a given functional label (EC class) in the clustered dataset.}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+  \includegraphics[width=\textwidth]{sequences_per_label_go_clustered.png}
+  \caption{ [Figure 3 - figure supplement 6] Number of sequences annotated with a given functional label. (GO label) in the clustered dataset.}
+\end{figure}
+
+\begin{figure}[ht] 
+  \includegraphics[width=0.9\textwidth]{combined_subfigs_b.pdf}
+  \caption{ [Figure 3 - figure supplement 7] Bootstrapped precision-recall curves for EC number prediction and gene ontology term prediction for random and clustered splits for four methods: BLAST top pick, single ProteInfer CNN, ensembled ProteInfer CNNs, and ensembled ProteInfer CNNs scaled by BLAST score. }
+  \label{sup:fig:with_ensemble} 
+\end{figure}
+
+
+
+\begin{figure}[ht] 
+  \includegraphics[width=0.9\textwidth]{combined_subfigs_c.pdf}
+  \caption{[Figure 3 - Figure supplement 8] Full precision-recall curves for EC number prediction and gene ontology term prediction for random and clustered splits for four methods: BLAST top pick, single ProteInfer CNN, ensembled ProteInfer CNNs }
+  \label{sup:fig:without_ensemble} 
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+  \includegraphics[width=0.6\textwidth]{random_untruncated.pdf}
+  \caption{[Figure 3 - Figure supplement 9] EC random task with different methods compared against a naive baseline where the predictor is simply the frequency in the training set.}
+  \label{sup:fig:naive}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+  \includegraphics[width=0.7\textwidth]{combined_split_go_random.pdf}
+  \caption{[Figure 3 - Figure supplement 10] GO performance stratified by method and ontology type.}
+  \label{sup:fig:go_ontologies}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+  \includegraphics[width=\textwidth]{ec_f1_by_training_size.png}
+  \caption{[Figure 3 - Figure supplement 11] Performance of EC model stratified by number of training examples available for each test example.}
+  \label{sup:fig:ec_f1_by_training_size}
+\end{figure}
+
+
+
+
+
+
 
 \begin{figure}[htbp]
 \centering
   \includegraphics[width=0.7\textwidth]{pfam_random.png}
-  \caption{Performance for Pfam prediction for random train/test split.}
+  \caption{[Figure 3 - Figure supplement 12] The ProteInfer algorithm is set up to allow any desired training vocabulary to be used. We demonstrated this by additionally training a model for predicting Pfam families from full-length protein sequences, which is available through our CLI-tool, and performs as shown here.}
   \label{sup:fig:ec_f1_by_training_size}
 \end{figure}
 
@@ -733,7 +684,7 @@ The ProteInfer algorithm is set up to allow any desired training vocabulary to b
 %stopleaveout
 
 %startleaveout
-
+%\end{comment}
 
 %\bibliography{../bibliography}
 % Extra text

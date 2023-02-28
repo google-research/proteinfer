@@ -74,6 +74,7 @@
 \RequirePackage[labelfont={bf,sf},%
                 labelsep=period,%
                 figurename=Fig.]{caption}
+\RequirePackage{subcaption}
 
 \DeclareUnicodeCharacter{00B0}{\degree}
 
@@ -428,11 +429,11 @@
   }}
 
 \def\bBioRXiv{{\footnotesize
-    \footerfont \thepage\hspace{7pt}|\hspace{7pt}bio\textcolor{red}{R}$\chi$iv
+    \footerfont \thepage\
   }}
   
 \def\cBioRXiv{{\footnotesize
-    \footerfont bio\textcolor{red}{R}$\chi$iv\hspace{7pt}|\hspace{7pt}\thepage
+    \footerfont \thepage
   }}
    
 \def\dBioRXiv{{\footnotesize
