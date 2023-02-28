@@ -72,7 +72,7 @@
 
   <!-- Support for pretty Twitter previews -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="ProteInfer: deep networks for protein functional inference" />
+  <meta name="twitter:title" content="ProteInfer, deep networks for protein functional inference" />
   <meta name="twitter:image" content="https://google-research.github.io/proteinfer/twitter_image_preview.png" />
   <!-- End support for pretty Twitter previews -->
 
@@ -101,9 +101,9 @@
 <body>
   <d-front-matter>
     <script id='distill-front-matter' type="text/json">{
-    "title": "ProteInfer: deep neural models for protein functional inference",
-    "published": "Sep 13, 2021",
-    "doi":"10.1101/2021.09.20.461077",
+    "title": "ProteInfer, deep neural models for protein functional inference",
+    "published": "Feb 27, 2023",
+    "doi":"10.7554/eLife.80942",
     "authors": [
       {
         "author":"Theo Sanderson*",
@@ -139,7 +139,7 @@
 
   </d-front-matter>
   <d-title>
-    <h1 id="title">ProteInfer: deep networks for protein functional inference</h1>
+    <h1 id="title">ProteInfer, deep networks for protein functional inference</h1>
 
     <p>We describe an approach for predicting the functional properties of a protein from its amino acid sequence using
       neural networks. Below, you can try an implementation of our technique that makes predictions locally on your
@@ -349,12 +349,13 @@
     responsible for visualization, analysis, code, CLI, open sourcing, testing, paper writing. DB was responsible for
     paper writing, analysis of results, code reviews. LJC was responsible for problem conception and framing, analysis of results, paper writing.
 
+    TS and MLB contributed equally to this work.
+
   </div>
 
   <p id="biorxiv_reference">
     <!--To cite this paper or tool, refer to (DO NOT SUBMIT).<br>-->This
-    manuscript is a <b style="font-weight:500">pre-print</b>, 
-    also available in a non-interactive format <a href="https://www.biorxiv.org/content/10.1101/2021.09.20.461077">at bioRxiv</a>.
+    is an interactive version of our paper. It is also available in a static form at <a href="https://elifesciences.org/articles/80942">at eLife</a>.
   </p>
   <d-article>
    <!--- <a class="marker" href="#section-1" id="section-1"><span>1</span></a>-->
@@ -706,9 +707,11 @@
 
 <p>To address this challenge we employ deep dilated convolutional networks to learn the mapping between full-length protein sequences and functional annotations. The resulting ProteInfer models take amino acid sequences as input and are trained on the well-curated portion of the protein universe annotated by Swiss-Prot<d-cite key="uniprotlatest"></d-cite>. We find that: 1) ProteInfer models reproduce curator decisions for a  variety of functional properties across sequences distant from the training data, 2) attribution analysis shows that the predictions are driven by relevant regions of each protein sequence, and 3) ProteInfer models create a generalised mapping between sequence space and the space of protein functions, which is useful for tasks other than those for which the models were trained. We provide trained ProteInfer networks that enable other researchers to reproduce the analysis presented and to explore embeddings of their proteins of interest, via both a command line tool<d-footnote><a href="https://github.com/google-research/proteinfer" target="_blank">https://github.com/google-research/proteinfer</a></d-footnote>, and also via an in-browser JavaScript implementation that demonstrates the computational efficiency of deep-learning approaches.</p>
 
-<h2>Results</h2>
+<h2>Methods</h2>
 
 <h3>A neural-network for protein function prediction</h3>
+
+<p>In a ProteInfer neural network (<a href="#fig3" target="_self">Figure 3</a>), a raw amino acid sequence is first represented numerically as a <i>one-hot</i> matrix and then passed through a series of convolutional layers. Each layer takes the representation of the sequence in the previous layer and applies a number of <i>filters</i>, which detect patterns of features. We use <i>residual</i> layers, in which the output of each layer is added to its input to ease the training of deeper networks<d-cite key="resnet"></d-cite>, and dilated convolutions<d-cite key="dilatedconvolutions"></d-cite>, meaning that successive layers examine larger sub-sequences of the input sequence. After building up an embedding of each position in the sequence, the model collapses these down to a single $n$-dimensional embedding of the sequence using average pooling. Since natural protein sequences can vary in length by at least three orders of magnitude, this pooling is advantageous because it allows our model to accommodate sequences of arbitrary length without imposing restrictive modeling assumptions or computational burdens that scale with sequence length. In contrast, many previous approaches operate on fixed sequence lengths: these techniques are unable to make predictions for proteins larger than this sequence length, and use unnecessary resources when employed on smaller proteins. Finally, a fully-connected layer maps these embeddings to logits for each potential label, which are the input to an element-wise sigmoid layer that outputs per-label probabilities. </p>
 
 <p><a name="model"></a>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
@@ -1195,8 +1198,6 @@
     <div id="tooltipper"></div>
 </figure></p>
 
-<p>In a ProteInfer neural network (<a href="#fig3" target="_self">Figure 3</a>), a raw amino acid sequence is first represented numerically as a <i>one-hot</i> matrix and then passed through a series of convolutional layers. Each layer takes the representation of the sequence in the previous layer and applies a number of <i>filters</i>, which detect patterns of features. We use <i>residual</i> layers, in which the output of each layer is added to its input to ease the training of deeper networks<d-cite key="resnet"></d-cite>, and dilated convolutions<d-cite key="dilatedconvolutions"></d-cite>, meaning that successive layers examine larger sub-sequences of the input sequence. After building up an embedding of each position in the sequence, the model collapses these down to a single $n$-dimensional embedding of the sequence using average pooling. Since natural protein sequences can vary in length by at least three orders of magnitude, this pooling is advantageous because it allows our model to accommodate sequences of arbitrary length without imposing restrictive modeling assumptions or computational burdens that scale with sequence length. In contrast, many previous approaches operate on fixed sequence lengths: these techniques are unable to make predictions for proteins larger than this sequence length, and use unnecessary resources when employed on smaller proteins. Finally, a fully-connected layer maps these embeddings to logits for each potential label, which are the input to an element-wise sigmoid layer that outputs per-label probabilities. </p>
-
 <p>We select all labels with predicted probability above a given confidence threshold, and varying this threshold yields a tradeoff between precision and recall. To summarize model performance as a single scalar, we compute the $\texttt{F}_{max}$ score, the maximum $\texttt{F}_{1}$ score (the geometric mean of precision and recall) across all thresholds<d-cite key="radivojac2013large"></d-cite>.  </p>
 
 <p>Each model was trained for about 60 hours using the Adam optimizer<d-cite key="kingma2014adam"></d-cite> on 8 NVIDIA P100 GPUs with data parallelism<d-cite key="dean2012large, dataparalellism"></d-cite>.  We found that using more than one GPU for training improved training time by allowing an increased batch size, but did not have a substantial impact on accuracy compared to training for longer with a smaller learning rate and smaller batch size on one GPU. The models have a small set of hyperparameters, such as the number of layers and the number of filters in each layer, which were tuned using random sampling to maximize $\texttt{F}_{max}$ on the random train-test split. Hyperparameter values are available in the <a href="./latex/supplement.pdf">supplement</a>.</p>
@@ -1210,6 +1211,8 @@
 <p>We use two methods to split data into training and evaluation sets. First, a random split of the data allows us to answer the following question: suppose that curators had randomly annotated only 80&percnt; of the sequences in Swiss-Prot. How accurately can ProteInfer annotate the remaining 20&percnt;?  Second, we use UniRef50<d-cite key="suzek2015uniref"></d-cite> clustering to split the data, to model a challenging use-case in which an unseen sequence has low sequence similarity to anything that has been previously annotated. Note there are alternative methods for splitting<d-cite key="Brandes2021,zhou2019cafa, gillis"></d-cite>, such as reserving the most recently-annotated proteins for evaluating models. This approach, which is used in CAFA and CASP<d-cite key="zhou2019cafa, gillis"></d-cite>, helps ensure a fair competition because labels for the evaluation data are not available to participants, or the scientific community at large, until after the competition submissions are due. Such a split is not available for EC classification, which is the primary focus of our analyses below. Finally, note that all of the above approaches typically lack reliable annotation for true negatives<d-cite key="warwick2020benchmarking"></d-cite>.</p>
 
 <p>To facilitate further development of machine learning methods, we provide TensorFlow<d-cite key="abadi2016tensorflow"></d-cite> TFrecord files for Swiss-Prot.<d-footnote><a href="https://console.cloud.google.com/storage/browser/brain-genomics-public/research/proteins/proteinfer/datasets/" target="_blank">https://console.cloud.google.com/storage/browser/brain-genomics-public/research/proteins/proteinfer/datasets/</a></d-footnote> Each example has three fields: the UniProt accession, the amino acid sequence, and a list of database cross-reference labels. UniProt annotations include only leaf nodes for hierarchical taxononomies such as EC and GO. To allow machine-learning algorithms to model this hierarchy, we added all parental annotations to each leaf node during dataset creation. </p>
+
+<h2>Results</h2>
 
 <h3>Prediction of catalysed reactions</h3>
 
@@ -1429,7 +1432,7 @@
 </style>
 </p>
 
-<p>We found that BLASTp was able to achieve higher recall values than ProteInfer for lower precision values, while ProteInfer was able to provide greater precision than BLASTp at lower recall values. The high recall of BLAST is likely to reflect the fact that it has access to the entirety of the training set, rather than having to compress it into a limited set of neural network weights. In contrast, the lack of precision in BLAST could relate to reshuffling of sequences during evolution, which would allow a given protein to show high similarity to a trainining sequence in a particular subregion, despite lacking the core region required for that training sequence's function.  We wondered whether a combination of ProteInfer and BLASTp could synergize the best properties of both approaches. We found that even the simple ensembling strategy of rescaling the BLAST bit score by the averages of the ensembled CNNs' predicted probabilities gave a $\texttt{F}_{max}$ score (0.991, 95&percnt; confidence interval [CI]: 0.990&ndash;0.992 ) that exceeded that of BLAST (0.984, 95&percnt; CI: 0.983&ndash;0.985) or the ensembled CNN (0.981, 95&percnt; CI: 0.980&ndash;0.982) alone (see Supplement for more details on this method). </p>
+<p>We found that BLASTp was able to achieve higher recall values than ProteInfer for lower precision values, while ProteInfer was able to provide greater precision than BLASTp at lower recall values. The high recall of BLAST is likely to reflect the fact that it has access to the entirety of the training set, rather than having to compress it into a limited set of neural network weights. In contrast, the lack of precision in BLAST could relate to reshuffling of sequences during evolution, which would allow a given protein to show high similarity to a trainining sequence in a particular subregion, despite lacking the core region required for that training sequence's function.  We wondered whether a combination of ProteInfer and BLASTp could synergize the best properties of both approaches. We found that even the simple ensembling strategy of rescaling the BLAST bit score by the averages of the ensembled CNNs' predicted probabilities gave a $\texttt{F}_{max}$ score (0.991, 95&percnt; confidence interval [CI]: 0.990&ndash;0.992 ) that exceeded that of BLAST (0.984, 95&percnt; CI: 0.983&ndash;0.985) or the ensembled CNN (0.981, 95&percnt; CI: 0.980&ndash;0.982) alone (see Methods for more details on this method). </p>
 
 <p>On the clustered train-test split based on UniRef50 (see <i>clustered</i> in <a href="#fig5" target="_self">Fig. 5</a>), we see a performance drop in all methods: this is expected, as remote homology tasks are designed to challenge methods to generalize farther in sequence space. The $\texttt{F}_{max}$ score of a single neural network fell to 0.914 (95&percnt; CI: 0.913&ndash;0.915, precision: 0.959 recall: 0.875), substantially lower than BLAST (0.950, 95&percnt; CI: 0.950&ndash;0.951), though again an ensemble of both BLAST and ProteInfer outperformed both (0.979, 95&percnt; CI: 0.979&ndash;0.980). These patterns suggest that neural network methods learn different information about proteins to alignment-based methods, and so a combination of the two provides a synergistic result. All methods dramatically outperformed the naive frequency-based approach (see supplement).</p>
 
@@ -2138,7 +2141,7 @@
 
 </style></p>
 
-<p>The resulting representation captures the hierarchical nature of EC classification, with the largest clusters in embedding space corresponding to top level EC groupings. These clusters in turn are further divided into sub-regions on the basis of subsequent levels of the EC hierarchy. Exceptions to this rule generally recapitulate biological properties. For instance, \emph{Q8RUD6} is annotated as Arsenate reductase (glutaredoxin) (EC:1.20.4.1)<d-cite key="pmid25464340"></d-cite> was not placed with other oxidoreductases (EC:1.-.-.-) but rather with Sulfurtransferases (EC:2.8.1.-). \emph{Q8RUD6} can however act as a sulfertransferase<d-cite key="pmid17408957"></d-cite>. </p>
+<p>The resulting representation captures the hierarchical nature of EC classification, with the largest clusters in embedding space corresponding to top level EC groupings. These clusters in turn are further divided into sub-regions on the basis of subsequent levels of the EC hierarchy. Exceptions to this rule generally recapitulate biological properties. For instance, <i>Q8RUD6</i> is annotated as Arsenate reductase (glutaredoxin) (EC:1.20.4.1)<d-cite key="pmid25464340"></d-cite> was not placed with other oxidoreductases (EC:1.-.-.-) but rather with Sulfurtransferases (EC:2.8.1.-). <i>Q8RUD6</i> can however act as a sulfertransferase<d-cite key="pmid17408957"></d-cite>. </p>
 
 <p>Note that the model is directly trained with labels reflecting the EC hierarchy; the structure in <a href="#fig8" target="_self">Fig. 8</a> was not discovered automatically from the data. However, we can also ask whether the embedding captures more general protein characteristics, beyond those on which it was directly supervised.</p>
 
@@ -2582,7 +2585,7 @@
 
 <p>An ensemble of multiple CNN elements was again able to achieve a slightly better result with an F1 score of 0.899 (95&percnt; CI: 0.897&ndash;0.901), which was exceeded by a simple transfer of the BLAST top pick at 0.902 (95&percnt; CI: 0.900&ndash;0.904), with an ensemble of both producing the best result of 0.908 (95&percnt; CI: 0.906&ndash;0.911).</p>
 
-<p>The same trends for the relative performance of different approaches were seen for each of the direct-acyclic graphs that make up the GO ontology (biological process, cellular component and molecular function), but there were substantial differences in absolute performance ((see <a href="./latex/supplement.pdf">supplement</a>)). Performance was highest for molecular function (max F1: 0.94), followed by biological process (max F1:0.86) and then cellular component (max F1:0.84).</p>
+<p>The same trends for the relative performance of different approaches were seen for each of the direct-acyclic graphs that make up the GO ontology (biological process, cellular component and molecular function), but there were substantial differences in absolute performance ( (see <a href="./latex/supplement.pdf">supplement</a>)). Performance was highest for molecular function (max F1: 0.94), followed by biological process (max F1:0.86) and then cellular component (max F1:0.84).</p>
 
 <p>To benchmark against a common signature-based methodology, we used InterProScan to assign protein family signatures to each test sequence. We chose InterProScan for its coverage of labels as well as its use of multiple profile-based annotation methods, including HMMER and PROSITE, mentioned above. We note that while InterProScan predicts GO labels directly, it does not do so for EC labels, which is why we did not use InterProScan to benchmark our work on predicting EC labels. We found that InterProScan gave good precision, but within this UniProt data had lower recall, giving it a precision of 0.937 and recall of 0.543 for an F1 score of 0.688. ProteInfer's recall at a precision of .937 is substantially higher (0.835) than InterProScan at assigning GO labels.  </p>
 
@@ -2607,14 +2610,14 @@
 <d-appendix>
 
   <h3>Acknowledgements</h3>
-  <p> We would like to thank Babak Alipanahi, Jamie Smith, Eli Bixby, Drew Bryant, Shanqing Cai, Cory McLean and Abhinay Ramparasad.
+  <p> We would like to thank Babak Alipanahi, Jamie Smith, Eli Bixby, Drew Bryant, Shanqing Cai, Cory McLean and Abhinay Ramaprasad.
   </p>
   <p>This version of the article uses the beautiful <a href="http://distill.pub">Distill</a>
     template. Indeed the entire format of the article is inspired by the pioneering articles in
     Distill.</p>
 
 
-  <d-bibliography src="bibliography.bib"></d-bibliography>
+  <d-bibliography src="./latex/mybib.bib"></d-bibliography>
 </d-appendix>
 
 
