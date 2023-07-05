@@ -5,7 +5,7 @@ backports.weakref==1.0.post1
 enum34==1.1.6
 funcsigs==1.0.2
 gast==0.2.2
-grpcio==1.19.0
+grpcio==1.53.0
 h5py==2.9.0
 Keras-Applications==1.0.8
 Keras-Preprocessing==1.0.9
