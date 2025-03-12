@@ -14,6 +14,10 @@ browser, and read the related paper.
 
 Or if you're interested in the command line interface instead, see below.
 
+You do not need a Google Cloud machine - these instructions were made as
+such just to demonstrate what it would take if you had to install
+everything from scratch.
+
 ### Install gcloud on your local machine if you don't have it installed
 ```
 sudo apt install -y google-cloud-sdk
