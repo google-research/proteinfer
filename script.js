@@ -116,7 +116,7 @@ function loadPDB(pdbID) {
 
 
 
-  return pdbView.loadFile('rcsb://' + pdbID).then(function (o) {
+  return pdbView.loadFile(`https://files.rcsb.org/download/${pdbID}.pdb`).then(function (o) {
     drawPredictions();
     pdbView.autoView();
     document.getElementById("pdb_view").onclick = function () {

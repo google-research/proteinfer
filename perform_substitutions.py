@@ -15,5 +15,5 @@ import sys
 for line in sys.stdin:
     for key in replacements:
         line = line.replace("&&&"+key+"&&&",replacements[key])
-    print line
+    print(line)
     
